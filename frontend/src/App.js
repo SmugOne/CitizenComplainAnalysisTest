@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, View, Text } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 
-function App() {
+export default function App() {
   const [data, setData] = useState(null);
 
-  // Fetch data from Flask API
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/data")
       .then((response) => response.json())
@@ -13,12 +12,22 @@ function App() {
   }, []);
 
   return (
-    <div>
-      <h1>React + Flask App</h1>
-      {data ? <p>{data.message}</p> : <p>Loading...</p>}
-    </div>
+    <View style={styles.container}>
+      <Text style={styles.title}>React Native + Flask App</Text>
+      <Text>{data ? data.message : "Loading..."}</Text>
+    </View>
   );
 }
 
-export default App;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingTop: 60,
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 20,
+  },
+});
 

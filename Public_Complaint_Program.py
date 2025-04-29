@@ -1,13 +1,16 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS  
+import pandas as pd
 
+#database = pd.read_csv('complaints.csv')
+
+#READ REACT NATIVE:
 Main = Flask(__name__)
-CORS(Main, resources={r"/api/*": {"origins": "http://localhost:3000"}})  # Allow React frontend to call the API
+CORS(Main, resources={r"/api/*": {"origins": "*"}})  # Allow React frontend to call the API
 
 @Main.route('/api/data', methods=['GET'])
 def get_data():
-    data = {"message": "Hello from Flask!", "status": "success"}
-    return jsonify(data)
+    return jsonify({"message": "testing", "status": "success"})
 
 @Main.route('/api/post', methods=['POST'])
 def receive_data():
@@ -15,5 +18,5 @@ def receive_data():
     return jsonify({"received": received_data, "message": "Data received!"})
 
 if __name__ == '__main__':
-    Main.run(debug=True)
+    Main.run(host='0.0.0.0', port=5000, debug=True)
 

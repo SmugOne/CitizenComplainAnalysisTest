@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { StyleSheet, View, Text } from "react-native";
 
 function App() {
   const [data, setData] = useState(null);

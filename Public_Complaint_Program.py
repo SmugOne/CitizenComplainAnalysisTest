@@ -1,7 +1,13 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS  
 import pandas as pd
-
+import os
+from oauth2client.service_account import ServiceAccountCredentials
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import make_pipeline
+from transformers import pipeline
 #database = pd.read_csv('complaints.csv')
 
 #READ REACT NATIVE:

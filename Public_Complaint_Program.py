@@ -27,11 +27,8 @@ if __name__ == '__main__':
     Main.run(host='0.0.0.0', port=5000, debug=True)
 
 def Database():
-    return jsonify {
-        "Dataset": {
-            "Name": "Public_Complaint_Program",
-            "Description": "This dataset contains information about public complaints received by the program.",
-            "Columns": {
+    return jsonify({
+        "Columns": {
                 "Complaint_ID": "Unique identifier for each complaint",
                 "Date": "Date of the complaint",
                 "Category": "Category of the complaint",
@@ -43,5 +40,4 @@ def Database():
                 {"Complaint_ID": 2, "Date": "2023-01-02", "Category": "Traffic", "Status": "Pending", "Resolution": None}
             ]   
         }
-    }
-
+    )

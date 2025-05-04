@@ -2,9 +2,6 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS  
 import os
 import pandas as pd
-import React from 'react'
-import { useState } from 'react';
-import axios from 'axios';
 from oauth2client.service_account import ServiceAccountCredentials
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.feature_extraction.text import CountVectorizer
@@ -30,7 +27,7 @@ if __name__ == '__main__':
 
 #BACKEND DEVELOPMENT ----------------------------------
 # Output and Training Model:
-@app.route('/api/complaints', methods=['GET'])
+@Main.route('/api/complaints', methods=['GET'])
 def Complaints():
     Database = pd.read_csv("CSVFile/ComplaintsData.csv") #Placeholder 
 

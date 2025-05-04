@@ -1,14 +1,16 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS  
-import pandas as pd
 import os
+import pandas as pd
+import React from 'react'
+import { useState } from 'react';
+import axios from 'axios';
 from oauth2client.service_account import ServiceAccountCredentials
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import make_pipeline
 from transformers import pipeline
-#database = pd.read_csv('complaints.csv')
 
 #READ REACT NATIVE: ---------------------------
 Main = Flask(__name__)
@@ -22,61 +24,57 @@ def get_data():
 def receive_data():
     received_data = request.json  # Get JSON data from React
     return jsonify({"received": received_data, "message": "Data received!"})
-
-#Back and Front end connect:
+#Back and Front end connection:
 if __name__ == '__main__':
     Main.run(host='0.0.0.0', port=5000, debug=True)
 
 #BACKEND DEVELOPMENT ----------------------------------
-Database = pd.read_csv("CSVFile/ComplaintsData.csv") #Placeholder 
-Training_Data = { } #Placeholder
+# Output and Training Model:
+@app.route('/api/complaints', methods=['GET'])
+def Complaints():
+    Database = pd.read_csv("CSVFile/ComplaintsData.csv") #Placeholder 
 
-#Training Model:
-training = pd.DataFrame(Training_Data)
-X_train, y_train = training['text'], training['label']
-model = make_pipeline(CountVectorizer(), MultinomialNB())
-model.fit(X_train, y_train)
+    Training_Data = { } #Placeholder
 
-textComplaints = Database['Raw Complaint'].tolist()
-Predicted = model.predict(textComplaints)
+    #Training Model:
+    training = pd.DataFrame(Training_Data)
+    X_train, y_train = training['text'], training['label']
+    model = make_pipeline(CountVectorizer(), MultinomialNB())
+    model.fit(X_train, y_train)
+    
+    textComplaints = Database['Raw Complaint'].tolist()
+    Predicted = model.predict(textComplaints)
 
-# Set emotion scores and iterates
-emotion_scores = []
-for label in Predicted:
-    score_dict = {
-        'anger': 0.0,
-        'fear': 0.0,
-        'joy': 0.0,
-        'sadness': 0.0,
-        'neutral': 0.0,
-        'surprise': 0.0,
-    }
-    score_dict[label] = 1.0
-    emotion_scores.append(score_dict)
+    emotion_scores = []
+    for label in Predicted:
+        score_dict = {
+            'anger': 0.0,
+            'fear': 0.0,
+            'joy': 0.0,
+            'sadness': 0.0,
+            'neutral': 0.0,
+            'surprise': 0.0,
+        }
+        score_dict[label] = 1.0
+        emotion_scores.append(score_dict)
 
-# Extract scores
-Anger_Score = []
-Fear_Score = []
-Joy_Score = []
-Sadness_Score = []
-Neutral_Score = []
-Surprise_Score = []
+    Anger_Score = [score.get('anger', 0) for score in emotion_scores]
+    Fear_Score = [score.get('fear', 0) for score in emotion_scores]
+    Joy_Score = [score.get('joy', 0) for score in emotion_scores]
+    Sadness_Score = [score.get('sadness', 0) for score in emotion_scores]
+    Neutral_Score = [score.get('neutral', 0) for score in emotion_scores]
+    Surprise_Score = [score.get('surprise', 0) for score in emotion_scores]
 
-for score in emotion_scores:
-    Anger_Score.append(score.get('anger', 0))
-    Fear_Score.append(score.get('fear', 0))
-    Joy_Score.append(score.get('joy', 0))
-    Sadness_Score.append(score.get('sadness', 0))
-    Neutral_Score.append(score.get('neutral', 0))
-    Surprise_Score.append(score.get('surprise', 0))
-
-# Add to DataFrame
-Database['Anger Score'] = Anger_Score
-Database['Fear Score'] = Fear_Score
-Database['Joy Score'] = Joy_Score
-Database['Neutral Score'] = Neutral_Score
-Database['Sadness Score'] = Sadness_Score
-Database['Surprise Score'] = Surprise_Score
+    # Scores the Database
+    Database['Anger Score'] = Anger_Score
+    Database['Fear Score'] = Fear_Score
+    Database['Joy Score'] = Joy_Score
+    Database['Neutral Score'] = Neutral_Score
+    Database['Sadness Score'] = Sadness_Score
+    Database['Surprise Score'] = Surprise_Score
+    
+    # Converts all database and results to "Model Output"
+    return jsonify(Database.to_dict(orient='Model Output'))
 
 def Dataframe():
     return jsonify(

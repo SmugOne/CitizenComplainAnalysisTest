@@ -78,9 +78,6 @@ Database['Neutral Score'] = Neutral_Score
 Database['Sadness Score'] = Sadness_Score
 Database['Surprise Score'] = Surprise_Score
 
-# OPTIONAL: Update Google Sheet (overwrite existing content)
-Database.to_csv("Complaints.db", index=False)
-
 def Dataframe():
     return jsonify(
         {

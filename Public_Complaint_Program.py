@@ -74,6 +74,18 @@ def Complaints():
     # Converts all database and results to "Model Output"
     return jsonify(Database.to_dict(orient='Model Output'))
 
+def NLP():
+    prioritize=[
+        "Corruption",
+        "Fraud",
+        "Harassment",
+        "Discrimination",
+        
+    ]
+
+    # converts prioritization words to "Prioritize"
+    return jsonify(prioritize.to_dict(orient='Prioritize'))
+
 #Placeholder:
 def Dataframe():
     return jsonify(

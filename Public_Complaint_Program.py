@@ -42,6 +42,7 @@ def Complaints():
     textComplaints = Database['Raw Complaint'].tolist()
     Predicted = model.predict(textComplaints)
 
+    # Set emotion scores
     emotion_scores = []
     for label in Predicted:
         score_dict = {
@@ -73,6 +74,7 @@ def Complaints():
     # Converts all database and results to "Model Output"
     return jsonify(Database.to_dict(orient='Model Output'))
 
+#Placeholder:
 def Dataframe():
     return jsonify(
         {

@@ -28,7 +28,7 @@ if __name__ == '__main__':
 #BACKEND DEVELOPMENT ----------------------------------
 # Output and Training Model:
 @Main.route('/api/complaints', methods=['GET'])
-def Complaints():
+def Model():
 
     #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv") #Placeholder 
@@ -75,7 +75,6 @@ def NLP():
         "Fraud",
         "Harassment",
         "Discrimination",
-        
     ]
 
     # converts prioritization words to "Prioritize"

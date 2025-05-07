@@ -1,9 +1,9 @@
-Raw Complaint,Anger Score,Fear Score,Joy Score,Neutral Score,Sadness Score,Surprise Score
-I hate this!,,,,,,
-I like this thing so much!,,,,,,
-I do not want to be another victim.,,,,,,
-Theres a widespread corruption within the Department of Health,,,,,,
-I just saw someone litter,,,,,,
-The governor is abusing our funds. I think he silence other critics,,,,,,
-I hate making complaints,,,,,,
-Theres some broken glass which may cause injury,,,,,,
+Name,Raw Complaint,Anger Score,Fear Score,Joy Score,Neutral Score,Sadness Score,Surprise Score,Predicted Agency
+,I hate this!,,,,,,,
+,I like this thing so much!,,,,,,,
+,I do not want to be another victim.,,,,,,,
+,Theres a widespread corruption within the Department of Health,,,,,,,
+,I just saw someone litter,,,,,,,
+,The governor is abusing our funds. I think he silence other critics,,,,,,,
+,I hate making complaints,,,,,,,
+,Theres some broken glass which may cause injury,,,,,,,

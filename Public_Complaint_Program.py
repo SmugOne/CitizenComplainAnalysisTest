@@ -29,8 +29,9 @@ if __name__ == '__main__':
 # Output and Training Model:
 @Main.route('/api/complaints', methods=['GET'])
 def Complaints():
-    Database = pd.read_csv("CSVFile/ComplaintsData.csv") #Placeholder 
 
+    #Datasets:
+    Database = pd.read_csv("CSVFile/ComplaintsData.csv") #Placeholder 
     Training_Data = { } #Placeholder
 
     #Training Model:
@@ -40,7 +41,7 @@ def Complaints():
     model.fit(X_train, y_train)
     
     textComplaints = Database['Raw Complaint'].tolist()
-    Predicted = model.predict(textComplaints)
+    #Predicted = model.predict(textComplaints)
 
     # Scores the Database
     probabilities = model.predict_proba(textComplaints)
@@ -57,7 +58,7 @@ def Complaints():
     Neutral_Score = [score.get('neutral', 0) for score in emotion_scores]
     Surprise_Score = [score.get('surprise', 0) for score in emotion_scores]
 
-    # Scores the Database
+    # Adds scores to the database:
     Database['Anger Score'] = Anger_Score
     Database['Fear Score'] = Fear_Score
     Database['Joy Score'] = Joy_Score

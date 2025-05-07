@@ -42,19 +42,13 @@ def Complaints():
     textComplaints = Database['Raw Complaint'].tolist()
     Predicted = model.predict(textComplaints)
 
-    # Set emotion scores
+    # Scores the Database
+    probabilities = model.predict_proba(textComplaints)
+    emotion_labels = model.classes_
     emotion_scores = []
-    for label in Predicted:
-        score_dict = {
-            'anger': 0.0,
-            'fear': 0.0,
-            'joy': 0.0,
-            'sadness': 0.0,
-            'neutral': 0.0,
-            'surprise': 0.0,
-        }
-        score_dict[label] = 1.0
-        emotion_scores.append(score_dict)
+    for prob in probabilities:
+        score_dict = dict(zip(emotion_labels, prob))  
+        emotion_scores.append(score_dict) 
 
     Anger_Score = [score.get('anger', 0) for score in emotion_scores]
     Fear_Score = [score.get('fear', 0) for score in emotion_scores]

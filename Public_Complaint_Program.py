@@ -26,13 +26,12 @@ if __name__ == '__main__':
     Main.run(host='0.0.0.0', port=5000, debug=True)
 
 #BACKEND DEVELOPMENT ----------------------------------
-# Output and Training Model:
-
 #Datasets:
 Database = pd.read_csv("CSVFile/ComplaintsData.csv") #Placeholder
 Training_Data = pd.read_csv("") #Placeholder
 ArrangedDatabase = pd.read_csv("") #Placeholder
 
+# Output and Training Model:
 @Main.route('/api/complaints', methods=['GET'])
 def Emotion_Model():
     #Training Model:
@@ -91,8 +90,9 @@ def NLP_Model():
         "diskriminasyon",
     ]
 
-    lowerWords = [word.lower() for word in prioritizedWords]
+    lowercased = [word.lower() for word in prioritizedWords & Database['Raw Complaint'].tolist()]
 
+    ArrangedDatabase["Complaint"]
 
     return jsonify(prioritize.to_dict(orient='PrioritizedWords'))
 

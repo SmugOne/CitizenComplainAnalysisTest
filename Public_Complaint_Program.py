@@ -32,7 +32,7 @@ def Model():
 
     #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv") #Placeholder 
-    Training_Data = { } #Placeholder
+    Training_Data = pd.read_csv("") #Placeholder
 
     #Training Model:
     training = pd.DataFrame(Training_Data)
@@ -70,7 +70,7 @@ def Model():
     return jsonify(Database.to_dict(orient='Model Output'))
 
 def NLP():
-    prioritize=[
+    prioritizedWords=[
         "Corruption",
         "Fraud",
         "Harassment",

@@ -27,13 +27,14 @@ if __name__ == '__main__':
 
 #BACKEND DEVELOPMENT ----------------------------------
 # Output and Training Model:
+
+#Datasets:
+Database = pd.read_csv("CSVFile/ComplaintsData.csv") #Placeholder
+Training_Data = pd.read_csv("") #Placeholder
+ArrangedDatabase = pd.read_csv("") #Placeholder
+
 @Main.route('/api/complaints', methods=['GET'])
-def Model():
-
-    #Datasets:
-    Database = pd.read_csv("CSVFile/ComplaintsData.csv") #Placeholder 
-    Training_Data = pd.read_csv("") #Placeholder
-
+def Emotion_Model():
     #Training Model:
     training = pd.DataFrame(Training_Data)
     X_train, y_train = training['text'], training['label']
@@ -69,29 +70,37 @@ def Model():
     # Converts all database and results to "Model Output"
     return jsonify(Database.to_dict(orient='Model Output'))
 
-def NLP():
+def NLP_Model():
     prioritizedWords=[
-        "Corruption",
-        "Fraud",
-        "Harassment",
-        "Discrimination",
+        "corruption",
+        "kurakot",
+        "kinurakot",
+        "kinorakot",
+        "kinukurakot",
+        "kinukorakot",
+        "fraud",
+        "harassment",
+        "abuse",
+        "pang-aabuso",
+        "inaabuso",
+        "abuso",
+        "pagsasamantala",
+        "sinasamantala",
+        "pagsasamantalahan",
+        "discrimination",
+        "diskriminasyon",
     ]
 
-    # converts prioritization words to "Prioritize"
-    return jsonify(prioritize.to_dict(orient='Prioritize'))
+    lowerWords = [word.lower() for word in prioritizedWords]
 
-#Placeholder:
-def Dataframe():
-    return jsonify(
-        {
-             "Columns": [
-                 {"Raw Complaint": None},
-                 {"Anger Score": None},
-                 {"Fear Score": None},
-                 {"Joy Score": None},
-                 {"Neutral Score": None},
-                 {"Sadness Score": None},
-                 {"Surprise Score": None},
-            ]
-        }
-    )
+
+    return jsonify(prioritize.to_dict(orient='PrioritizedWords'))
+
+def Arranged():
+    AngerScores = Database['Anger Score'].tolist()
+    FearScores = Database['Fear Score'].tolist()
+    SurpriseScores = Database['Surprise Score'].tolist()
+    SadnessScores = Database['Sadness Score'].tolist()
+    NeutralScores = Database['Neutral Score'].tolist()
+
+    #if AngerScores 

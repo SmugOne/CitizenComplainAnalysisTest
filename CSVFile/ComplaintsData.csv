@@ -1,9 +1,9 @@
-ID,Name,Raw Complaint,Anger Score,Fear Score,Joy Score,Neutral Score,Sadness Score,Surprise Score,Predicted Agency
-1,,I hate this!,,,,,,,
-2,,I like this thing so much!,,,,,,,
-3,,I do not want to be another victim.,,,,,,,
-4,,Theres a widespread corruption within the Department of Health,,,,,,,
-5,,I just saw someone litter,,,,,,,
-6,,The governor is abusing our funds. I think he silence other critics,,,,,,,
-7,,I hate making complaints,,,,,,,
-8,,Theres some broken glass which may cause injury,,,,,,,
+ID,Name,Raw Complaint,Location
+1,John Doe,I hate this!,
+2,Mark Lawrence,I like this thing so much!,
+3,Amaron Karl,I do not want to be another victim.,
+4,Von Der Hugg,Theres a widespread corruption within the Department of Health,
+5,Sterner Marina,I just saw someone litter,
+6,Mikko Samis,The governor is abusing our funds. I think he silence other critics,
+7,Daniel Maki,I hate making complaints,
+8,Powell Corana,Theres some broken glass which may cause injury,

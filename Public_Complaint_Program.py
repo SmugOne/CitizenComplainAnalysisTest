@@ -19,7 +19,6 @@ def run_arrangement():
     return Arrange()
 
 def ArrangeLogic():
-
     #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv")
     Training_Data = pd.read_csv("CSVFile/TrainingDataset.csv")

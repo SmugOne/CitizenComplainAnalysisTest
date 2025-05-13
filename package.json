@@ -11,8 +11,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "expo": "^53.0.9",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-scripts": "^5.0.1"
+    "react-scripts": "^5.0.1",
+    "react-native-web": "^0.20.0",
+    "@expo/metro-runtime": "~5.0.4"
   }
 }

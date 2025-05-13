@@ -20,8 +20,8 @@ def run_arrangement():
 
 def ArrangeLogic():
     #Datasets:
-    Database = pd.read_csv("CSVFile/ComplaintsData.csv")
-    Training_Data = pd.read_csv("CSVFile/TrainingDataset.csv")
+    Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
+    Training_Data = pd.read_csv("CSVFile/TrainingDataset.csv", encoding='cp1252')
 
     #Training Model:
     Training_Data['Emotion'] = Training_Data['Emotion'].str.strip().str.lower()
@@ -36,6 +36,7 @@ def ArrangeLogic():
 
     prioritizedWords = [
         "corruption", 
+        "corrupt",
         "kurakot", 
         "kinurakot", 
         "kinorakot", 

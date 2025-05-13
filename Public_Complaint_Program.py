@@ -82,8 +82,8 @@ def ArrangeLogic():
     Database = Database.rename(columns={'Raw Complaint': 'Complaint'})
 
     #Add Predicted Agency (WIP)
-    if 'Predicted Agency' not in Database.columns:
-        Database['Predicted Agency'] = ""
+    #if 'Predicted Agency' not in Database.columns:
+    #    Database['Predicted Agency'] = ""
 
     #Final selected output
     output = Database[[ 

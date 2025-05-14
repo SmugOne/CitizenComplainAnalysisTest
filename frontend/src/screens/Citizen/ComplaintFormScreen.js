@@ -39,7 +39,7 @@ const ComplaintFormScreen = ({ navigation }) => {
 
     //Return to flask backend
     try {
-      const response = await fetch('http://<YOUR-IP>:5000/api/complaints', {
+      const response = await fetch('http://192.168.68.75:5000/api/complaints', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

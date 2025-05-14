@@ -14,12 +14,15 @@ from transformers import pipeline
 #Connection:
 load_dotenv()
 app = Flask(__name__)
-FLASK_API_URL = os.getenv('FLASK_API_URL', 'http://localhost:5000')
+FLASK_API_URL = os.getenv('FLASK_API_URL', 'http://192.168.68.75:5000')
 
 def home():
     return jsonify({"message": "Flask API is running", "api_url": FLASK_API_URL})
 
 if __name__ == '__main__':
+    import os 
+    os.environ["FLASK_ENV"] = "development"
+    app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
     app.run(debug=True)
 
 #BACKEND DEVELOPMENT ----------------------------------
@@ -93,8 +96,8 @@ def ArrangeLogic():
     Database = Database.rename(columns={'Raw Complaint': 'Complaint'})
 
     #Add Predicted Agency (WIP)
-    #if 'Predicted Agency' not in Database.columns:
-    #    Database['Predicted Agency'] = ""
+    if 'Predicted Agency' not in Database.columns:
+        Database['Predicted Agency'] = ""
 
     #Final selected output
     output = Database[[ 

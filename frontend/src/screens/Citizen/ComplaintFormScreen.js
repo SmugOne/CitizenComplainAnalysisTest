@@ -43,7 +43,7 @@ const ComplaintFormScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Submit a Complaint</Text>
+      <Text style={styles.title}>Complaint Form</Text>
 
       <TextInput
         placeholder="Name (optional or Anonymous)"
@@ -52,8 +52,17 @@ const ComplaintFormScreen = ({ navigation }) => {
         style={styles.input}
       />
 
+      <View style={styles.checkboxContainer}>
+        <CheckBox
+          value={name}
+          onValueChange={setName => setName('Anonymous')}
+          style={styles.checkbox}
+        />
+        <Text style={styles.label}>Send as Anonymous</Text>
+      </View>
+
       <TextInput
-        placeholder="Complaint Description"
+        placeholder="Add Complaint"
         value={description}
         onChangeText={setDescription}
         multiline
@@ -132,6 +141,13 @@ const styles = StyleSheet.create({
   },
   buttonSpacing: {
     marginTop: 15,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  checkbox: {
+    alignSelf: 'center',
   },
   image: {
     width: '100%',

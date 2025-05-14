@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Image, StyleSheet, Alert } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
-import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { Picker } from '@react-native-picker/picker';
 import * as FileSystem from 'expo-file-system';
@@ -13,19 +12,6 @@ const ComplaintFormScreen = ({ navigation }) => {
   const [imageUri, setImageUri] = useState(null);
   const [location, setLocation] = useState(null);
   const [anonymous, setAnonymous] = useState(false);
-
-  const handlePickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert("Permission Denied", "Permission to access gallery is required.");
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync();
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-    }
-  };
 
   const handleGetLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -42,15 +28,8 @@ const ComplaintFormScreen = ({ navigation }) => {
   //Submit function:
   const handleSubmit = async () => {
     const finalName = anonymous || !name.trim() ? 'Anonymous' : name; //Setname to 'Anonymous' if name empty or anonymous is true
-
-    let imageBase64 = null;
-    if (imageUri) {
-      imageBase64 = await FileSystem.readAsStringAsync(imageUri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-    }
-
-    const data = {
+    //Submit as FrontEndData
+    const FrontEndData = {
       name: finalName,
       complaint: RawComplaint, category,
       latitude: location?.latitude,
@@ -65,7 +44,7 @@ const ComplaintFormScreen = ({ navigation }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(FrontEndData),
       });
 
       if (response.ok) {
@@ -78,7 +57,7 @@ const ComplaintFormScreen = ({ navigation }) => {
         setLocation(null);
         setAnonymous(false);
         navigation.navigate('Home');
-} else {
+      } else {
         Alert.alert('Error', 'Failed to submit complaint.');
       }
     } catch (error) {

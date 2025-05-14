@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS  
+from dotenv import load_dotenv
 import os
 import pandas as pd
 import joblib
@@ -10,7 +11,16 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import make_pipeline
 from transformers import pipeline
 
+#Connection:
+load_dotenv()
 app = Flask(__name__)
+FLASK_API_URL = os.getenv('FLASK_API_URL', 'http://localhost:5000')
+
+def home():
+    return jsonify({"message": "Flask API is running", "api_url": FLASK_API_URL})
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 #BACKEND DEVELOPMENT ----------------------------------
 # Main:

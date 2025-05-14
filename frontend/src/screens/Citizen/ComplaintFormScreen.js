@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Image, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
 import * as Location from 'expo-location';
 import { Picker } from '@react-native-picker/picker';
@@ -9,7 +9,6 @@ const ComplaintFormScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [RawComplaint, setDescription] = useState('');
   const [category, setCategory] = useState('');
-  const [imageUri, setImageUri] = useState(null);
   const [location, setLocation] = useState(null);
   const [anonymous, setAnonymous] = useState(false);
 
@@ -27,14 +26,13 @@ const ComplaintFormScreen = ({ navigation }) => {
 
   //Submit function:
   const handleSubmit = async () => {
-    const finalName = anonymous || !name.trim() ? 'Anonymous' : name; //Setname to 'Anonymous' if name empty or anonymous is true
+    const finalName = anonymous || !name.trim() ? 'Anonymous' : name; //Setname to 'Anonymous' if name empty or checkbox is true
     //Submit as FrontEndData
     const FrontEndData = {
       name: finalName,
       complaint: RawComplaint, category,
       latitude: location?.latitude,
       longitude: location?.longitude,
-      image: imageBase64,
     };
 
     //Return to flask backend
@@ -53,7 +51,6 @@ const ComplaintFormScreen = ({ navigation }) => {
         setName('');
         setDescription('');
         setCategory('');
-        setImageUri(null);
         setLocation(null);
         setAnonymous(false);
         navigation.navigate('Home');
@@ -170,12 +167,6 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     marginRight: 8,
-  },
-  image: {
-    width: '100%',
-    height: 200,
-    marginTop: 15,
-    borderRadius: 8,
   },
   locationText: {
     marginTop: 10,

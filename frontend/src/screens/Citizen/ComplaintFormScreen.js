@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Image, StyleSheet, Alert } from 'react-native';
+import CheckBox from '@react-native-community/checkbox';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { Picker } from '@react-native-picker/picker';
+import * as FileSystem from 'expo-file-system';
 
 const ComplaintFormScreen = ({ navigation }) => {
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [RawComplaint, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [imageUri, setImageUri] = useState(null);
   const [location, setLocation] = useState(null);
+  const [anonymous, setAnonymous] = useState(false);
 
   const handlePickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (permissionResult.granted === false) {
+    if (!permissionResult.granted) {
       Alert.alert("Permission Denied", "Permission to access gallery is required.");
       return;
     }
@@ -35,27 +38,72 @@ const ComplaintFormScreen = ({ navigation }) => {
     setLocation(currentLocation.coords);
   };
 
-  const handleSubmit = () => {
-    // validation here if needed
-    Alert.alert('Complaint Submitted', 'Thank you for your complaint!');
-    navigation.navigate('Home');
+
+  //Submit function:
+  const handleSubmit = async () => {
+    const finalName = anonymous || !name.trim() ? 'Anonymous' : name; //Setname to 'Anonymous' if name empty or anonymous is true
+
+    let imageBase64 = null;
+    if (imageUri) {
+      imageBase64 = await FileSystem.readAsStringAsync(imageUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+    }
+
+    const data = {
+      name: finalName,
+      complaint: RawComplaint, category,
+      latitude: location?.latitude,
+      longitude: location?.longitude,
+      image: imageBase64,
+    };
+
+    //Return to flask backend
+    try {
+      const response = await fetch('http://<YOUR-IP>:5000/api/complaints', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        Alert.alert('Complaint Submitted');
+        //Resets form
+        setName('');
+        setDescription('');
+        setCategory('');
+        setImageUri(null);
+        setLocation(null);
+        setAnonymous(false);
+        navigation.navigate('Home');
+} else {
+        Alert.alert('Error', 'Failed to submit complaint.');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'An error occurred.');
+    }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Complaint Form</Text>
 
-      <TextInput
-        placeholder="Name (optional or Anonymous)"
+      {!anonymous && (
+        <TextInput
+        placeholder="Name (optional)"
         value={name}
         onChangeText={setName}
         style={styles.input}
-      />
+        />
+      )}
 
       <View style={styles.checkboxContainer}>
         <CheckBox
-          value={name}
-          onValueChange={setName => setName('Anonymous')}
+          value={anonymous}
+          onValueChange={setAnonymous}
           style={styles.checkbox}
         />
         <Text style={styles.label}>Send as Anonymous</Text>
@@ -63,32 +111,26 @@ const ComplaintFormScreen = ({ navigation }) => {
 
       <TextInput
         placeholder="Add Complaint"
-        value={description}
+        value={RawComplaint}
         onChangeText={setDescription}
         multiline
         style={[styles.input, { height: 100 }]}
       />
 
-      <Text style={styles.label}>Category:</Text>
+      <Text style={styles.label}>Category:</Text> 
       <View style={styles.pickerContainer}>
         <Picker
           selectedValue={category}
           onValueChange={(itemValue) => setCategory(itemValue)}
         >
           <Picker.Item label="Select Category" value="" />
-          <Picker.Item label="Garbage Collection" value="garbage" />
-          <Picker.Item label="Road Damage" value="road" />
-          <Picker.Item label="Water Supply" value="water" />
-          <Picker.Item label="Electricity Issue" value="electricity" />
-          <Picker.Item label="Others" value="others" />
+          <Picker.Item label="Garbage Collection" value="DENR" />
+          <Picker.Item label="Road Damage" value="DPWH" />
+          <Picker.Item label="Water Supply" value="DENR" />
+          <Picker.Item label="Electricity Issue" value="DOE" />
+          <Picker.Item label="Others" value="" />
         </Picker>
       </View>
-
-      <View style={styles.buttonSpacing}>
-        <Button title="Upload Image" onPress={handlePickImage} />
-      </View>
-
-      {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
 
       <View style={styles.buttonSpacing}>
         <Button title="Get Location" onPress={handleGetLocation} />
@@ -145,9 +187,10 @@ const styles = StyleSheet.create({
   checkboxContainer: {
     flexDirection: 'row',
     marginBottom: 20,
+    alignItems: 'center',
   },
   checkbox: {
-    alignSelf: 'center',
+    marginRight: 8,
   },
   image: {
     width: '100%',

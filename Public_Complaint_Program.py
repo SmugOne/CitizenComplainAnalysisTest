@@ -18,7 +18,8 @@ if __name__ == '__main__':
     app.run(debug=True)
 
 #BACKEND DEVELOPMENT ----------------------------------
-# Flask-React Connect:
+
+#Flask-React Connect and Assign:
 @app.route('/api/complaints', methods=['POST'])
 def run_arrangement():
 
@@ -36,23 +37,21 @@ def run_arrangement():
     else:
         ID = Database['ID'].max() + 1
 
-    # Add new entry to the database
+    #Add new entry to the database
     new_row = {
         'ID': ID,
         'Name': name,
         'Raw Complaint': complaint,
         'Location': str(location) if location else ''
     }
-
     Database = pd.concat([Database, pd.DataFrame([new_row])], ignore_index=True)
 
     #Save updated database
     Database.to_csv("CSVFile/ComplaintsData.csv", index=False, encoding='cp1252')
-
     return Arrange()
 
 
-#Training Model and Classification Algorithm:
+#Training Model and Classification Algorithms:
 def ArrangeLogic():
     #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')

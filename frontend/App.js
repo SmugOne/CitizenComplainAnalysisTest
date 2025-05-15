@@ -1,21 +1,30 @@
 import React, { useEffect } from 'react';
-import { View, Text } from 'react-native';
-import { API_URL } from '@env'; // Load from .env
-import 'react-native-gesture-handler'; // Required for navigation gestures
-import AppNavigator from './src/components/navigation/AppNavigator'; // Navigation (optional if used)
+import { API_URL } from '@env';
+import 'react-native-gesture-handler';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 
+//Path to screens
+import HomeScreen from './src/screens/Citizen/HomeScreen';
+import ComplaintFormScreen from './src/screens/Citizen/ComplaintFormScreen';
+import ComplaintStatusScreen from './src/screens/Citizen/ComplaintStatusScreen';
+import ComplaintHistoryScreen from './src/screens/Citizen/ComplaintHistoryScreen';
+import AdminLoginScreen from './src/screens/Citizen/Admin/AdminLoginScreen';
+import ComplaintListScreen from './src/screens/Citizen/Admin/ComplaintListScreen';
+import DashboardScreen from './src/screens/Citizen/Admin/DashboardScreen';
+
+const Stack = createStackNavigator();
+
+// Get API URL
 export default function App() {
-
   useEffect(() => {
     console.log("API_URL:", API_URL);
 
-    // Example payload for the request
     const FrontEndData = {
       message: "This is a test complaint",
       location: "Sample Location"
     };
 
-    // POST request only if API_URL is defined
     if (API_URL) {
       fetch(API_URL, {
         method: 'POST',
@@ -30,13 +39,18 @@ export default function App() {
     }
   }, []);
 
+  //Set navigation 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>API URL: {API_URL}</Text>
-
-      {/* Uncomment this if you want to render your navigation instead of just the Text */}
-      {/* <AppNavigator /> */}
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Complaint Form" component={ComplaintFormScreen} />
+        <Stack.Screen name="Complaint History" component={ComplaintHistoryScreen} />
+        <Stack.Screen name="Complaint Status" component={ComplaintStatusScreen} />
+        <Stack.Screen name="Admin Login" component={AdminLoginScreen} />
+        <Stack.Screen name="Complaint List" component={ComplaintListScreen} />
+        <Stack.Screen name="Dashboard" component={DashboardScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
-

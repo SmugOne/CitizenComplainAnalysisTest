@@ -1,7 +1,6 @@
 import React from 'react';
 import {View, Text, StyleSheet } from 'react-native';
 import { API_URL } from 'react-native-dotenv';
-import { API_URL } from '@env'; //env
 import 'react-native-gesture-handler'; // Required for navigation gestures
 import AppNavigator from './src/components/navigation/AppNavigator'; // Import AppNavigator
 

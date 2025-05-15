@@ -46,11 +46,13 @@ def run_arrangement():
 
     Database = pd.concat([Database, pd.DataFrame([new_row])], ignore_index=True)
 
-    # Save updated database
+    #Save updated database
     Database.to_csv("CSVFile/ComplaintsData.csv", index=False, encoding='cp1252')
 
     return Arrange()
 
+
+#Training Model and Classification Algorithm:
 def ArrangeLogic():
     #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
@@ -89,9 +91,6 @@ def ArrangeLogic():
         "diskriminasyon",
     
     ]
-
-    #Distribute Data from ComplaintsFormScreen
-
 
     #Predict emotion scores
     textComplaints = Database['Raw Complaint'].fillna("").tolist()

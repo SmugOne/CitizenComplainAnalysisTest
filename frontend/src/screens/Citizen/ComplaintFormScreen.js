@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Image, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
 import * as Location from 'expo-location';
 import { Picker } from '@react-native-picker/picker';
@@ -7,11 +7,19 @@ import * as FileSystem from 'expo-file-system';
 
 const ComplaintFormScreen = ({ navigation }) => {
   const [name, setName] = useState('');
-  const [RawComplaint, setDescription] = useState('');
+  const [RawComplaint, setComplaint] = useState('');
   const [category, setCategory] = useState('');
-  const [imageUri, setImageUri] = useState(null);
   const [location, setLocation] = useState(null);
   const [anonymous, setAnonymous] = useState(false);
+
+  //Automatically sets name as Anonymous.
+  useEffect(() => {
+    if (anonymous) {
+      setName('Anonymous');
+    } else {
+      setName('');
+    }
+  }, [anonymous]);
 
   const handleGetLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -28,13 +36,18 @@ const ComplaintFormScreen = ({ navigation }) => {
   //Submit function:
   const handleSubmit = async () => {
     const finalName = anonymous || !name.trim() ? 'Anonymous' : name; //Setname to 'Anonymous' if name empty or anonymous is true
-    //Submit as FrontEndData
+    
+    //Check if complaint is empty
+    if (!RawComplaint.trim()) {
+      Alert.alert('Missing Complaint');
+      return;
+      }
+
+    //Submit as FrontEndData to Backend
     const FrontEndData = {
       name: finalName,
-      complaint: RawComplaint, category,
-      latitude: location?.latitude,
-      longitude: location?.longitude,
-      image: imageBase64,
+      complaint: RawComplaint,
+      location: location ?? null,
     };
 
     //Return to flask backend
@@ -46,14 +59,13 @@ const ComplaintFormScreen = ({ navigation }) => {
         },
         body: JSON.stringify(FrontEndData),
       });
-
+      //Submit complaint:
       if (response.ok) {
         Alert.alert('Complaint Submitted');
         //Resets form
         setName('');
-        setDescription('');
+        setComplaint('');
         setCategory('');
-        setImageUri(null);
         setLocation(null);
         setAnonymous(false);
         navigation.navigate('Home');
@@ -78,7 +90,7 @@ const ComplaintFormScreen = ({ navigation }) => {
         style={styles.input}
         />
       )}
-
+      
       <View style={styles.checkboxContainer}>
         <CheckBox
           value={anonymous}
@@ -91,7 +103,7 @@ const ComplaintFormScreen = ({ navigation }) => {
       <TextInput
         placeholder="Add Complaint"
         value={RawComplaint}
-        onChangeText={setDescription}
+        onChangeText={setComplaint}
         multiline
         style={[styles.input, { height: 100 }]}
       />
@@ -170,12 +182,6 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     marginRight: 8,
-  },
-  image: {
-    width: '100%',
-    height: 200,
-    marginTop: 15,
-    borderRadius: 8,
   },
   locationText: {
     marginTop: 10,

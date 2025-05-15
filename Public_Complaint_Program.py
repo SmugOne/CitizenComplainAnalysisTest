@@ -11,10 +11,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import make_pipeline
 from transformers import pipeline
 
-#Connection:
-load_dotenv()
 app = Flask(__name__)
-FLASK_API_URL = os.getenv('FLASK_API_URL', 'http://192.168.68.75:5000')
 
 def home():
     return jsonify({"message": "Flask API is running", "api_url": FLASK_API_URL})
@@ -27,7 +24,7 @@ if __name__ == '__main__':
 
 #BACKEND DEVELOPMENT ----------------------------------
 # Main:
-@app.route('/api/arrange', methods=['POST'])
+@app.route('/api/complaints', methods=['POST'])
 def run_arrangement():
     return Arrange()
 
@@ -68,6 +65,9 @@ def ArrangeLogic():
         "discrimination", 
         "diskriminasyon",
     ]
+
+    #Distribute Data from ComplaintsFormScreen
+
 
     #Predict emotion scores
     textComplaints = Database['Raw Complaint'].fillna("").tolist()

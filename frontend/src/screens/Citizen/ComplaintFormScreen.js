@@ -12,7 +12,7 @@ const ComplaintFormScreen = ({ navigation }) => {
   const [location, setLocation] = useState(null);
   const [anonymous, setAnonymous] = useState(false);
 
-  //Automatically sets name as Anonymous.
+  //Automatically sets name as Anonymous if anonymous is true
   useEffect(() => {
     if (anonymous) {
       setName('Anonymous');
@@ -32,18 +32,17 @@ const ComplaintFormScreen = ({ navigation }) => {
     setLocation(currentLocation.coords);
   };
 
-
   //Submit function:
   const handleSubmit = async () => {
     const finalName = anonymous || !name.trim() ? 'Anonymous' : name; //Setname to 'Anonymous' if name empty or anonymous is true
     
     //Check if complaint is empty
     if (!RawComplaint.trim()) {
-      Alert.alert('Missing Complaint');
+      Alert.alert('Complaint Missing');
       return;
-      }
+    }
 
-    //Submit as FrontEndData to Backend
+    //Submit as FrontEndData to Backend (key:value pairs)
     const FrontEndData = {
       name: finalName,
       complaint: RawComplaint,
@@ -52,13 +51,14 @@ const ComplaintFormScreen = ({ navigation }) => {
 
     //Return to flask backend
     try {
-      const response = await fetch('http://192.168.68.75:5000/api/complaints', {
+      const response = await fetch('http://172.17.24.153:5000/api/complaints', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(FrontEndData),
       });
+
       //Submit complaint:
       if (response.ok) {
         Alert.alert('Complaint Submitted');
@@ -78,16 +78,17 @@ const ComplaintFormScreen = ({ navigation }) => {
     }
   };
 
+  //HTML:
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Complaint Form</Text>
 
       {!anonymous && (
         <TextInput
-        placeholder="Name (optional)"
-        value={name}
-        onChangeText={setName}
-        style={styles.input}
+          placeholder="Name (optional)"
+          value={name}
+          onChangeText={setName}
+          style={styles.input}
         />
       )}
       
@@ -129,7 +130,7 @@ const ComplaintFormScreen = ({ navigation }) => {
 
       {location && (
         <Text style={styles.locationText}>
-          Location: {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
+          Location: {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)} 
         </Text>
       )}
 

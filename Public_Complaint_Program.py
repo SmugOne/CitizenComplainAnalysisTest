@@ -13,19 +13,42 @@ from transformers import pipeline
 
 app = Flask(__name__)
 
-def home():
-    return jsonify({"message": "Flask API is running", "api_url": FLASK_API_URL})
-
 if __name__ == '__main__':
-    import os 
-    os.environ["FLASK_ENV"] = "development"
     app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
     app.run(debug=True)
 
 #BACKEND DEVELOPMENT ----------------------------------
-# Main:
+# Flask-React Connect:
 @app.route('/api/complaints', methods=['POST'])
 def run_arrangement():
+
+    #Distribute Data from ComplaintsFormScreen
+
+    name = request.form.get('name')
+    complaint = request.form.get('complaint')
+    location = request.form.get('location')
+    #Datasets:
+    Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
+
+    #Assign new ID based on the last one
+    if Database.empty:
+        ID = 1
+    else:
+        ID = Database['ID'].max() + 1
+
+    # Add new entry to the database
+    new_row = {
+        'ID': ID,
+        'Name': name,
+        'Raw Complaint': complaint,
+        'Location': str(location) if location else ''
+    }
+
+    Database = pd.concat([Database, pd.DataFrame([new_row])], ignore_index=True)
+
+    # Save updated database
+    Database.to_csv("CSVFile/ComplaintsData.csv", index=False, encoding='cp1252')
+
     return Arrange()
 
 def ArrangeLogic():
@@ -64,6 +87,7 @@ def ArrangeLogic():
         "pagsasamantalahan", 
         "discrimination", 
         "diskriminasyon",
+    
     ]
 
     #Distribute Data from ComplaintsFormScreen

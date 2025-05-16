@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-import CheckBox from '@react-native-community/checkbox';
+import Checkbox from 'expo-checkbox';
 import * as Location from 'expo-location';
 import { Picker } from '@react-native-picker/picker';
-import * as FileSystem from 'expo-file-system';
 
 const ComplaintFormScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -12,7 +11,6 @@ const ComplaintFormScreen = ({ navigation }) => {
   const [location, setLocation] = useState(null);
   const [anonymous, setAnonymous] = useState(false);
 
-  //Automatically sets name as Anonymous if anonymous is true
   useEffect(() => {
     if (anonymous) {
       setName('Anonymous');
@@ -32,24 +30,20 @@ const ComplaintFormScreen = ({ navigation }) => {
     setLocation(currentLocation.coords);
   };
 
-  //Submit function:
   const handleSubmit = async () => {
-    const finalName = anonymous || !name.trim() ? 'Anonymous' : name; //Setname to 'Anonymous' if name empty or anonymous is true
-    
-    //Check if complaint is empty
+    const finalName = anonymous || !name.trim() ? 'Anonymous' : name;
+
     if (!RawComplaint.trim()) {
       Alert.alert('Complaint Missing');
       return;
     }
 
-    //Submit as FrontEndData to Backend (key:value pairs)
     const FrontEndData = {
       name: finalName,
       complaint: RawComplaint,
       location: location ?? null,
     };
 
-    //Return to flask backend
     try {
       const response = await fetch('http://172.17.24.153:5000/api/complaints', {
         method: 'POST',
@@ -59,10 +53,8 @@ const ComplaintFormScreen = ({ navigation }) => {
         body: JSON.stringify(FrontEndData),
       });
 
-      //Submit complaint:
       if (response.ok) {
         Alert.alert('Complaint Submitted');
-        //Resets form
         setName('');
         setComplaint('');
         setCategory('');
@@ -78,7 +70,6 @@ const ComplaintFormScreen = ({ navigation }) => {
     }
   };
 
-  //HTML:
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Complaint Form</Text>
@@ -91,11 +82,12 @@ const ComplaintFormScreen = ({ navigation }) => {
           style={styles.input}
         />
       )}
-      
+
       <View style={styles.checkboxContainer}>
-        <CheckBox
+        <Checkbox
           value={anonymous}
           onValueChange={setAnonymous}
+          color={anonymous ? '#4630EB' : undefined}
           style={styles.checkbox}
         />
         <Text style={styles.label}>Send as Anonymous</Text>
@@ -109,7 +101,7 @@ const ComplaintFormScreen = ({ navigation }) => {
         style={[styles.input, { height: 100 }]}
       />
 
-      <Text style={styles.label}>Category:</Text> 
+      <Text style={styles.label}>Category:</Text>
       <View style={styles.pickerContainer}>
         <Picker
           selectedValue={category}
@@ -128,9 +120,9 @@ const ComplaintFormScreen = ({ navigation }) => {
         <Button title="Get Location" onPress={handleGetLocation} />
       </View>
 
-      {location && (
+      {location && location.latitude && location.longitude && (
         <Text style={styles.locationText}>
-          Location: {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)} 
+          Location: {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
         </Text>
       )}
 
@@ -165,7 +157,6 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    marginBottom: 5,
   },
   pickerContainer: {
     borderWidth: 1,

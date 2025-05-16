@@ -27,7 +27,7 @@ const HomeScreen = ({ navigation }) => {
         />
       </View>
 
-      {/* Admin Login button positioned at the upper right */}
+      {/* Admin Login button positioned at the upper right */} 
       <View style={styles.adminButtonContainer}>
         <Button
           title="Admin Login"

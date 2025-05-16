@@ -12,10 +12,7 @@ from sklearn.pipeline import make_pipeline
 from transformers import pipeline
 
 app = Flask(__name__)
-
-if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
-    app.run(debug=True)
+CORS(app)  # Enable CORS for all routes
 
 #BACKEND DEVELOPMENT ----------------------------------
 
@@ -24,10 +21,10 @@ if __name__ == '__main__':
 def run_arrangement():
 
     #Distribute Data from ComplaintsFormScreen
-
-    name = request.form.get('name')
-    complaint = request.form.get('complaint')
-    location = request.form.get('location')
+    data = request.get_json()
+    name = data.get('name')
+    complaint = data.get('complaint')
+    location = data.get('location')
     #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
 
@@ -140,5 +137,5 @@ def Arrange():
 #Back and Front end connection:
 if __name__ == '__main__':
     ArrangeLogic()  #Run once
-
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+    app.run(debug=True)

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import Checkbox from 'expo-checkbox';
 import * as Location from 'expo-location';
+import { API_URL } from '@env';
 import { Picker } from '@react-native-picker/picker';
 
 const ComplaintFormScreen = ({ navigation }) => {
@@ -11,61 +12,89 @@ const ComplaintFormScreen = ({ navigation }) => {
   const [location, setLocation] = useState(null);
   const [anonymous, setAnonymous] = useState(false);
 
+  //Set default name to Anonymous or vice versa.
   useEffect(() => {
     if (anonymous) {
       setName('Anonymous');
-    } else {
+    } 
+    else {
       setName('');
     }
   }, [anonymous]);
 
+  //Location:
   const handleGetLocation = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
+    var { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert("Permission Denied", "Permission to access location is required.");
       return;
     }
 
-    let currentLocation = await Location.getCurrentPositionAsync({});
+    //Get location
+    var currentLocation = await Location.getCurrentPositionAsync({});
     setLocation(currentLocation.coords);
   };
 
+  //Submit Complaint
   const handleSubmit = async () => {
-    const finalName = anonymous || !name.trim() ? 'Anonymous' : name;
+    // if anonymous true, set name to Anonymous. Else keep name
+    let finalName;
+    if (anonymous || !name.trim()) {
+      finalName = 'Anonymous';
+    } 
+    else {
+      finalName = name;
+    }
 
+    //If no complaints inputted
     if (!RawComplaint.trim()) {
       Alert.alert('Complaint Missing');
       return;
     }
 
+    //Sets FrontEndData to be sent to the backend
     const FrontEndData = {
       name: finalName,
       complaint: RawComplaint,
+      category: category && null, //Update in future use with agencies
       location: location ?? null,
     };
 
+    //Sends data (FrontEndData) to backend
+    var response = "";
+      response = await fetch(`${API_URL}/api/complaints`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(FrontEndData),
+      });
 
-    const response = await fetch('http://172.17.24.153:5000/api/complaints', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(FrontEndData),
-    });
-
+    //Adds error
     if (response.ok) {
-      Alert.alert('Complaint Submitted');
-      setName('');
-      setComplaint('');
-      setCategory('');
-      setLocation(null);
-      setAnonymous(false);
-      navigation.navigate('Home');
+      Alert.alert('Complaint Submitted', '', [
+        {
+          text: 'OK',
+          onPress: () => {
+            setName('');
+            setComplaint('');
+            setCategory('');
+            setLocation(null);
+            setAnonymous(false);
+            navigation.navigate('Home');
+          },
+        },
+      ]);
     } else {
-      Alert.alert('Error', 'Failed to submit complaint.');
+      const errorText = await response.text();
+      // debug: Server error response
+      console.error('Server error on response:', errorText);
+      Alert.alert(`Failed to submit complaint: ${errorText}`);
     }
   };
 
+
+  //HTML:
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Complaint Form</Text>

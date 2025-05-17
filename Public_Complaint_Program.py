@@ -16,7 +16,7 @@ CORS(app)  # Enable CORS for all routes
 
 #BACKEND DEVELOPMENT ----------------------------------
 
-#Flask-React Connect and Assign:
+#Flask-React Connect and Assign from ComplaintsFormScreen:
 @app.route('/api/complaints', methods=['POST'])
 def run_arrangement():
 
@@ -45,7 +45,9 @@ def run_arrangement():
 
     #Save updated database
     Database.to_csv("CSVFile/ComplaintsData.csv", index=False, encoding='cp1252')
-    return Arrange()
+    
+    # Return success message only — not Arrange() to avoid UI freeze
+    return jsonify({"message": "Complaint submitted successfully."}), 200
 
 
 #Training Model and Classification Algorithms:
@@ -134,8 +136,8 @@ def Arrange():
     output = ArrangeLogic()
     return jsonify(output.to_dict(orient='records'))
 
+
 #Back and Front end connection:
 if __name__ == '__main__':
     ArrangeLogic()  #Run once
-    app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

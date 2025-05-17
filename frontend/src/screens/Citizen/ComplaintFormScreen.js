@@ -44,29 +44,25 @@ const ComplaintFormScreen = ({ navigation }) => {
       location: location ?? null,
     };
 
-    try {
-      const response = await fetch('http://172.17.24.153:5000/api/complaints', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(FrontEndData),
-      });
 
-      if (response.ok) {
-        Alert.alert('Complaint Submitted');
-        setName('');
-        setComplaint('');
-        setCategory('');
-        setLocation(null);
-        setAnonymous(false);
-        navigation.navigate('Home');
-      } else {
-        Alert.alert('Error', 'Failed to submit complaint.');
-      }
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'An error occurred.');
+    const response = await fetch('http://172.17.24.153:5000/api/complaints', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(FrontEndData),
+    });
+
+    if (response.ok) {
+      Alert.alert('Complaint Submitted');
+      setName('');
+      setComplaint('');
+      setCategory('');
+      setLocation(null);
+      setAnonymous(false);
+      navigation.navigate('Home');
+    } else {
+      Alert.alert('Error', 'Failed to submit complaint.');
     }
   };
 
@@ -110,8 +106,9 @@ const ComplaintFormScreen = ({ navigation }) => {
           <Picker.Item label="Select Category" value="" />
           <Picker.Item label="Garbage Collection" value="DENR" />
           <Picker.Item label="Road Damage" value="DPWH" />
-          <Picker.Item label="Water Supply" value="DENR" />
-          <Picker.Item label="Electricity Issue" value="DOE" />
+          <Picker.Item label="Water Services" value="DENR" />
+          <Picker.Item label="Electricity Services" value="DOE" />
+          <Picker.Item label="Education Services" value="DepEd" />
           <Picker.Item label="Others" value="" />
         </Picker>
       </View>

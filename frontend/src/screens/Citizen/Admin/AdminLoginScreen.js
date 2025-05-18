@@ -7,7 +7,7 @@ const AdminLoginScreen = ({ navigation }) => {
 
   const handleLogin = () => {
     if (userId === 'admin' && password === 'admin123') { // Passwords. Can be replaced with a database
-      navigation.navigate('Admin Dashboard');
+      navigation.navigate('Dashboard');
     } else {
       Alert.alert('Invalid Credentials', 'Please enter correct admin ID and password.');
     }

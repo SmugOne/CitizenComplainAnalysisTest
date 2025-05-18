@@ -14,20 +14,45 @@ from transformers import pipeline
 #Connection:
 load_dotenv()
 app = Flask(__name__)
-FLASK_API_URL = os.getenv('FLASK_API_URL', 'http://localhost:5000')
-
-def home():
-    return jsonify({"message": "Flask API is running", "api_url": FLASK_API_URL})
-
-if __name__ == '__main__':
-    app.run(debug=True)
+CORS(app)  # Enable CORS for all routes
 
 #BACKEND DEVELOPMENT ----------------------------------
-# Main:
-@app.route('/api/arrange', methods=['POST'])
-def run_arrangement():
-    return Arrange()
 
+#Flask-React Connect and Assign from ComplaintsFormScreen:
+@app.route('/api/complaints', methods=['POST'])
+def run_arrangement():
+
+    #Distribute Data from ComplaintsFormScreen
+    data = request.get_json()
+    name = data.get('name')
+    complaint = data.get('complaint')
+    location = data.get('location')
+    #Datasets:
+    Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
+
+    #Assign new ID based on the last one
+    if Database.empty:
+        ID = 1
+    else:
+        ID = Database['ID'].max() + 1
+
+    #Add new entry to the database
+    new_row = {
+        'ID': ID,
+        'Name': name,
+        'Raw Complaint': complaint,
+        'Location': str(location) if location else ''
+    }
+    Database = pd.concat([Database, pd.DataFrame([new_row])], ignore_index=True)
+
+    #Save updated database
+    Database.to_csv("CSVFile/ComplaintsData.csv", index=False, encoding='cp1252')
+    
+    # Return success message only — not Arrange() to avoid UI freeze
+    #return jsonify({"message": "Complaint submitted successfully."}), 200
+
+
+#Training Model and Classification Algorithms:
 def ArrangeLogic():
     #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
@@ -64,6 +89,7 @@ def ArrangeLogic():
         "pagsasamantalahan", 
         "discrimination", 
         "diskriminasyon",
+    
     ]
 
     #Predict emotion scores
@@ -91,14 +117,15 @@ def ArrangeLogic():
 
     #Rename from Raw Complaint (ComplaintsData) to Complaint (ArrangedData)
     Database = Database.rename(columns={'Raw Complaint': 'Complaint'})
+    
 
     #Add Predicted Agency (WIP)
-    #if 'Predicted Agency' not in Database.columns:
-    #    Database['Predicted Agency'] = ""
+    if 'Predicted Agency' not in Database.columns:
+        Database['Predicted Agency'] = ""
 
-    #Final selected output
+    #Final selected output to ArrangedData
     output = Database[[ 
-        'ID', 'Name', 'Complaint',
+        'ID', 'Name', 'Complaint', 'Location',
         'Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score',
         'Sadness Score', 'Surprise Score',
         'Predicted Agency', 'Flagged Words'
@@ -112,8 +139,8 @@ def Arrange():
     output = ArrangeLogic()
     return jsonify(output.to_dict(orient='records'))
 
+
 #Back and Front end connection:
 if __name__ == '__main__':
     ArrangeLogic()  #Run once
-
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

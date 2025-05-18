@@ -1,43 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-import CheckBox from '@react-native-community/checkbox';
+import Checkbox from 'expo-checkbox';
 import * as Location from 'expo-location';
+import { API_URL } from '@env';
 import { Picker } from '@react-native-picker/picker';
-import * as FileSystem from 'expo-file-system';
 
 const ComplaintFormScreen = ({ navigation }) => {
   const [name, setName] = useState('');
-  const [RawComplaint, setDescription] = useState('');
+  const [RawComplaint, setComplaint] = useState('');
   const [category, setCategory] = useState('');
   const [location, setLocation] = useState(null);
   const [anonymous, setAnonymous] = useState(false);
 
+  //Set default name to Anonymous or vice versa.
+  useEffect(() => {
+    if (anonymous) {
+      setName('Anonymous');
+    } 
+    else {
+      setName('');
+    }
+  }, [anonymous]);
+
+  //Location:
   const handleGetLocation = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
+    var { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert("Permission Denied", "Permission to access location is required.");
       return;
     }
 
-    let currentLocation = await Location.getCurrentPositionAsync({});
+    //Get location
+    var currentLocation = await Location.getCurrentPositionAsync({});
     setLocation(currentLocation.coords);
   };
 
-
-  //Submit function:
+  //Submit Complaint
   const handleSubmit = async () => {
-    const finalName = anonymous || !name.trim() ? 'Anonymous' : name; //Setname to 'Anonymous' if name empty or checkbox is true
-    //Submit as FrontEndData
+    // if anonymous true, set name to Anonymous. Else keep name
+    let finalName;
+    if (anonymous || !name.trim()) {
+      finalName = 'Anonymous';
+    } 
+    else {
+      finalName = name;
+    }
+
+    //If no complaints inputted
+    if (!RawComplaint.trim()) {
+      Alert.alert('Complaint Missing');
+      return;
+    }
+
+    //Sets FrontEndData to be sent to the backend
     const FrontEndData = {
       name: finalName,
-      complaint: RawComplaint, category,
-      latitude: location?.latitude,
-      longitude: location?.longitude,
+      complaint: RawComplaint,
+      category: category && null, //Update in future use with agencies
+      location: location ?? null,
     };
 
-    //Return to flask backend
-    try {
-      const response = await fetch('http://<YOUR-IP>:5000/api/complaints', {
+    //Sends data (FrontEndData) to backend
+    var response = "";
+      response = await fetch(`${API_URL}/api/complaints`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,41 +70,49 @@ const ComplaintFormScreen = ({ navigation }) => {
         body: JSON.stringify(FrontEndData),
       });
 
-      if (response.ok) {
-        Alert.alert('Complaint Submitted');
-        //Resets form
-        setName('');
-        setDescription('');
-        setCategory('');
-        setLocation(null);
-        setAnonymous(false);
-        navigation.navigate('Home');
-      } else {
-        Alert.alert('Error', 'Failed to submit complaint.');
-      }
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'An error occurred.');
+    //Adds error
+    if (response.ok) {
+      Alert.alert('Complaint Submitted', '', [
+        {
+          text: 'OK',
+          onPress: () => {
+            setName('');
+            setComplaint('');
+            setCategory('');
+            setLocation(null);
+            setAnonymous(false);
+            navigation.navigate('Home');
+          },
+        },
+      ]);
+    } else {
+      const errorText = await response.text();
+      // debug: Server error response
+      console.error('Server error on response:', errorText);
+      Alert.alert(`Failed to submit complaint: ${errorText}`);
     }
   };
 
+
+  //HTML:
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Complaint Form</Text>
 
       {!anonymous && (
         <TextInput
-        placeholder="Name (optional)"
-        value={name}
-        onChangeText={setName}
-        style={styles.input}
+          placeholder="Name (optional)"
+          value={name}
+          onChangeText={setName}
+          style={styles.input}
         />
       )}
 
       <View style={styles.checkboxContainer}>
-        <CheckBox
+        <Checkbox
           value={anonymous}
           onValueChange={setAnonymous}
+          color={anonymous ? '#4630EB' : undefined}
           style={styles.checkbox}
         />
         <Text style={styles.label}>Send as Anonymous</Text>
@@ -88,12 +121,12 @@ const ComplaintFormScreen = ({ navigation }) => {
       <TextInput
         placeholder="Add Complaint"
         value={RawComplaint}
-        onChangeText={setDescription}
+        onChangeText={setComplaint}
         multiline
         style={[styles.input, { height: 100 }]}
       />
 
-      <Text style={styles.label}>Category:</Text> 
+      <Text style={styles.label}>Category:</Text>
       <View style={styles.pickerContainer}>
         <Picker
           selectedValue={category}
@@ -102,8 +135,9 @@ const ComplaintFormScreen = ({ navigation }) => {
           <Picker.Item label="Select Category" value="" />
           <Picker.Item label="Garbage Collection" value="DENR" />
           <Picker.Item label="Road Damage" value="DPWH" />
-          <Picker.Item label="Water Supply" value="DENR" />
-          <Picker.Item label="Electricity Issue" value="DOE" />
+          <Picker.Item label="Water Services" value="DENR" />
+          <Picker.Item label="Electricity Services" value="DOE" />
+          <Picker.Item label="Education Services" value="DepEd" />
           <Picker.Item label="Others" value="" />
         </Picker>
       </View>
@@ -112,7 +146,7 @@ const ComplaintFormScreen = ({ navigation }) => {
         <Button title="Get Location" onPress={handleGetLocation} />
       </View>
 
-      {location && (
+      {location && location.latitude && location.longitude && (
         <Text style={styles.locationText}>
           Location: {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
         </Text>
@@ -149,7 +183,6 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    marginBottom: 5,
   },
   pickerContainer: {
     borderWidth: 1,

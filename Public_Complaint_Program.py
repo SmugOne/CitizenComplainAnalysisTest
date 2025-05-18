@@ -14,6 +14,9 @@ from transformers import pipeline
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
+# Ensure CSVFile directory exists
+os.makedirs("CSVFile", exist_ok=True)
+
 #BACKEND DEVELOPMENT ----------------------------------
 
 #Flask-React Connect and Assign from ComplaintsFormScreen:
@@ -43,11 +46,11 @@ def run_arrangement():
     }
     Database = pd.concat([Database, pd.DataFrame([new_row])], ignore_index=True)
 
-    #Save updated database
+    #Save updated database and returns it
     Database.to_csv("CSVFile/ComplaintsData.csv", index=False, encoding='cp1252')
+    ArrangeLogic()
     
-    # Return success message only — not Arrange() to avoid UI freeze
-    #return jsonify({"message": "Complaint submitted successfully."}), 200
+    return jsonify({"message": "Complaint submitted and arranged successfully"})
 
 
 #Training Model and Classification Algorithms:
@@ -133,9 +136,19 @@ def ArrangeLogic():
     output.to_csv("CSVFile/ArrangedData.csv", index=False)
     return output
 
-def Arrange():
-    output = ArrangeLogic()
-    return jsonify(output.to_dict(orient='records'))
+
+#Takes result from ArrangedData 
+@app.route('/api/complaints', methods=['GET'])
+def get_complaints():
+    try:
+        df = pd.read_csv('CSVFile/ArrangedData.csv')
+    except FileNotFoundError:
+        df = ArrangeLogic()
+
+    # Replace all NaN, NaT, and pd.NA values with None
+    df = df.replace({pd.NA: None, pd.NaT: None, float('nan'): None})
+
+    return jsonify(df.to_dict(orient='records'))
 
 
 #Back and Front end connection:

@@ -118,8 +118,8 @@ def ArrangeLogic():
     
 
     #Add Predicted Agency (WIP)
-    # if 'Predicted Agency' not in Database.columns:
-    #     Database['Predicted Agency'] = ""
+    if 'Predicted Agency' not in Database.columns:
+        Database['Predicted Agency'] = ""
 
     #Final selected output to ArrangedData
     output = Database[[ 

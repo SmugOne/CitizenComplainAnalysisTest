@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { View, Text, Button, FlatList, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { FadeInUp } from 'react-native-reanimated';
 
@@ -12,7 +12,6 @@ useEffect(() => {
   fetch('http://192.168.68.73:5000/api/complaints')
     .then(async (response) => {
       const text = await response.text();
-      console.log('Raw response:', text);  // Add this line to see the response
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -33,7 +32,7 @@ useEffect(() => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Admin Complaint List</Text>
+      <Text style={styles.title}>Prioritized List</Text>
       {loading ? (
         <Text>Loading...</Text>
       ) : error ? (
@@ -47,12 +46,20 @@ useEffect(() => {
           data={complaints}
           renderItem={({ item }) => (
             <Animated.View entering={FadeInUp} style={styles.card}>
-              <Text style={styles.cardText}>Name: {item.Name}</Text>
-              <Text style={styles.cardText}>Complaint: {item.Complaint}</Text>
-              <Text style={styles.cardText}>Location: {item.Location}</Text>
-              <Text style={styles.cardText}>Emotion: {/* Leave empty for now */}</Text>
-              <Text style={styles.cardText}>Agency: {item.PredictedAgency}</Text>
-            </Animated.View>
+              <Text style={styles.cardText}>
+                <Text style={{ fontWeight: 'bold' }}>Name: </Text>{item.Name}
+              </Text>
+              <Text style={styles.cardText}>
+                <Text style={{ fontWeight: 'bold' }}>Complaint: </Text>{item.Complaint}
+              </Text>
+              <Text style={styles.cardText}>
+                <Text style={{ fontWeight: 'bold' }}>Location: </Text>{item.Location}
+              </Text>
+              <Text style={styles.cardText}>
+                <Text style={{ fontWeight: 'bold' }}>Agency: </Text>{item.PredictedAgency}
+              </Text>
+             <Button title="Done" onPress={() => { /**/ }} />
+</Animated.View>
           )}
           keyExtractor={(item, index) => index.toString()}
         />

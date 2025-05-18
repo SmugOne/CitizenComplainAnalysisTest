@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
+import { FadeInUp } from 'react-native-reanimated';
 
 const AdminDashboardScreen = () => {
   const [totalComplaints, setTotalComplaints] = useState('');
@@ -10,7 +11,7 @@ const AdminDashboardScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Animated.View entering="fadeInUp" style={styles.card}>
+      <Animated.View entering={FadeInUp} style={styles.card}>
         <Text style={styles.title}>Admin Dashboard</Text>
         <Text style={styles.stats}>Total Complaints: {totalComplaints}</Text>
         <Text style={styles.stats}>Resolved Complaints: {resolvedComplaints}</Text>

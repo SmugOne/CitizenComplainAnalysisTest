@@ -23,7 +23,7 @@ const AppNavigator = () => {
         <Stack.Screen name="Complaint History" component={ComplaintHistoryScreen} />
         <Stack.Screen name="Complaint Status" component={ComplaintStatusScreen} />
         <Stack.Screen name="Admin Login" component={AdminLoginScreen} />
-        <Stack.Screen name="Complaint List" component={ComplaintListScreen} />
+        <Stack.Screen name="Admin Complaint List" component={ComplaintListScreen} />
         <Stack.Screen name="Dashboard" component={DashboardScreen} />
       </Stack.Navigator>
     </NavigationContainer>

@@ -47,7 +47,7 @@ def run_arrangement():
     Database.to_csv("CSVFile/ComplaintsData.csv", index=False, encoding='cp1252')
     
     # Return success message only — not Arrange() to avoid UI freeze
-    return jsonify({"message": "Complaint submitted successfully."}), 200
+    #return jsonify({"message": "Complaint submitted successfully."}), 200
 
 
 #Training Model and Classification Algorithms:
@@ -115,14 +115,15 @@ def ArrangeLogic():
 
     #Rename from Raw Complaint (ComplaintsData) to Complaint (ArrangedData)
     Database = Database.rename(columns={'Raw Complaint': 'Complaint'})
+    
 
     #Add Predicted Agency (WIP)
-    if 'Predicted Agency' not in Database.columns:
-        Database['Predicted Agency'] = ""
+    # if 'Predicted Agency' not in Database.columns:
+    #     Database['Predicted Agency'] = ""
 
-    #Final selected output
+    #Final selected output to ArrangedData
     output = Database[[ 
-        'ID', 'Name', 'Complaint',
+        'ID', 'Name', 'Complaint', 'Location',
         'Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score',
         'Sadness Score', 'Surprise Score',
         'Predicted Agency', 'Flagged Words'

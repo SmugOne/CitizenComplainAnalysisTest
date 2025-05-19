@@ -10,3 +10,6 @@ ID,Name,Raw Complaint,Location
 9,Anonymous,Theres garbage on the street,
 10,Anonymous,There's corruption going on at the school branch with a principal,
 11,Mark Mike,There's lack of water in my area,"{'accuracy': 100, 'longitude': 120.9788143, 'altitude': 101.80000305175781, 'heading': 0, 'latitude': 14.3756576, 'altitudeAccuracy': 100, 'speed': 0}"
+12,Anonymous,Slow wifi,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}"
+13,Anonymous,My area lacked water supplies! ,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}"
+14,Anonymous,Water supplies are low here! Where is government intervention?? ,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}"

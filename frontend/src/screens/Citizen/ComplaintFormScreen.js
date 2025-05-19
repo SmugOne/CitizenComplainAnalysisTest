@@ -35,63 +35,66 @@ const ComplaintFormScreen = ({ navigation }) => {
     setLocation(currentLocation.coords);
   };
 
-  //Submit Complaint
-  const handleSubmit = async () => {
-    // if anonymous true, set name to Anonymous. Else keep name
-    let finalName;
-    if (anonymous || !name.trim()) {
-      finalName = 'Anonymous';
-    } 
-    else {
-      finalName = name;
-    }
+// Submit Complaint
+const handleSubmit = async () => {
+  console.log('Submitting complaint...');
 
-    //If no complaints inputted
-    if (!RawComplaint.trim()) {
-      Alert.alert('Complaint Missing');
-      return;
-    }
+  // if anonymous true, set name to Anonymous. Else keep name
+  let finalName;
+  if (anonymous || !name.trim()) {
+    finalName = 'Anonymous';
+  } else {
+    finalName = name;
+  }
 
-    //Sets FrontEndData to be sent to the backend
-    const FrontEndData = {
-      name: finalName,
-      complaint: RawComplaint,
-      category: category && null, //Update in future use with agencies
-      location: location ?? null,
-    };
+  // If no complaints inputted
+  if (!RawComplaint.trim()) {
+    Alert.alert('Complaint Missing');
+    console.log('Complaint missing - abort submit');
+    return;
+  }
 
-    //Sends data (FrontEndData) to backend
-    var response = "";
-      response = await fetch(`${API_URL}/api/complaints`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(FrontEndData),
-      });
+  //Sets FrontEndData to be sent to the backend
+  const FrontEndData = {
+    name: finalName,
+    complaint: RawComplaint,
+    category: category || null, 
+    location: location ?? null,
+  };
 
-    //Adds error
+  console.log('Data to submit:', FrontEndData);
+
+  //Sends data (FrontEndData) to backend
+    const response = await fetch(`${API_URL}/api/complaints`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(FrontEndData),
+    });
+    console.log('Response status:', response.status);
+
     if (response.ok) {
       Alert.alert('Complaint Submitted', '', [
         {
           text: 'OK',
           onPress: () => {
+            console.log('Navigating home after submission');
             setName('');
             setComplaint('');
             setCategory('');
             setLocation(null);
             setAnonymous(false);
-            navigation.navigate('Home');
+            navigation.replace('Home');
           },
         },
       ]);
     } else {
       const errorText = await response.text();
-      // debug: Server error response
       console.error('Server error on response:', errorText);
       Alert.alert(`Failed to submit complaint: ${errorText}`);
     }
-  };
+};
 
 
   //HTML:

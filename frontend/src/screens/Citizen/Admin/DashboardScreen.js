@@ -44,11 +44,7 @@ const AdminDashboardScreen = () => {
         <Button
           title="View Resolved Complaints"
           onPress={() => {
-<<<<<<< Updated upstream
-            // Future implementation here
-=======
             // Future implementation
->>>>>>> Stashed changes
           }}
         />
         </View>

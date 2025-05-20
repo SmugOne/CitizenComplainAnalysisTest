@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { FadeInUp } from 'react-native-reanimated';
 
 const AdminDashboardScreen = () => {
-  const [totalComplaints, setTotalComplaints] = useState('');
-  const [resolvedComplaints, setResolvedComplaints] = useState('');
+  const [totalComplaints, setTotalComplaints] = useState(0);
+  const [resolvedComplaints, setResolvedComplaints] = useState(0);
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -55,6 +55,17 @@ const AdminDashboardScreen = () => {
             onPress={() => navigation.navigate('Home')}
           />
         </View>
+
+        {/* New button added below */}
+        <View style={styles.buttonSpacing}>
+          <Button
+            title="View Resolved Complaints"
+            onPress={() => {
+              // Placeholder action - no screen yet
+              console.log('View Resolved Complaints button pressed');
+            }}
+          />
+        </View>
       </Animated.View>
     </View>
   );
@@ -65,6 +76,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 16,
+    backgroundColor: '#e6f0ff',
   },
   card: {
     backgroundColor: '#fff',

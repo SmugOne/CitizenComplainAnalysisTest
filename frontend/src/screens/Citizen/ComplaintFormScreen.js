@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from 'react-native';
 import Checkbox from 'expo-checkbox';
 import * as Location from 'expo-location';
-import { API_URL } from '@env';
 import { Picker } from '@react-native-picker/picker';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { API_URL } from '@env';  // <-- Import API_URL here
 
 const ComplaintFormScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -12,95 +20,92 @@ const ComplaintFormScreen = ({ navigation }) => {
   const [location, setLocation] = useState(null);
   const [anonymous, setAnonymous] = useState(false);
 
-  //Set default name to Anonymous or vice versa.
   useEffect(() => {
     if (anonymous) {
       setName('Anonymous');
-    } 
-    else {
+    } else {
       setName('');
     }
   }, [anonymous]);
 
-  //Location:
   const handleGetLocation = async () => {
-    var { status } = await Location.requestForegroundPermissionsAsync();
+    const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert("Permission Denied", "Permission to access location is required.");
+      Alert.alert('Permission Denied', 'Permission to access location is required.');
       return;
     }
 
-    //Get location
-    var currentLocation = await Location.getCurrentPositionAsync({});
-    setLocation(currentLocation.coords);
-  };
+    try {
+      const currentLocation = await Location.getCurrentPositionAsync({});
+      const [address] = await Location.reverseGeocodeAsync({
+        latitude: currentLocation.coords.latitude,
+        longitude: currentLocation.coords.longitude,
+      });
 
-// Submit Complaint
-const handleSubmit = async () => {
-  console.log('Submitting complaint...');
+      const barangay = address.subdistrict || address.district || '';
+      const city = address.city || address.region || '';
+      const locationString = `${barangay ? barangay + ', ' : ''}${city}`;
 
-  // if anonymous true, set name to Anonymous. Else keep name
-  let finalName;
-  if (anonymous || !name.trim()) {
-    finalName = 'Anonymous';
-  } else {
-    finalName = name;
-  }
-
-  // If no complaints inputted
-  if (!RawComplaint.trim()) {
-    Alert.alert('Complaint Missing');
-    console.log('Complaint missing - abort submit');
-    return;
-  }
-
-  //Sets FrontEndData to be sent to the backend
-  const FrontEndData = {
-    name: finalName,
-    complaint: RawComplaint,
-    category: category || null, 
-    location: location ?? null,
-  };
-
-  console.log('Data to submit:', FrontEndData);
-
-  //Sends data (FrontEndData) to backend
-    const response = await fetch(`${API_URL}/api/complaints`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(FrontEndData),
-    });
-    console.log('Response status:', response.status);
-
-    if (response.ok) {
-      Alert.alert('Complaint Submitted', '', [
-        {
-          text: 'OK',
-          onPress: () => {
-            console.log('Navigating home after submission');
-            setName('');
-            setComplaint('');
-            setCategory('');
-            setLocation(null);
-            setAnonymous(false);
-            navigation.replace('Home');
-          },
-        },
-      ]);
-    } else {
-      const errorText = await response.text();
-      console.error('Server error on response:', errorText);
-      Alert.alert(`Failed to submit complaint: ${errorText}`);
+      setLocation(locationString);
+    } catch (error) {
+      console.error('Location error: ', error);
+      Alert.alert('Error getting location');
     }
-};
+  };
 
+  const handleSubmit = async () => {
+    let finalName = anonymous || !name.trim() ? 'Anonymous' : name;
 
-  //HTML:
+    if (!RawComplaint.trim()) {
+      Alert.alert('Complaint Missing', 'Please enter your complaint before submitting.');
+      return;
+    }
+
+    const FrontEndData = {
+      name: finalName,
+      complaint: RawComplaint,
+      category: category || null,
+      location: location ?? null,
+    };
+
+    try {
+      const response = await fetch(`${API_URL}/api/complaints`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(FrontEndData),
+      });
+
+      if (response.ok) {
+        Alert.alert('Complaint Submitted', '', [
+          {
+            text: 'OK',
+            onPress: () => {
+              setName('');
+              setComplaint('');
+              setCategory('');
+              setLocation(null);
+              setAnonymous(false);
+              navigation.replace('Home');
+            },
+          },
+        ]);
+      } else {
+        const errorText = await response.text();
+        Alert.alert(`Failed to submit complaint: ${errorText}`);
+      }
+    } catch (error) {
+      console.error('Fetch error:', error);
+      Alert.alert('Failed to submit complaint.');
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Complaint Form</Text>
+      <Animated.Text entering={FadeInDown.delay(200)} style={styles.title}>
+        Complaint Form
+      </Animated.Text>
 
       {!anonymous && (
         <TextInput
@@ -131,10 +136,7 @@ const handleSubmit = async () => {
 
       <Text style={styles.label}>Category:</Text>
       <View style={styles.pickerContainer}>
-        <Picker
-          selectedValue={category}
-          onValueChange={(itemValue) => setCategory(itemValue)}
-        >
+        <Picker selectedValue={category} onValueChange={setCategory}>
           <Picker.Item label="Select Category" value="" />
           <Picker.Item label="Garbage Collection" value="DENR" />
           <Picker.Item label="Road Damage" value="DPWH" />
@@ -145,23 +147,22 @@ const handleSubmit = async () => {
         </Picker>
       </View>
 
-      <View style={styles.buttonSpacing}>
-        <Button title="Get Location" onPress={handleGetLocation} />
-      </View>
+      <TouchableOpacity style={styles.getLocationBtn} onPress={handleGetLocation}>
+        <Text style={styles.getLocationText}>Get Location</Text>
+      </TouchableOpacity>
 
-      {location && location.latitude && location.longitude && (
-        <Text style={styles.locationText}>
-          Location: {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
-        </Text>
-      )}
+      {location && <Text style={styles.locationText}>Location: {location}</Text>}
 
-      <View style={styles.buttonSpacing}>
-        <Button title="Submit Complaint" onPress={handleSubmit} />
-      </View>
+      <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
+        <Text style={styles.submitBtnText}>Submit Complaint</Text>
+      </TouchableOpacity>
 
-      <View style={styles.buttonSpacing}>
-        <Button title="Back to Home" onPress={() => navigation.navigate('Home')} />
-      </View>
+      <TouchableOpacity
+        style={styles.backBtn}
+        onPress={() => navigation.navigate('Home')}
+      >
+        <Text style={styles.backBtnText}>Back to Home</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -169,44 +170,92 @@ const handleSubmit = async () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: 20,
+    backgroundColor: '#e6f0ff',
   },
   title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    marginBottom: 20,
+    fontSize: 28,
+    fontWeight: '900',
     textAlign: 'center',
+    marginBottom: 25,
+    color: '#2c3e50',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#999',
-    borderRadius: 8,
-    padding: 10,
+    borderColor: '#888',
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    backgroundColor: '#fff',
     marginBottom: 15,
+    elevation: 3,
   },
   label: {
     fontSize: 16,
+    marginBottom: 8,
+    color: '#34495e',
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: '#999',
-    borderRadius: 8,
+    borderColor: '#888',
+    borderRadius: 12,
+    backgroundColor: '#fff',
     marginBottom: 15,
-  },
-  buttonSpacing: {
-    marginTop: 15,
+    elevation: 3,
   },
   checkboxContainer: {
     flexDirection: 'row',
-    marginBottom: 20,
     alignItems: 'center',
+    marginBottom: 20,
   },
   checkbox: {
-    marginRight: 8,
+    marginRight: 10,
+  },
+  getLocationBtn: {
+    backgroundColor: '#3c82f6',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 15,
+    elevation: 4,
+  },
+  getLocationText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
   },
   locationText: {
-    marginTop: 10,
     fontSize: 14,
+    marginBottom: 20,
+    color: '#2c3e50',
+    textAlign: 'center',
+  },
+  submitBtn: {
+    backgroundColor: '#27ae60',
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 20,
+    elevation: 4,
+  },
+  submitBtnText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  backBtn: {
+    borderWidth: 1,
+    borderColor: '#888',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    elevation: 3,
+  },
+  backBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#34495e',
   },
 });
 

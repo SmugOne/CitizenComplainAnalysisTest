@@ -1,34 +1,73 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Button, FlatList, StyleSheet } from 'react-native';
-import Animated from 'react-native-reanimated';
-import { FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInUp, useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
 
 const AdminComplaintListScreen = () => {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-useEffect(() => {
-  fetch('http://172.17.24.34:5000/api/complaints')
-    .then(async (response) => {
-      const text = await response.text();
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return JSON.parse(text);  // manually parse now that you logged it
-    })
-    .then(data => {
-      setComplaints(data);
-      setLoading(false);
-      setError(null);
-    })
-    .catch(error => {
-      console.error('Error fetching complaints:', error);
-      setError(error.message);
-      setLoading(false);
-    });
-}, []);
+  useEffect(() => {
+    fetch('http://192.168.1.13:5000/api/complaints')
+      .then(async (response) => {
+        const text = await response.text();
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return JSON.parse(text);
+      })
+      .then(data => {
+        setComplaints(data);
+        setLoading(false);
+        setError(null);
+      })
+      .catch(error => {
+        console.error('Error fetching complaints:', error);
+        setError(error.message);
+        setLoading(false);
+      });
+  }, []);
 
+  const removeComplaint = (itemToRemove) => {
+    setComplaints((prevComplaints) =>
+      prevComplaints.filter((complaint) => complaint !== itemToRemove)
+    );
+  };
+
+  const ComplaintItem = ({ item }) => {
+    const opacity = useSharedValue(1);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+      opacity: opacity.value,
+      transform: [{ scale: opacity.value }],
+    }));
+
+    const handleDone = () => {
+      opacity.value = withTiming(0, { duration: 500 }, () => {
+        runOnJS(removeComplaint)(item);
+      });
+    };
+
+    return (
+      <Animated.View entering={FadeInUp}>
+        <Animated.View style={[styles.card, animatedStyle]}>
+          <Text style={styles.cardText}>
+            <Text style={{ fontWeight: 'bold' }}>Name: </Text>{item.Name}
+          </Text>
+          <Text style={styles.cardText}>
+            <Text style={{ fontWeight: 'bold' }}>Complaint: </Text>{item.Complaint}
+          </Text>
+          <Text style={styles.cardText}>
+            <Text style={{ fontWeight: 'bold' }}>Location: </Text>{item.Location}
+          </Text>
+          <Text style={styles.cardText}>
+            <Text style={{ fontWeight: 'bold' }}>Agency: </Text>{item.PredictedAgency}
+          </Text>
+          <Button title="Done" onPress={handleDone} />
+        </Animated.View>
+      </Animated.View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -44,23 +83,7 @@ useEffect(() => {
       ) : (
         <FlatList
           data={complaints}
-          renderItem={({ item }) => (
-            <Animated.View entering={FadeInUp} style={styles.card}>
-              <Text style={styles.cardText}>
-                <Text style={{ fontWeight: 'bold' }}>Name: </Text>{item.Name}
-              </Text>
-              <Text style={styles.cardText}>
-                <Text style={{ fontWeight: 'bold' }}>Complaint: </Text>{item.Complaint}
-              </Text>
-              <Text style={styles.cardText}>
-                <Text style={{ fontWeight: 'bold' }}>Location: </Text>{item.Location}
-              </Text>
-              <Text style={styles.cardText}>
-                <Text style={{ fontWeight: 'bold' }}>Agency: </Text>{item.PredictedAgency}
-              </Text>
-             <Button title="Done" onPress={() => { /**/ }} />
-</Animated.View>
-          )}
+          renderItem={({ item }) => <ComplaintItem item={item} />}
           keyExtractor={(item, index) => index.toString()}
         />
       )}

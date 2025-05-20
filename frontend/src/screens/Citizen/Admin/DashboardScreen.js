@@ -9,6 +9,26 @@ const AdminDashboardScreen = () => {
   const [resolvedComplaints, setResolvedComplaints] = useState('');
   const navigation = useNavigation();
 
+<<<<<<< Updated upstream
+=======
+  useEffect(() => {
+    fetch('http://192.168.68.73:5000/api/complaints')
+      .then(async (response) => {
+        const text = await response.text();
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return JSON.parse(text);
+      })
+      .then(data => {
+        setTotalComplaints(data.length);
+      })
+      .catch(error => {
+        console.error('Error fetching total complaints:', error);
+      });
+  }, []);
+
+>>>>>>> Stashed changes
   return (
     <View style={styles.container}>
       <Animated.View entering={FadeInUp} style={styles.card}>
@@ -24,11 +44,23 @@ const AdminDashboardScreen = () => {
         </View>
 
         <View style={styles.buttonSpacing}>
+        <Button
+          title="View Resolved Complaints"
+          onPress={() => {
+            // Future implementation
+          }}
+        />
+        </View>
+<<<<<<< Updated upstream
+=======
+
+        <View style={styles.buttonSpacing}>
           <Button
-            title="Back to Home"
+            title="Log Out"
             onPress={() => navigation.navigate('Home')}
           />
         </View>
+>>>>>>> Stashed changes
       </Animated.View>
     </View>
   );

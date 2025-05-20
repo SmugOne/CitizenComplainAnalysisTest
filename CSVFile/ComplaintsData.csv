@@ -1,9 +1,15 @@
-Raw Complaint,Anger Score,Fear Score,Joy Score,Neutral Score,Sadness Score,Surprise Score
-I hate this!,,,,,,
-I like this thing so much!,,,,,,
-I do not want to be another victim.,,,,,,
-Theres a widespread corruption within the Department of Health,,,,,,
-I just saw someone litter,,,,,,
-The governor is abusing our funds. I think he silence other critics,,,,,,
-I hate making complaints,,,,,,
-Theres some broken glass which may cause injury,,,,,,
+ID,Name,Raw Complaint,Location
+1,John Doe,Mabagal ang serbisyo dito sa ospital!,
+2,Mark Lawrence,May kurakot dito sa barangay,
+3,Amaron Karl,Ang laki na ng sunog! Asan yung bumbero!?,
+4,Von Der Hugg,Theres a widespread corruption within the Department of Health,
+5,Sterner Marina,May nagkakalat,
+6,Mikko Samis,Maraming naipon na basura dito,
+7,Daniel Maki,Mabagal traffic dito,
+8,Powell Corana,Grabe! Ang bagal dito ng usad ng trapiko dito sa amin!,
+9,Anonymous,Theres garbage on the street,
+10,Anonymous,There's corruption going on at the school branch with a principal,
+11,Mark Mike,There's lack of water in my area,"{'accuracy': 100, 'longitude': 120.9788143, 'altitude': 101.80000305175781, 'heading': 0, 'latitude': 14.3756576, 'altitudeAccuracy': 100, 'speed': 0}"
+12,Anonymous,Slow wifi,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}"
+13,Anonymous,My area lacked water supplies! ,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}"
+14,Anonymous,Water supplies are low here! Where is government intervention?? ,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}"

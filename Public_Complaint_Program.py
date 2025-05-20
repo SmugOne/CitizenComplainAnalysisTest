@@ -1,7 +1,9 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS  
+from dotenv import load_dotenv
 import os
 import pandas as pd
+import joblib
 from oauth2client.service_account import ServiceAccountCredentials
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.feature_extraction.text import CountVectorizer
@@ -9,95 +11,147 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import make_pipeline
 from transformers import pipeline
 
-#READ REACT NATIVE: ---------------------------
-Main = Flask(__name__)
-CORS(Main, resources={r"/api/*": {"origins": "*"}})  # Allow React frontend to call the API
+app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
-@Main.route('/api/data', methods=['GET'])
-def get_data():
-    return jsonify({"message": "testing", "status": "success"})
-
-@Main.route('/api/post', methods=['POST'])
-def receive_data():
-    received_data = request.json  # Get JSON data from React
-    return jsonify({"received": received_data, "message": "Data received!"})
-#Back and Front end connection:
-if __name__ == '__main__':
-    Main.run(host='0.0.0.0', port=5000, debug=True)
+# Ensure CSVFile directory exists
+os.makedirs("CSVFile", exist_ok=True)
 
 #BACKEND DEVELOPMENT ----------------------------------
-# Output and Training Model:
-@Main.route('/api/complaints', methods=['GET'])
-def Complaints():
-    Database = pd.read_csv("CSVFile/ComplaintsData.csv") #Placeholder 
 
-    Training_Data = { } #Placeholder
+#Flask-React Connect and Assign from ComplaintsFormScreen:
+@app.route('/api/complaints', methods=['POST'])
+def run_arrangement():
+
+    #Distribute Data from ComplaintsFormScreen
+    data = request.get_json()
+    name = data.get('name')
+    complaint = data.get('complaint')
+    location = data.get('location')
+    #Datasets:
+    Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
+
+    #Assign new ID based on the last one
+    if Database.empty:
+        ID = 1
+    else:
+        ID = Database['ID'].max() + 1
+
+    #Add new entry to the database
+    new_row = {
+        'ID': ID,
+        'Name': name,
+        'Raw Complaint': complaint,
+        'Location': str(location) if location else ''
+    }
+    Database = pd.concat([Database, pd.DataFrame([new_row])], ignore_index=True)
+
+    #Save updated database and returns it
+    Database.to_csv("CSVFile/ComplaintsData.csv", index=False, encoding='cp1252')
+    ArrangeLogic()
+    
+    return jsonify({"message": "Complaint submitted and arranged successfully"})
+
+
+#Training Model and Classification Algorithms:
+def ArrangeLogic():
+    #Datasets:
+    Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
+    Training_Data = pd.read_csv("CSVFile/TrainingDataset.csv", encoding='cp1252')
 
     #Training Model:
-    training = pd.DataFrame(Training_Data)
-    X_train, y_train = training['text'], training['label']
-    model = make_pipeline(CountVectorizer(), MultinomialNB())
-    model.fit(X_train, y_train)
+    Training_Data['Emotion'] = Training_Data['Emotion'].str.strip().str.lower()
+
+    X_train = Training_Data['Complaint'].fillna("").str.lower()
+    y_train = Training_Data['Emotion']
+    TrainingModel = make_pipeline(
+        CountVectorizer(lowercase=True),
+        MultinomialNB()
+    )
+    TrainingModel.fit(X_train, y_train)
+
+    #Flagged Words
+    prioritizedWords = [
+        "corruption", 
+        "corrupt",
+        "kurakot", 
+        "kinurakot", 
+        "kinorakot", 
+        "kinukurakot", 
+        "kinukorakot",
+        "fraud", 
+        "harassment", 
+        "abuse", 
+        "pang-aabuso", 
+        "inaabuso", 
+        "abuso",
+        "pagsasamantala", 
+        "sinasamantala", 
+        "pagsasamantalahan", 
+        "discrimination", 
+        "diskriminasyon",
     
-    textComplaints = Database['Raw Complaint'].tolist()
-    Predicted = model.predict(textComplaints)
-
-    # Set emotion scores
-    emotion_scores = []
-    for label in Predicted:
-        score_dict = {
-            'anger': 0.0,
-            'fear': 0.0,
-            'joy': 0.0,
-            'sadness': 0.0,
-            'neutral': 0.0,
-            'surprise': 0.0,
-        }
-        score_dict[label] = 1.0
-        emotion_scores.append(score_dict)
-
-    Anger_Score = [score.get('anger', 0) for score in emotion_scores]
-    Fear_Score = [score.get('fear', 0) for score in emotion_scores]
-    Joy_Score = [score.get('joy', 0) for score in emotion_scores]
-    Sadness_Score = [score.get('sadness', 0) for score in emotion_scores]
-    Neutral_Score = [score.get('neutral', 0) for score in emotion_scores]
-    Surprise_Score = [score.get('surprise', 0) for score in emotion_scores]
-
-    # Scores the Database
-    Database['Anger Score'] = Anger_Score
-    Database['Fear Score'] = Fear_Score
-    Database['Joy Score'] = Joy_Score
-    Database['Neutral Score'] = Neutral_Score
-    Database['Sadness Score'] = Sadness_Score
-    Database['Surprise Score'] = Surprise_Score
-    
-    # Converts all database and results to "Model Output"
-    return jsonify(Database.to_dict(orient='Model Output'))
-
-def NLP():
-    prioritize=[
-        "Corruption",
-        "Fraud",
-        "Harassment",
-        "Discrimination",
-        
     ]
 
-    # converts prioritization words to "Prioritize"
-    return jsonify(prioritize.to_dict(orient='Prioritize'))
+    #Predict emotion scores
+    textComplaints = Database['Raw Complaint'].fillna("").tolist()
+    probabilities = TrainingModel.predict_proba(textComplaints)
+    emotion_labels = TrainingModel.classes_
+    emotion_scores = [dict(zip(emotion_labels, prob)) for prob in probabilities]
 
-#Placeholder:
-def Dataframe():
-    return jsonify(
-        {
-             "Columns": [
-                 {"Raw Complaint": None},
-                 {"Anger Score": None},
-                 {"Fear Score": None},
-                 {"Joy Score": None},
-                 {"Neutral Score": None},
-                 {"Sadness Score": None},
-                 {"Surprise Score": None},
-            ]
-        }
+    #Scores the Database
+    Database['Anger Score'] = [score.get('anger', 0) for score in emotion_scores]
+    Database['Fear Score'] = [score.get('fear', 0) for score in emotion_scores]
+    Database['Joy Score'] = [score.get('joy', 0) for score in emotion_scores]
+    Database['Neutral Score'] = [score.get('neutral', 0) for score in emotion_scores]
+    Database['Sadness Score'] = [score.get('sadness', 0) for score in emotion_scores]
+    Database['Surprise Score'] = [score.get('surprise', 0) for score in emotion_scores]
+
+    #Adds priority words based on prioritizedwords list
+    Database['Flagged Words'] = Database['Raw Complaint'].str.lower().apply(
+        lambda x: any(word in x for word in prioritizedWords)
     )
+
+    #Sorts by maximum score
+    Database['Max Severity Score'] = Database[['Anger Score', 'Sadness Score', 'Fear Score']].max(axis=1)
+    Database = Database.sort_values(by=['Flagged Words', 'Max Severity Score'], ascending=[False, False])
+
+    #Rename from Raw Complaint (ComplaintsData) to Complaint (ArrangedData)
+    Database = Database.rename(columns={'Raw Complaint': 'Complaint'})
+    
+
+    #Add Predicted Agency (WIP)
+    if 'Predicted Agency' not in Database.columns:
+        Database['Predicted Agency'] = ""
+
+    #Final selected output to ArrangedData
+    output = Database[[ 
+        'ID', 'Name', 'Complaint', 'Location',
+        'Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score',
+        'Sadness Score', 'Surprise Score',
+        'Predicted Agency', 'Flagged Words'
+    ]]
+
+    #Save and return file
+    output.to_csv("CSVFile/ArrangedData.csv", index=False)
+    return output
+
+
+#Takes result from ArrangedData 
+@app.route('/api/complaints', methods=['GET'])
+def get_complaints():
+    try:
+        df = pd.read_csv('CSVFile/ArrangedData.csv')
+    except FileNotFoundError:
+        df = ArrangeLogic()
+
+    # Replace all NaN, NaT, and pd.NA values with None
+    df = df.replace({pd.NA: None, pd.NaT: None, float('nan'): None})
+
+    return jsonify(df.to_dict(orient='records'))
+
+
+#Back and Front end connection:
+if __name__ == '__main__':
+    ArrangeLogic()  #Run once
+    app.run(host="0.0.0.0", port=5000, debug=True)

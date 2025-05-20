@@ -9,8 +9,6 @@ const AdminDashboardScreen = () => {
   const [resolvedComplaints, setResolvedComplaints] = useState('');
   const navigation = useNavigation();
 
-<<<<<<< Updated upstream
-=======
   useEffect(() => {
     fetch('http://192.168.68.73:5000/api/complaints')
       .then(async (response) => {
@@ -28,7 +26,6 @@ const AdminDashboardScreen = () => {
       });
   }, []);
 
->>>>>>> Stashed changes
   return (
     <View style={styles.container}>
       <Animated.View entering={FadeInUp} style={styles.card}>
@@ -47,12 +44,10 @@ const AdminDashboardScreen = () => {
         <Button
           title="View Resolved Complaints"
           onPress={() => {
-            // Future implementation
+            // Future implementation here
           }}
         />
         </View>
-<<<<<<< Updated upstream
-=======
 
         <View style={styles.buttonSpacing}>
           <Button
@@ -60,7 +55,6 @@ const AdminDashboardScreen = () => {
             onPress={() => navigation.navigate('Home')}
           />
         </View>
->>>>>>> Stashed changes
       </Animated.View>
     </View>
   );

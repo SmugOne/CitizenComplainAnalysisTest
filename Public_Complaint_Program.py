@@ -70,7 +70,7 @@ def ArrangeLogic():
     )
     TrainingModel.fit(X_train, y_train)
 
-    #Flagged Words
+    #Flagged Words:
     prioritizedWords = [
         "corruption", 
         "corrupt",

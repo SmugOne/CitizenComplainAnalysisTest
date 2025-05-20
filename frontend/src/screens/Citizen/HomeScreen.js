@@ -1,14 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const HomeScreen = ({ navigation }) => {
   return (
-    <LinearGradient
-      colors={['#4facfe', '#00f2fe']}
-      style={styles.container}
-    >
+    <View style={[styles.container, { backgroundColor: '#e6f0ff' }]}>
       <View style={styles.centerContent}>
         <Animated.Text entering={FadeInDown.delay(100)} style={styles.title}>
           Citizen Complaint Program
@@ -34,7 +30,7 @@ const HomeScreen = ({ navigation }) => {
           </Animated.View>
         </View>
       </View>
-    </LinearGradient>
+    </View>
   );
 };
 
@@ -51,7 +47,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 34,
     fontWeight: '900',
-    color: '#fff',
+    color: 'black',
     textAlign: 'center',
     marginBottom: 40,
   },

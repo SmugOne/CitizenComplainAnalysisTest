@@ -1,13 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { FadeInUp } from 'react-native-reanimated';
 
 const AdminDashboardScreen = () => {
-  const [totalComplaints, setTotalComplaints] = useState('');
-  const [resolvedComplaints, setResolvedComplaints] = useState('');
+  const [totalComplaints, setTotalComplaints] = useState(0);
+  const [resolvedComplaints, setResolvedComplaints] = useState(0);
   const navigation = useNavigation();
+
+  useEffect(() => {
+    fetch('http://192.168.1.13:5000/api/complaints')
+      .then(async (response) => {
+        const text = await response.text();
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return JSON.parse(text);
+      })
+      .then(data => {
+        setTotalComplaints(data.length);
+      })
+      .catch(error => {
+        console.error('Error fetching total complaints:', error);
+      });
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -27,6 +44,17 @@ const AdminDashboardScreen = () => {
           <Button
             title="Back to Home"
             onPress={() => navigation.navigate('Home')}
+          />
+        </View>
+
+        {/* New button added below */}
+        <View style={styles.buttonSpacing}>
+          <Button
+            title="View Resolved Complaints"
+            onPress={() => {
+              // Placeholder action - no screen yet
+              console.log('View Resolved Complaints button pressed');
+            }}
           />
         </View>
       </Animated.View>

@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import {View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,} from 'react-native';
 import Checkbox from 'expo-checkbox';
 import * as Location from 'expo-location';
 import { Picker } from '@react-native-picker/picker';

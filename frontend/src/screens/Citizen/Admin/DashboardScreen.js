@@ -55,17 +55,6 @@ const AdminDashboardScreen = () => {
             onPress={() => navigation.navigate('Home')}
           />
         </View>
-
-        {/* New button added below */}
-        <View style={styles.buttonSpacing}>
-          <Button
-            title="View Resolved Complaints"
-            onPress={() => {
-              // Placeholder action - no screen yet
-              console.log('View Resolved Complaints button pressed');
-            }}
-          />
-        </View>
       </Animated.View>
     </View>
   );

@@ -10,7 +10,7 @@ const AdminDashboardScreen = () => {
   const navigation = useNavigation();
 
   useEffect(() => {
-    fetch('http://192.168.68.73:5000/api/complaints')
+    fetch('http://172.17.24.34:5000/api/complaints')
       .then(async (response) => {
         const text = await response.text();
         if (!response.ok) {

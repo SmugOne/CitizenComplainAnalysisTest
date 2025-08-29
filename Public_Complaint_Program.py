@@ -124,6 +124,13 @@ def ArrangeLogic():
     if 'Predicted Agency' not in Database.columns:
         Database['Predicted Agency'] = "" #if not existing 
 
+    #Notification (WIP)
+    # Implement 72 hour notification logic.
+
+    #False Complaints Detection (WIP)
+    # Implement logic to detect and handle false complaints.
+    # Detect Spam or repeated complaints.
+
     #Final selected output to ArrangedData
     output = Database[[ 
         'ID', 'Name', 'Complaint', 'Location',

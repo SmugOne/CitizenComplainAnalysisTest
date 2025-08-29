@@ -122,7 +122,7 @@ def ArrangeLogic():
 
     #Add Predicted Agency (WIP)
     if 'Predicted Agency' not in Database.columns:
-        Database['Predicted Agency'] = ""
+        Database['Predicted Agency'] = "" #if not existing 
 
     #Final selected output to ArrangedData
     output = Database[[ 

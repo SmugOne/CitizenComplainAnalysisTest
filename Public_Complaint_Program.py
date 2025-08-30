@@ -72,7 +72,7 @@ def ArrangeLogic():
     )
     TrainingModel.fit(X_train, y_train)
 
-    #Flagged Words
+    #Flagged Words:
     prioritizedWords = [
         "corruption", 
         "corrupt",
@@ -123,8 +123,15 @@ def ArrangeLogic():
     
 
     #Add Predicted Agency (WIP)
-    # if 'Predicted Agency' not in Database.columns:
-    #     Database['Predicted Agency'] = ""
+    if 'Predicted Agency' not in Database.columns:
+        Database['Predicted Agency'] = "" #if not existing 
+
+    #Notification (WIP)
+    # Implement 72 hour notification logic.
+
+    #False Complaints Detection (WIP)
+    # Implement logic to detect and handle false complaints.
+    # Detect Spam or repeated complaints.
 
     #Final selected output to ArrangedData
     output = Database[[ 

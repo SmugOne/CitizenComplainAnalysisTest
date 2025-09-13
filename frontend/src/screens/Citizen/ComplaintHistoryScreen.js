@@ -1,62 +1,53 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import Layout from "../../components/Layout";
 
-const ComplaintHistoryScreen = () => {
-
-  const [complaints, setComplaints] = useState([]);
+export default function ComplaintHistoryScreen({ navigation }) {
+  // Placeholder, later to be replaced by backend connection
+  const complaints = [];
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Complaint History</Text>
-
-      {complaints.length === 0 ? (
-        <Text style={styles.noComplaintsText}>No complaints submitted yet.</Text>
-      ) : (
-        <FlatList
-          data={complaints}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Text style={styles.cardText}>{item.description}</Text>
+    <Layout navigation={navigation}>
+      <View style={styles.card}>
+        <Text style={styles.title}>Complaint History</Text>
+        <Text style={styles.subtitle}>
+          View your previous complaints and their statuses.
+        </Text>
+      </View>
+      <View style={styles.historyList}>
+        {complaints.length === 0 ? (
+          <Text style={{ color: "#888", textAlign: "center" }}>No complaints (not available)</Text>
+        ) : (
+          complaints.map((c, i) => (
+            <View style={styles.historyItem} key={i}>
+              <Text style={styles.complaintId}>ID: {c.id}</Text>
+              <Text style={styles.historyStatus}>{c.status}</Text>
             </View>
-          )}
-          keyExtractor={(item) => item.id}
-        />
-      )}
-    </View>
+          ))
+        )}
+      </View>
+    </Layout>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  card: { backgroundColor: "#fbf3df", padding: 22, borderRadius: 12, marginBottom: 18 },
+  title: { fontSize: 28, textAlign: "center", fontWeight: "800", color: "#11493f" },
+  subtitle: { marginTop: 8, textAlign: "center", color: "#11493f" },
+  historyList: {
+    backgroundColor: "#fff",
     padding: 16,
-    backgroundColor: '#f5f5f5',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  noComplaintsText: {
-    fontSize: 16,
-    color: '#777',
-    textAlign: 'center',
-    marginTop: 20,
-  },
-  card: {
-    backgroundColor: '#fff',
-    padding: 15,
     borderRadius: 8,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
+    borderWidth: 1,
+    borderColor: "#ece6d5",
   },
-  cardText: {
-    fontSize: 16,
-    color: '#333',
+  historyItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ece6d5",
   },
+  complaintId: { color: "#11493f", fontWeight: "700" },
+  historyStatus: { color: "#197278", fontWeight: "600" },
 });
-
-export default ComplaintHistoryScreen;

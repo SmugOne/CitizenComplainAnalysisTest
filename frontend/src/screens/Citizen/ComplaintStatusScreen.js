@@ -1,49 +1,34 @@
-// src/screens/Citizen/ComplaintStatusScreen.js
-import React from 'react';
-import { View, Text, StyleSheet, Button } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import Animated from 'react-native-reanimated';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import Layout from "../../components/Layout";
 
-const ComplaintStatusScreen = () => {
-  const navigation = useNavigation();
-
+export default function ComplaintStatusScreen({ navigation }) {
   return (
-    <View style={styles.container}>
+    <Layout navigation={navigation}>
       <View style={styles.card}>
         <Text style={styles.title}>Complaint Status</Text>
-        <Text style={styles.status}>Your complaint is being reviewed.</Text>
-        <Button title="Go Back" onPress={() => navigation.goBack()} />
+        <Text style={styles.subtitle}>
+          Complaint status will be shown here (not available yet).
+        </Text>
       </View>
-    </View>
+      <View style={styles.statusBox}>
+        <Text style={styles.statusTitle}>Status: Not available</Text>
+      </View>
+    </Layout>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 16,
+  card: { backgroundColor: "#fbf3df", padding: 22, borderRadius: 12, marginBottom: 18 },
+  title: { fontSize: 28, textAlign: "center", fontWeight: "800", color: "#11493f" },
+  subtitle: { marginTop: 8, textAlign: "center", color: "#11493f" },
+  statusBox: {
+    backgroundColor: "#fff",
+    padding: 18,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ece6d5",
+    alignItems: "center",
   },
-  card: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#333',
-  },
-  status: {
-    fontSize: 18,
-    marginBottom: 20,
-    color: '#666',
-  },
+  statusTitle: { color: "#197278", fontWeight: "700", fontSize: 20, marginBottom: 6 },
 });
-
-export default ComplaintStatusScreen;

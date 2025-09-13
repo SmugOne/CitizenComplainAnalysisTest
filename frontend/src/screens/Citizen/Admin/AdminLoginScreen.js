@@ -1,71 +1,85 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import React, { useState } from "react";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
+import Layout from "../../../components/Layout";
 
-const AdminLoginScreen = ({ navigation }) => {
-  const [userId, setUserId] = useState('');
-  const [password, setPassword] = useState('');
+const HARDCODED_USER = "admin";
+const HARDCODED_PASS = "password123";
 
+export default function AdminLoginScreen({ navigation }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPW, setShowPW] = useState(false);
+  const [error, setError] = useState("");
   const handleLogin = () => {
-    if (userId === 'admin' && password === 'admin123') { // Passwords. Can be replaced with a database
-      navigation.navigate('Dashboard');
+    if (username === HARDCODED_USER && password === HARDCODED_PASS) {
+      alert("Login successful!");
+      setUsername("");
+      setPassword("");
+      setError("");
+      navigation.navigate("AdminDashboard");
     } else {
-      Alert.alert('Invalid Credentials', 'Please enter correct admin ID and password.');
+      setError("Incorrect username or password.");
     }
   };
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Admin Login</Text>
-
-      <TextInput
-        placeholder="User ID"
-        value={userId}
-        onChangeText={setUserId}
-        style={styles.input}
-      />
-
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={styles.input}
-      />
-
-      <View style={styles.buttonSpacing}>
-        <Button title="Login" onPress={handleLogin} />
+    <Layout navigation={navigation}>
+      <View style={styles.card}>
+        <Text style={styles.title}>Admin Login</Text>
+        <Text style={styles.subtitle}>Enter your credentials to access the admin panel.</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Username"
+          value={username}
+          onChangeText={setUsername}
+          autoCapitalize="none"
+        />
+        <View style={styles.pwRow}>
+          <TextInput
+            style={[styles.input, { flex: 1, marginBottom: 0 }]}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPW}
+            autoCapitalize="none"
+          />
+          <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPW((s) => !s)}>
+            <MaterialIcons name={showPW ? "visibility" : "visibility-off"} size={24} color="#197278" />
+          </TouchableOpacity>
+        </View>
+        {error ? <Text style={{ color: "red", marginTop: 4 }}>{error}</Text> : null}
+        <TouchableOpacity style={styles.loginBtn} onPress={handleLogin}>
+          <Text style={styles.loginBtnText}>Login</Text>
+        </TouchableOpacity>
+        <Text style={{marginTop:10,color:"#888",fontSize:12}}>
+          Demo login: admin / password123
+        </Text>
       </View>
-
-      <View style={styles.buttonSpacing}>
-        <Button title="Back to Home" onPress={() => navigation.navigate('Home')} />
-      </View>
-    </View>
+    </Layout>
   );
-};
-
+}
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    justifyContent: 'center',
-    backgroundColor: '#e6f0ff',
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 30,
-  },
+  card: { backgroundColor: "#fff", borderRadius: 12, padding: 24, alignItems: "center" },
+  title: { fontSize: 26, fontWeight: "800", color: "#11493f", marginBottom: 10 },
+  subtitle: { color: "#11493f", marginBottom: 16 },
   input: {
     borderWidth: 1,
-    borderColor: '#999',
+    borderColor: "#ece6d5",
     borderRadius: 8,
-    padding: 10,
-    marginBottom: 20,
+    padding: 12,
+    marginBottom: 12,
+    width: "100%",
+    backgroundColor: "#f7f1de",
+    fontSize: 15,
   },
-  buttonSpacing: {
-    marginTop: 15,
+  pwRow: { flexDirection: "row", alignItems: "center", width: "100%" },
+  eyeBtn: { marginLeft: 6, padding: 6 },
+  loginBtn: {
+    backgroundColor: "#11493f",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 16,
   },
+  loginBtnText: { color: "#ffd66b", fontWeight: "700", fontSize: 16 },
 });
-
-export default AdminLoginScreen;

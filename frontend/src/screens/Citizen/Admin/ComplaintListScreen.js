@@ -1,134 +1,75 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Button, FlatList, StyleSheet } from 'react-native';
-import { API_URL } from '@env';
-import Animated, { FadeInUp, useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
+import React from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import Layout from "../../../components/Layout";
 
-const AdminComplaintListScreen = ({navigation}) => {
-  const [complaints, setComplaints] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+// Dummy complaints for demo
+const complaints = [
+  { id: "C-00123", status: "Pending", category: "Infrastructure" },
+  { id: "C-00124", status: "Resolved", category: "Public Services" },
+  { id: "C-00125", status: "On Going", category: "Environment" },
+];
 
-  useEffect(() => {
-    fetch(`${API_URL}/api/complaints`)
-      .then(async (response) => {
-        const text = await response.text();
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return JSON.parse(text);
-      })
-      .then(data => {
-        setComplaints(data);
-        setLoading(false);
-        setError(null);
-      })
-      .catch(error => {
-        console.error('Error fetching complaints:', error);
-        setError(error.message);
-        setLoading(false);
-      });
-  }, []);
-
-  const removeComplaint = (itemToRemove) => {
-    setComplaints((prevComplaints) =>
-      prevComplaints.filter((complaint) => complaint !== itemToRemove)
-    );
-  };
-
-  const ComplaintItem = ({ item }) => {
-    const opacity = useSharedValue(1);
-
-    const animatedStyle = useAnimatedStyle(() => ({
-      opacity: opacity.value,
-      transform: [{ scale: opacity.value }],
-    }));
-
-    const handleDone = () => {
-      opacity.value = withTiming(0, { duration: 500 }, () => {
-        runOnJS(removeComplaint)(item);
-      });
-    };
-
-    return (
-      <Animated.View entering={FadeInUp}>
-        <Animated.View style={[styles.card, animatedStyle]}>
-          <Text style={styles.cardText}>
-            <Text style={{ fontWeight: 'bold' }}>Name: </Text>{item.Name}
-          </Text>
-          <Text style={styles.cardText}>
-            <Text style={{ fontWeight: 'bold' }}>Complaint: </Text>{item.Complaint}
-          </Text>
-          <Text style={styles.cardText}>
-            <Text style={{ fontWeight: 'bold' }}>Location: </Text>{item.Location}
-          </Text>
-          <Text style={styles.cardText}>
-            <Text style={{ fontWeight: 'bold' }}>Agency: </Text>{item.PredictedAgency}
-          </Text>
-          <Button title="Done" onPress={handleDone} />
-        </Animated.View>
-      </Animated.View>
-    );
-  };
-
+export default function ComplaintListScreen({ navigation }) {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Prioritized List</Text>
-      {loading ? (
-        <Text>Loading...</Text>
-      ) : error ? (
-        <Text style={{ color: 'red', textAlign: 'center', marginTop: 20 }}>
-          Error: {error}
-        </Text>
-      ) : complaints.length === 0 ? (
-        <Text style={styles.noComplaintsText}>No complaints to show yet.</Text>
-      ) : (
-        <FlatList
-          data={complaints}
-          renderItem={({ item }) => <ComplaintItem item={item} />}
-          keyExtractor={(item, index) => index.toString()}
-        />
-      )}
-      <View style={styles.buttonSpacing}>
-        <Button
-        title="Back to Dashboard"
-        onPress={() => navigation.navigate('Dashboard')}
-        />
-        </View>
-    </View>
+    <Layout navigation={navigation}>
+      <View style={styles.card}>
+        <Text style={styles.title}>Complaint List</Text>
+        <Text style={styles.subtitle}>View and manage all submitted complaints.</Text>
+        <ScrollView style={{ width: "100%" }}>
+          {complaints.length === 0 ? (
+            <Text style={{ color: "#888", textAlign: "center", marginTop: 20 }}>
+              No complaints (not available)
+            </Text>
+          ) : (
+            complaints.map((item, idx) => (
+              <View style={styles.listItem} key={item.id}>
+                <View>
+                  <Text style={styles.complaintId}>ID: {item.id}</Text>
+                  <Text style={styles.catText}>Category: {item.category}</Text>
+                </View>
+                <Text>Status: {item.status}</Text>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => navigation.navigate("ComplaintStatus", { complaintId: item.id })}
+                >
+                  <Text style={styles.actionButtonText}>View</Text>
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
+        </ScrollView>
+      </View>
+    </Layout>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#e6f0ff',
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  noComplaintsText: {
-    textAlign: 'center',
-    fontSize: 16,
-    marginTop: 20,
-    color: '#777',
-  },
   card: {
-    backgroundColor: '#f9f9f9',
-    padding: 15,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 24,
+    alignItems: "center",
+    width: "100%",
+  },
+  title: { fontSize: 26, fontWeight: "800", color: "#11493f", marginBottom: 10 },
+  subtitle: { color: "#11493f", marginBottom: 16 },
+  listItem: {
+    backgroundColor: "#f3ead3",
     borderRadius: 8,
+    padding: 16,
     marginBottom: 10,
-    elevation: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
-  cardText: {
-    fontSize: 16,
-    marginBottom: 5,
+  complaintId: { fontWeight: "700", color: "#11493f" },
+  catText: { color: "#197278", fontSize: 13 },
+  actionButton: {
+    backgroundColor: "#197278",
+    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginLeft: 10,
   },
-  buttonSpacing: {
-  marginBottom: 16,
-},
+  actionButtonText: { color: "#fff", fontWeight: "700" },
 });
-
-export default AdminComplaintListScreen;

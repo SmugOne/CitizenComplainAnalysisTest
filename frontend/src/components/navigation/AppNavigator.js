@@ -1,32 +1,39 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
 
-// Import Screens
-import HomeScreen from '../../screens/Citizen/HomeScreen';
-import ComplaintFormScreen from '../../screens/Citizen/ComplaintFormScreen';
-// import ComplaintHistoryScreen from '../../screens/Citizen/ComplaintHistoryScreen';
-// import ComplaintStatusScreen from '../../screens/Citizen/ComplaintStatusScreen';
-import AdminLoginScreen from '../../screens/Citizen/Admin/AdminLoginScreen';
-import ComplaintListScreen from '../../screens/Citizen/Admin/ComplaintListScreen';
-import DashboardScreen from '../../screens/Citizen/Admin/DashboardScreen';
+// Citizen Screens
+import HomeScreen from "../../screens/Citizen/HomeScreen";
+import SubmitComplaintScreen from "../../screens/Citizen/SubmitComplaintScreen";
+import ComplaintHistoryScreen from "../../screens/Citizen/ComplaintHistoryScreen";
+import TrackComplaintScreen from "../../screens/Citizen/TrackComplaintScreen";
+import ComplaintStatusScreen from "../../screens/Citizen/ComplaintStatusScreen";
+import AboutScreen from "../../screens/Citizen/AboutScreen";
 
-const Stack = createNativeStackNavigator();
+// Admin Screens
+import AdminLoginScreen from "../../screens/Citizen/Admin/AdminLoginScreen";
+import DashboardScreen from "../../screens/Citizen/Admin/DashboardScreen";
+import ComplaintListScreen from "../../screens/Citizen/Admin/ComplaintListScreen";
 
-const AppNavigator = () => {
+const Stack = createStackNavigator();
+
+export default function AppNavigator() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Complaint Form" component={ComplaintFormScreen} />
-        {/* <Stack.Screen name="Complaint History" component={ComplaintHistoryScreen} />
-        <Stack.Screen name="Complaint Status" component={ComplaintStatusScreen} /> */}
-        <Stack.Screen name="Admin Login" component={AdminLoginScreen} />
-        <Stack.Screen name="Admin Complaint List" component={ComplaintListScreen} />
-        <Stack.Screen name="Dashboard" component={DashboardScreen} />
+      <Stack.Navigator initialRouteName="CitizenHome" screenOptions={{ headerShown: false }}>
+        {/* Citizen routes */}
+        <Stack.Screen name="CitizenHome" component={HomeScreen} />
+        <Stack.Screen name="SubmitComplaint" component={SubmitComplaintScreen} />
+        <Stack.Screen name="ComplaintHistory" component={ComplaintHistoryScreen} />
+        <Stack.Screen name="TrackComplaint" component={TrackComplaintScreen} />
+        <Stack.Screen name="ComplaintStatus" component={ComplaintStatusScreen} />
+        <Stack.Screen name="AboutScreen" component={AboutScreen} />
+
+        {/* Admin routes */}
+        <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
+        <Stack.Screen name="AdminDashboard" component={DashboardScreen} />
+        <Stack.Screen name="ComplaintList" component={ComplaintListScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
-};
-
-export default AppNavigator;
+}

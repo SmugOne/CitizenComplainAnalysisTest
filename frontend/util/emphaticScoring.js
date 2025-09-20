@@ -1,3 +1,4 @@
+// Unused
 export function emphaticScoreComplaint(complaint) {
     const keywords = ['emergency', 'urgent', 'corruption', 'abuse'];
     const description = complaint.description.toLowerCase();

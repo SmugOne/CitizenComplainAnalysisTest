@@ -5,7 +5,6 @@ import { createStackNavigator } from "@react-navigation/stack";
 // Citizen Screens
 import HomeScreen from "../../screens/Citizen/HomeScreen";
 import SubmitComplaintScreen from "../../screens/Citizen/SubmitComplaintScreen";
-import ComplaintHistoryScreen from "../../screens/Citizen/ComplaintHistoryScreen";
 import TrackComplaintScreen from "../../screens/Citizen/TrackComplaintScreen";
 import ComplaintStatusScreen from "../../screens/Citizen/ComplaintStatusScreen";
 import AboutScreen from "../../screens/Citizen/AboutScreen";
@@ -24,7 +23,6 @@ export default function AppNavigator() {
         {/* Citizen routes */}
         <Stack.Screen name="CitizenHome" component={HomeScreen} />
         <Stack.Screen name="SubmitComplaint" component={SubmitComplaintScreen} />
-        <Stack.Screen name="ComplaintHistory" component={ComplaintHistoryScreen} />
         <Stack.Screen name="TrackComplaint" component={TrackComplaintScreen} />
         <Stack.Screen name="ComplaintStatus" component={ComplaintStatusScreen} />
         <Stack.Screen name="AboutScreen" component={AboutScreen} />

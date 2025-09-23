@@ -96,9 +96,6 @@ export default function Layout({ children, navigation }) {
               <TouchableOpacity onPress={() => nav("SubmitComplaint")} style={styles.sidebarLink}>
                 <Text style={styles.sidebarLinkText}>Submit Complaint</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => nav("ComplaintHistory")} style={styles.sidebarLink}>
-                <Text style={styles.sidebarLinkText}>Complaint History</Text>
-              </TouchableOpacity>
               <TouchableOpacity onPress={() => nav("TrackComplaint")} style={styles.sidebarLink}>
                 <Text style={styles.sidebarLinkText}>Track Complaint</Text>
               </TouchableOpacity>

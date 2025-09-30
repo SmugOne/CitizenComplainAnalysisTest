@@ -54,11 +54,12 @@ def run_arrangement():
     #Save updated database and returns it
     Database.to_csv("CSVFile/ComplaintsData.csv", index=False, encoding='cp1252')
     ArrangeLogic()
-    
+
+    #Message to user if complaint submission is successful (used on SubmitComplaintScreen.js)
     return jsonify({
-    "id": int(ID),
-    "message": "Complaint submitted and arranged successfully"
-})
+        "id": int(ID),
+        "message": "Complaint submitted! Check your ID to track its status."
+    })
 
 
 #Training Model and Classification Algorithms:

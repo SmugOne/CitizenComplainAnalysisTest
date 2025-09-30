@@ -65,12 +65,8 @@ export default function SubmitComplaintScreen({ navigation }) {
         location: location,
       }),
     });
-
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
     const data = await response.json();
-    alert(`${data.message}\nComplaint ID: ${data.id}\nName: ${anonymous ? "Anonymous" : name}\nComplaint: ${complaint}\nCategory: ${category}\nLocation: ${location}`   
-    );
+    alert(`${data.message}\nComplaint ID: ${data.id}`); //See Public_Complaint_Program.py at return jsonify
 
     //Reset form after success(?)
     setName("");

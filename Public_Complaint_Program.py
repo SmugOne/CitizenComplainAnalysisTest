@@ -30,6 +30,8 @@ def run_arrangement():
     name = data.get('name')
     complaint = data.get('complaint')
     location = data.get('location')
+    category = data.get('category')
+
     #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
 
@@ -44,7 +46,8 @@ def run_arrangement():
         'ID': ID,
         'Name': name,
         'Raw Complaint': complaint,
-        'Location': str(location) if location else ''
+        'Location': str(location) if location else '',
+        'Category': str(category) if category else '',
     }
     Database = pd.concat([Database, pd.DataFrame([new_row])], ignore_index=True)
 
@@ -52,7 +55,10 @@ def run_arrangement():
     Database.to_csv("CSVFile/ComplaintsData.csv", index=False, encoding='cp1252')
     ArrangeLogic()
     
-    return jsonify({"message": "Complaint submitted and arranged successfully"})
+    return jsonify({
+    "id": int(ID),
+    "message": "Complaint submitted and arranged successfully"
+})
 
 
 #Training Model and Classification Algorithms:
@@ -91,7 +97,7 @@ def ArrangeLogic():
         "sinasamantala", 
         "pagsasamantalahan", 
         "discrimination", 
-        "diskriminasyon",
+        "diskriminasyon", 
     
     ]
 
@@ -157,7 +163,7 @@ def get_complaints():
     # Replace all NaN, NaT, and pd.NA values with None
     df = df.replace({pd.NA: None, pd.NaT: None, float('nan'): None})
 
-    return jsonify(df.to_dict(orient='records'))
+    return jsonify(df.to_dict(orient='records')) 
 
 
 #Back and Front end connection:

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Picker, Switch, ActivityIndicator } from "react-native";
 import * as Location from "expo-location";
 import Layout from "../../components/Layout";
+import { API_URL } from "@env";
 
 const defaultCategories = [
   "Infrastructure",
@@ -50,17 +51,38 @@ export default function SubmitComplaintScreen({ navigation }) {
     location.trim() !== "" &&
     (anonymous || name.trim() !== "");
 
-  const handleSubmit = () => {
-    if (!canSubmit) return;
-    alert(
-      `Complaint submitted!\nName: ${anonymous ? "Anonymous" : name}\nComplaint: ${complaint}\nCategory: ${category}\nLocation: ${location}`
+  //Submit complaint
+  const handleSubmit = async () => {
+  if (!canSubmit) return;
+  try {
+    const response = await fetch(`${API_URL}/api/complaints`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: anonymous ? "Anonymous" : name,
+        complaint: complaint,
+        category: category,
+        location: location,
+      }),
+    });
+
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    const data = await response.json();
+    alert(`${data.message}\nComplaint ID: ${data.id}\nName: ${anonymous ? "Anonymous" : name}\nComplaint: ${complaint}\nCategory: ${category}\nLocation: ${location}`   
     );
+
+    //Reset form after success(?)
     setName("");
     setComplaint("");
     setCategory(categories[0]);
     setLocation("");
     setAnonymous(false);
-  };
+  } catch (err) {
+    console.error("Error submitting complaint:", err);
+    alert("Failed to submit complaint. Please try again.");
+  }
+};
 
   return (
     <Layout navigation={navigation}>

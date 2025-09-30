@@ -140,6 +140,8 @@ def ArrangeLogic():
     # Implement logic to detect and handle false complaints.
     # Detect Spam or repeated complaints.
 
+    #Location must be within Dasma only (WIP)
+
     #Final selected output to ArrangedData
     output = Database[[ 
         'ID', 'Name', 'Complaint', 'Location',

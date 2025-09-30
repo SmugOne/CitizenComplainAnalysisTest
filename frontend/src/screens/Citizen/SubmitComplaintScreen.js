@@ -45,6 +45,7 @@ export default function SubmitComplaintScreen({ navigation }) {
     if (newCat && !categories.includes(newCat)) setCategories([...categories, newCat]);
   };
 
+  //Required fields before submit button can be pressed
   const canSubmit =
     complaint.trim() !== "" &&
     category.trim() !== "" &&

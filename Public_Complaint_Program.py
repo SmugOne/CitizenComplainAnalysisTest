@@ -99,7 +99,6 @@ def ArrangeLogic():
         "pagsasamantalahan", 
         "discrimination", 
         "diskriminasyon", 
-    
     ]
 
     #Predict emotion scores
@@ -139,6 +138,9 @@ def ArrangeLogic():
     #False Complaints Detection (WIP)
     # Implement logic to detect and handle false complaints.
     # Detect Spam or repeated complaints.
+
+    #Category (WIP)
+    # Implement admin changes on complaints category
 
     #Location must be within Dasma only (WIP)
 

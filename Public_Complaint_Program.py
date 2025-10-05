@@ -53,7 +53,7 @@ def run_arrangement():
 
     #Save updated database and returns it
     Database.to_csv("CSVFile/ComplaintsData.csv", index=False, encoding='cp1252')
-    ArrangeLogic()
+    Main()
 
     #Message to user if complaint submission is successful (used on SubmitComplaintScreen.js)
     return jsonify({
@@ -63,12 +63,12 @@ def run_arrangement():
 
 
 #Training Model and Classification Algorithms:
-def ArrangeLogic():
+def Main():
     #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
     Training_Data = pd.read_csv("CSVFile/TrainingDataset.csv", encoding='cp1252')
 
-    #Training Model:
+    #Training Model (Emotion):
     Training_Data['Emotion'] = Training_Data['Emotion'].str.strip().str.lower()
 
     X_train = Training_Data['Complaint'].fillna("").str.lower()
@@ -78,6 +78,19 @@ def ArrangeLogic():
         MultinomialNB()
     )
     TrainingModel.fit(X_train, y_train)
+
+    #Training Model (Government Agency):
+    Training_Data['Government Agency'] = Training_Data['Government Agency'].str.strip().str.upper()
+
+    X_agency = Training_Data['Complaint'].fillna("").str.lower()
+    y_agency = Training_Data['Government Agency']
+
+    # Train the model for agency prediction
+    AgencyModel = make_pipeline(
+        CountVectorizer(lowercase=True),
+        MultinomialNB()
+    )
+    AgencyModel.fit(X_agency, y_agency)
 
     #Flagged Words:
     prioritizedWords = [
@@ -127,13 +140,18 @@ def ArrangeLogic():
     #Rename from Raw Complaint (ComplaintsData) to Complaint (ArrangedData)
     Database = Database.rename(columns={'Raw Complaint': 'Complaint'})
     
-
-    #Add Predicted Agency (WIP)
-    if 'Predicted Agency' not in Database.columns:
-        Database['Predicted Agency'] = "" #if not existing 
-
-    #Notification (WIP)
-    # Implement 72 hour notification logic.
+    #Add Predicted Agency:
+    if 'Category' in Database.columns:
+        Database['Predicted Agency'] = Database['Category'].fillna('').str.upper()
+        NoAgency = Database['Predicted Agency'].str.strip() == ''
+        if NoAgency.any():
+            predicted_agencies = AgencyModel.predict(
+                Database.loc[NoAgency, 'Complaint'].fillna("").str.lower()
+            )
+            Database.loc[NoAgency, 'Predicted Agency'] = predicted_agencies
+    else:
+        predicted_agencies = AgencyModel.predict(Database['Complaint'].fillna("").str.lower())
+        Database['Predicted Agency'] = predicted_agencies
 
     #False Complaints Detection (WIP)
     # Implement logic to detect and handle false complaints.
@@ -149,7 +167,7 @@ def ArrangeLogic():
         'ID', 'Name', 'Complaint', 'Location',
         'Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score',
         'Sadness Score', 'Surprise Score',
-        'Predicted Agency', 'Flagged Words'
+        'Predicted Agency', 'Flagged Words',
     ]]
 
     #Save and return file
@@ -163,7 +181,7 @@ def get_complaints():
     try:
         df = pd.read_csv('CSVFile/ArrangedData.csv')
     except FileNotFoundError:
-        df = ArrangeLogic()
+        df = Main()
 
     # Replace all NaN, NaT, and pd.NA values with None
     df = df.replace({pd.NA: None, pd.NaT: None, float('nan'): None})
@@ -173,5 +191,5 @@ def get_complaints():
 
 #Back and Front end connection:
 if __name__ == '__main__':
-    ArrangeLogic()  #Run once
+    Main()  #Run once
     app.run(host="0.0.0.0", port=5000, debug=True)

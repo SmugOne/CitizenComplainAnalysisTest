@@ -5,13 +5,14 @@ import Layout from "../../components/Layout";
 import { API_URL } from "@env";
 
 const defaultCategories = [
-  "Infrastructure",
-  "Public Services",
-  "Safety & Security",
-  "Environment",
-  "Administrative Issues",
-  "Community Concerns",
-  "Other",
+  {label: "Select Category", value: ""},
+  {label: "Garbage Collection", value: "DENR"},
+  {label: "Road Damage", value: "DPWH"},
+  {label: "Water Services", value: "DENR"},
+  {label: "Electricity Services", value: "DOE"},
+  {label: "Education Services", value: "DEPED"},
+  {label: "Corruption", value: "OMBUDSMAN"},
+  {label: "Others", value: "NA"},
 ];
 
 export default function SubmitComplaintScreen({ navigation }) {
@@ -40,15 +41,10 @@ export default function SubmitComplaintScreen({ navigation }) {
     setLocLoading(false);
   };
 
-  const handleAddCategory = () => {
-    const newCat = prompt("Enter new category:");
-    if (newCat && !categories.includes(newCat)) setCategories([...categories, newCat]);
-  };
-
   //Required fields before submit button can be pressed
   const canSubmit =
     complaint.trim() !== "" &&
-    category.trim() !== "" &&
+    category.value.trim() !== "" &&
     location.trim() !== "" &&
     (anonymous || name.trim() !== "");
 
@@ -62,7 +58,7 @@ export default function SubmitComplaintScreen({ navigation }) {
       body: JSON.stringify({
         name: anonymous ? "Anonymous" : name,
         complaint: complaint,
-        category: category,
+        category: category.value,
         location: location,
       }),
     });
@@ -114,29 +110,30 @@ export default function SubmitComplaintScreen({ navigation }) {
           {Platform.OS === "web" ? (
             <select
               style={styles.select}
-              value={category}
-              onChange={e => setCategory(e.target.value)}
+              value={category.value}
+              onChange={(e) =>
+                setCategory(categories.find((cat) => cat.value === e.target.value))
+              }
             >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>
-                  {cat}
+              {categories.map((cat) => (
+                <option key={cat.value} value={cat.value}>
+                  {cat.label}
                 </option>
               ))}
             </select>
           ) : (
             <Picker
-              selectedValue={category}
+              selectedValue={category.value}
               style={styles.picker}
-              onValueChange={setCategory}
+              onValueChange={(value) =>
+                setCategory(categories.find((cat) => cat.value === value))
+              }
             >
-              {categories.map(cat => (
-                <Picker.Item label={cat} value={cat} key={cat} />
+              {categories.map((cat) => (
+                <Picker.Item label={cat.label} value={cat.value} key={cat.value} />
               ))}
             </Picker>
           )}
-          <TouchableOpacity onPress={handleAddCategory} style={styles.addCatBtn}>
-            <Text style={styles.addCatBtnText}>+</Text>
-          </TouchableOpacity>
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>Location:</Text>
@@ -190,16 +187,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f7f1de",
     fontSize: 15,
   },
-  picker: { flex: 1, height: 40 },
-  addCatBtn: {
-    marginLeft: 10,
-    backgroundColor: "#197278",
-    borderRadius: 14,
-    width: 30,
-    height: 30,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   addCatBtnText: { color: "#fff", fontWeight: "bold", fontSize: 20 },
   locBtn: {
     backgroundColor: "#197278",
@@ -208,6 +195,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginLeft: 10,
   },
+
   locBtnText: { color: "#fff", fontWeight: "700" },
   btnRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
   submitBtn: {

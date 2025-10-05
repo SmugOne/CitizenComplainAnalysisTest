@@ -135,8 +135,9 @@ const ComplaintFormScreen = ({ navigation }) => {
           <Picker.Item label="Road Damage" value="DPWH" />
           <Picker.Item label="Water Services" value="DENR" />
           <Picker.Item label="Electricity Services" value="DOE" />
-          <Picker.Item label="Education Services" value="DepEd" />
-          <Picker.Item label="Others" value="" />
+          <Picker.Item label="Education Services" value="DEPED" />
+          <Picker.Item label="Corruption" value="OMBUDSMAN" />
+          <Picker.Item label="Others" value="NA" />
         </Picker>
       </View>
 

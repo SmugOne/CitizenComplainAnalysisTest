@@ -32,6 +32,15 @@ def run_arrangement():
     location = data.get('location')
     category = data.get('category')
 
+    # Handle image upload
+    image_file = request.files.get('image')
+    image_id = None
+    if image_file:
+        filename = secure_filename(image_file.filename)
+        image_path = os.path.join(UPLOAD_FOLDER, filename)
+        image_file.save(image_path)
+        image_id = filename  # can be used to retrieve the file later
+
     #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
 
@@ -167,7 +176,7 @@ def Main():
         'ID', 'Name', 'Complaint', 'Location',
         'Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score',
         'Sadness Score', 'Surprise Score',
-        'Predicted Agency', 'Flagged Words',
+        'Predicted Agency', 'Flagged Words', 'Image ID',
     ]]
 
     #Save and return file

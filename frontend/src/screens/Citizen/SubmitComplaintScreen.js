@@ -13,7 +13,7 @@ const defaultCategories = [
   {label: "Electricity Services", value: "DOE"},
   {label: "Education Services", value: "DEPED"},
   {label: "Corruption", value: "OMBUDSMAN"},
-  {label: "Others", value: "NA"},
+  {label: "Others", value: ""},
 ];
 
 export default function SubmitComplaintScreen({ navigation }) {
@@ -21,7 +21,6 @@ export default function SubmitComplaintScreen({ navigation }) {
   const [name, setName] = useState("");
   const [complaint, setComplaint] = useState("");
   const [category, setCategory] = useState(defaultCategories[0]);
-  const [categories, setCategories] = useState(defaultCategories);
   const [location, setLocation] = useState("");
   const [locLoading, setLocLoading] = useState(false);
   const [image, setImage] = useState(null);
@@ -38,42 +37,75 @@ export default function SubmitComplaintScreen({ navigation }) {
       }
       let loc = await Location.getCurrentPositionAsync({});
       setLocation(`Lat: ${loc.coords.latitude}, Long: ${loc.coords.longitude}`);
-    } catch (e) {
+    } 
+    catch (e) {
       setLocation("Could not get location");
     }
     setLocLoading(false);
   };
 
-  //Required fields before submit button can be pressed
+//Image picker
   const pickImage = async () => {
-    setImageLoading(true);
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  setImageLoading(true);
+  try {
+    const result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.7,
     });
-
-    // For SDK 49+, result.assets; for older, result.uri
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      setImage(result.assets[0].uri);
-    } else if (!result.canceled && result.uri) {
-      setImage(result.uri);
+    if (!result.canceled) {
+      const uri = result.assets ? result.assets[0].uri : result.uri;
+      setImage(uri);
     }
-    setImageLoading(false);
+  } 
+  catch (error) {
+    console.error("Error picking image:", error);
+  }
+  setImageLoading(false);
   };
 
   const handleRemoveImage = () => setImage(null);
 
+//Form validation (Can only submit if all fields are filled)
   const canSubmit =
     complaint.trim() !== "" &&
-    category.value.trim() !== "" &&
     location.trim() !== "" &&
     (anonymous || name.trim() !== "");
 
-  //Submit complaint
+//Submit complaint & image to backend
   const handleSubmit = async () => {
   if (!canSubmit) return;
+  let imageUrl = null;
+
+  //Upload image ti backend
+  if (image) {
+    try {
+      const formData = new FormData();
+      formData.append("image", {
+        uri: image,
+        name: "complaint_image.jpg",
+        type: "image/jpeg",
+      });
+
+      const uploadResponse = await fetch(`${API_URL}/api/upload-image`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        body: formData,
+      });
+
+      const uploadData = await uploadResponse.json();
+      imageUrl = uploadData.image_url; 
+    } 
+    catch (err) {
+      console.error("Error uploading image:", err);
+      alert("Failed to upload image. Please try again.");
+      return; 
+    }
+  }
+
+  //Submit complaint data to backend
   try {
     const response = await fetch(`${API_URL}/api/complaints`, {
       method: "POST",
@@ -95,7 +127,8 @@ export default function SubmitComplaintScreen({ navigation }) {
     setLocation("");
     setAnonymous(false);
     setImage(null);
-  } catch (err) {
+  } 
+  catch (err) {
     console.error("Error submitting complaint:", err);
     alert("Failed to submit complaint. Please try again.");
     }

@@ -32,14 +32,14 @@ def run_arrangement():
     location = data.get('location')
     category = data.get('category')
 
-    # Handle image upload
+    #Handle image upload (WIP)
     image_file = request.files.get('image')
     image_id = None
     if image_file:
         filename = secure_filename(image_file.filename)
         image_path = os.path.join(UPLOAD_FOLDER, filename)
         image_file.save(image_path)
-        image_id = filename  # can be used to retrieve the file later
+        image_id = filename  #can be used to retrieve the file later
 
     #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')

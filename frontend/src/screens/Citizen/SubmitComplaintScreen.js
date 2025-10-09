@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Picker, Switch, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Image, Switch, ActivityIndicator } from "react-native";
 import * as Location from "expo-location";
+import * as ImagePicker from "expo-image-picker";
 import Layout from "../../components/Layout";
 
 const defaultCategories = [
@@ -21,6 +22,8 @@ export default function SubmitComplaintScreen({ navigation }) {
   const [categories, setCategories] = useState(defaultCategories);
   const [location, setLocation] = useState("");
   const [locLoading, setLocLoading] = useState(false);
+  const [image, setImage] = useState(null);
+  const [imageLoading, setImageLoading] = useState(false);
 
   const handleGetLocation = async () => {
     setLocLoading(true);
@@ -44,6 +47,26 @@ export default function SubmitComplaintScreen({ navigation }) {
     if (newCat && !categories.includes(newCat)) setCategories([...categories, newCat]);
   };
 
+  const pickImage = async () => {
+    setImageLoading(true);
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.7,
+    });
+
+    // For SDK 49+, result.assets; for older, result.uri
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setImage(result.assets[0].uri);
+    } else if (!result.canceled && result.uri) {
+      setImage(result.uri);
+    }
+    setImageLoading(false);
+  };
+
+  const handleRemoveImage = () => setImage(null);
+
   const canSubmit =
     complaint.trim() !== "" &&
     category.trim() !== "" &&
@@ -52,14 +75,16 @@ export default function SubmitComplaintScreen({ navigation }) {
 
   const handleSubmit = () => {
     if (!canSubmit) return;
+    // Add image logic here (e.g., upload image to server or include in API)
     alert(
-      `Complaint submitted!\nName: ${anonymous ? "Anonymous" : name}\nComplaint: ${complaint}\nCategory: ${category}\nLocation: ${location}`
+      `Complaint submitted!\nName: ${anonymous ? "Anonymous" : name}\nComplaint: ${complaint}\nCategory: ${category}\nLocation: ${location}\nImage: ${image ? image : "No image"}`
     );
     setName("");
     setComplaint("");
     setCategory(categories[0]);
     setLocation("");
     setAnonymous(false);
+    setImage(null);
   };
 
   return (
@@ -126,6 +151,23 @@ export default function SubmitComplaintScreen({ navigation }) {
             {locLoading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.locBtnText}>Get Location</Text>}
           </TouchableOpacity>
         </View>
+        {/* IMAGE UPLOAD SECTION */}
+        <View style={styles.row}>
+          <Text style={styles.label}>Attach Image:</Text>
+          <TouchableOpacity onPress={pickImage} style={styles.imageBtn}>
+            <Text style={styles.imageBtnText}>{imageLoading ? "Loading..." : "Pick Image"}</Text>
+          </TouchableOpacity>
+          {image && (
+            <TouchableOpacity onPress={handleRemoveImage} style={styles.removeImageBtn}>
+              <Text style={styles.removeImageBtnText}>Remove</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        {image && (
+          <View style={{ alignItems: "center", marginBottom: 10 }}>
+            <Image source={{ uri: image }} style={{ width: 120, height: 120, borderRadius: 10 }} />
+          </View>
+        )}
         <View style={styles.btnRow}>
           <TouchableOpacity style={[styles.submitBtn, !canSubmit && { opacity: 0.5 }]} onPress={handleSubmit} disabled={!canSubmit}>
             <Text style={styles.submitBtnText}>Submit Complaint</Text>
@@ -206,4 +248,27 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   backBtnText: { color: "#11493f", fontWeight: "700", fontSize: 16 },
+  imageBtn: {
+    marginLeft: 10,
+    backgroundColor: "#197278",
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  imageBtnText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+  removeImageBtn: {
+    marginLeft: 10,
+    backgroundColor: "#c93a3a",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  removeImageBtnText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 13,
+  },
 });

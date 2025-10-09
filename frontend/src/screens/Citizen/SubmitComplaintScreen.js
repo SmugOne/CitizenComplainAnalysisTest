@@ -98,9 +98,8 @@ export default function SubmitComplaintScreen({ navigation }) {
   } catch (err) {
     console.error("Error submitting complaint:", err);
     alert("Failed to submit complaint. Please try again.");
-  }
-};
-};
+    }
+  };
 
   return (
     <Layout navigation={navigation}>
@@ -195,7 +194,7 @@ export default function SubmitComplaintScreen({ navigation }) {
       </View>
     </Layout>
   );
-
+};
 const styles = StyleSheet.create({
   card: { backgroundColor: "#fbf3df", padding: 22, borderRadius: 12, marginBottom: 18 },
   title: { fontSize: 28, textAlign: "center", fontWeight: "800", color: "#11493f" },

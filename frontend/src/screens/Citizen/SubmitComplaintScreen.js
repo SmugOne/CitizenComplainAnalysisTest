@@ -75,9 +75,10 @@ export default function SubmitComplaintScreen({ navigation }) {
 //Submit complaint & image to backend
   const handleSubmit = async () => {
   if (!canSubmit) return;
+  let imageId = null;
   let imageUrl = null;
 
-  //Upload image ti backend
+  //Upload image to backend
   if (image) {
     try {
       const formData = new FormData();
@@ -87,7 +88,7 @@ export default function SubmitComplaintScreen({ navigation }) {
         type: "image/jpeg",
       });
 
-      const uploadResponse = await fetch(`${API_URL}/api/upload-image`, {
+      const uploadResponse = await fetch(`${API_URL}/api/uploadImage`, {
         method: "POST",
         headers: {
           "Content-Type": "multipart/form-data",
@@ -96,12 +97,13 @@ export default function SubmitComplaintScreen({ navigation }) {
       });
 
       const uploadData = await uploadResponse.json();
-      imageUrl = uploadData.image_url; 
+      imageId = uploadData.imageId;
+      imageUrl = uploadData.imageUrl;
     } 
     catch (err) {
       console.error("Error uploading image:", err);
       alert("Failed to upload image. Please try again.");
-      return; 
+      return;
     }
   }
 
@@ -115,6 +117,8 @@ export default function SubmitComplaintScreen({ navigation }) {
         complaint: complaint,
         category: category.value,
         location: location,
+        imageID: imageId,
+        imageUrl: imageUrl,
       }),
     });
     const data = await response.json();

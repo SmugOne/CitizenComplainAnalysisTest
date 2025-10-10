@@ -4,11 +4,13 @@ from dotenv import load_dotenv
 import os
 import pandas as pd
 import joblib
+import uuid
 from oauth2client.service_account import ServiceAccountCredentials
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import make_pipeline
+from werkzeug.utils import secure_filename
 from transformers import pipeline
 
 #Connection:
@@ -21,6 +23,38 @@ os.makedirs("CSVFile", exist_ok=True)
 
 #BACKEND DEVELOPMENT ----------------------------------
 
+#Distribute Upload Folder
+Folder = 'uploads'
+os.makedirs(Folder, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = Folder
+
+#Image upload from ComplaintsFormScreen:
+@app.route('/api/uploadImage', methods=['POST'])
+def upload_image():
+    if 'image' not in request.files:
+        return jsonify({"error": "No image part in the request"}), 400
+
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    #Stores image with identifier
+    image = request.files['image']
+    filename = secure_filename(image.filename)
+    image_id = str(uuid.uuid4())  # unique ID for the image
+    saved_filename = f"{image_id}_{filename}"
+    image.save(os.path.join(app.config['UPLOAD_FOLDER'], saved_filename))
+
+    #push image_id into database
+    return jsonify({
+        "message": "Image uploaded successfully",
+        "imageId": image_id,
+        "file_name": saved_filename,
+        "imageUrl": f"/uploads/{saved_filename}"
+    })
+
+
+
 #Flask-React Connect and Assign from ComplaintsFormScreen:
 @app.route('/api/complaints', methods=['POST'])
 def run_arrangement():
@@ -31,15 +65,7 @@ def run_arrangement():
     complaint = data.get('complaint')
     location = data.get('location')
     category = data.get('category')
-
-    #Handle image upload (WIP)
-    image_file = request.files.get('image')
-    image_id = None
-    if image_file:
-        filename = secure_filename(image_file.filename)
-        image_path = os.path.join(UPLOAD_FOLDER, filename)
-        image_file.save(image_path)
-        image_id = filename  #can be used to retrieve the file later
+    imageID = data.get('imageID')  
 
     #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
@@ -57,6 +83,7 @@ def run_arrangement():
         'Raw Complaint': complaint,
         'Location': str(location) if location else '',
         'Category': str(category) if category else '',
+        'Image ID': str(imageID) if imageID else '',
     }
     Database = pd.concat([Database, pd.DataFrame([new_row])], ignore_index=True)
 
@@ -95,7 +122,7 @@ def Main():
     y_agency = Training_Data['Government Agency']
 
     #Train the model for agency prediction
-    AgencyModel = make_pipeline(
+    AgencyModel = make_pipeline( 
         CountVectorizer(lowercase=True),
         MultinomialNB()
     )
@@ -196,6 +223,7 @@ def get_complaints():
     df = df.replace({pd.NA: None, pd.NaT: None, float('nan'): None})
 
     return jsonify(df.to_dict(orient='records')) 
+
 
 
 #Back and Front end connection:

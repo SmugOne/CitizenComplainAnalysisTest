@@ -23,10 +23,10 @@ os.makedirs("CSVFile", exist_ok=True)
 
 #BACKEND DEVELOPMENT ----------------------------------
 
-#Distribute Upload Folder
-Folder = 'uploads'
-os.makedirs(Folder, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = Folder
+#Image Folder:
+ImageFolder = os.path.join(os.getcwd(),'ImageFolder')
+os.makedirs(ImageFolder, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = ImageFolder
 
 #Image upload from ComplaintsFormScreen:
 @app.route('/api/uploadImage', methods=['POST'])
@@ -45,7 +45,7 @@ def upload_image():
     saved_filename = f"{imageId}_{filename}"
     image.save(os.path.join(app.config['UPLOAD_FOLDER'], saved_filename))
 
-    #push imageid into database
+    #push imageid into Image Folder
     return jsonify({
         "message": "Image uploaded successfully",
         "imageId": imageId,

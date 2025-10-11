@@ -41,14 +41,14 @@ def upload_image():
     #Stores image with identifier
     image = request.files['image']
     filename = secure_filename(image.filename)
-    image_id = str(uuid.uuid4())  # unique ID for the image
-    saved_filename = f"{image_id}_{filename}"
+    imageId = str(uuid.uuid4())  # unique ID for the image
+    saved_filename = f"{imageId}_{filename}"
     image.save(os.path.join(app.config['UPLOAD_FOLDER'], saved_filename))
 
-    #push image_id into database
+    #push imageid into database
     return jsonify({
         "message": "Image uploaded successfully",
-        "imageId": image_id,
+        "imageId": imageId,
         "file_name": saved_filename,
         "imageUrl": f"/uploads/{saved_filename}"
     })

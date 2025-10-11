@@ -176,7 +176,7 @@ export default function SubmitComplaintScreen({ navigation }) {
                 setCategory(categories.find((cat) => cat.value === e.target.value))
               }
             >
-              {categories.map((cat) => (
+              {defaultCategories.map((cat) => (
                 <option key={cat.value} value={cat.value}>
                   {cat.label}
                 </option>
@@ -190,7 +190,7 @@ export default function SubmitComplaintScreen({ navigation }) {
                 setCategory(categories.find((cat) => cat.value === value))
               }
             >
-              {categories.map((cat) => (
+              {defaultCategories.map((cat) => (
                 <Picker.Item label={cat.label} value={cat.value} key={cat.value} />
               ))}
             </Picker>

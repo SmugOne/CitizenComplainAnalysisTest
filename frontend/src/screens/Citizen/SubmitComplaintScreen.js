@@ -69,7 +69,6 @@ export default function SubmitComplaintScreen({ navigation }) {
 //Form validation (Can only submit if all fields are filled)
   const canSubmit =
     complaint.trim() !== "" &&
-    location.trim() !== "" &&
     (anonymous || name.trim() !== "");
 
 //Submit complaint & image to backend

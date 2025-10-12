@@ -1,4 +1,4 @@
-ID,Name,Complaint,Location,Anger Score,Fear Score,Joy Score,Neutral Score,Sadness Score,Surprise Score,Predicted Agency,Flagged Words,Image ID,Status
+ID,Name,Complaint,Location,Anger Score,Fear Score,Joy Score,Neutral Score,Sadness Score,Surprise Score,Predicted Agency,Flagged Words,Image ID,Complaint Status
 10,Anonymous,There's corruption going on at the school branch with a principal,,0.924421533,0.005845194,0.026082217,0.017295548,0.010126595,0.016228913,MMDA,TRUE,,
 2,Mark Lawrence,May kurakot dito sa barangay,,0.006032907,0.791007255,0.002451114,0.156035924,0.006344409,0.038128391,PNP,TRUE,,
 36,Anonymous,I think there's corruption within the police,"Lat: 14.4048128, Long: 120.979456",0.589730947,0.030275602,0.173439342,0.115830525,0.052663133,0.03806045,MMDA,TRUE,,

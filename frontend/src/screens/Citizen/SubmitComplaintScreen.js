@@ -118,6 +118,7 @@ export default function SubmitComplaintScreen({ navigation }) {
         location: location,
         imageID: imageId,
         imageUrl: imageUrl,
+        status: "UNSOLVED",
       }),
     });
     const data = await response.json();

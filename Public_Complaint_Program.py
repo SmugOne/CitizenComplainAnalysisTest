@@ -66,6 +66,7 @@ def run_arrangement():
     location = data.get('location')
     category = data.get('category')
     imageID = data.get('imageID')  
+    status = data.get('status') or "UNSOLVED" 
 
     #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
@@ -84,6 +85,7 @@ def run_arrangement():
         'Location': str(location) if location else '',
         'Category': str(category) if category else '',
         'Image ID': str(imageID) if imageID else '',
+        'Status': status,
     }
     Database = pd.concat([Database, pd.DataFrame([new_row])], ignore_index=True)
 
@@ -201,7 +203,7 @@ def Main():
         'ID', 'Name', 'Complaint', 'Location',
         'Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score',
         'Sadness Score', 'Surprise Score',
-        'Predicted Agency', 'Flagged Words', 'Image ID',
+        'Predicted Agency', 'Flagged Words', 'Image ID', 'Complaint Status',
     ]]
 
     #Save and return file
@@ -214,15 +216,13 @@ def Main():
 def get_complaints():
     try:
         df = pd.read_csv('CSVFile/ArrangedData.csv')
+        df = df.fillna('')
     except FileNotFoundError:
         df = Main()
 
     # Replace all NaN, NaT, and pd.NA values with None
     df = df.replace({pd.NA: None, pd.NaT: None, float('nan'): None})
-
     return jsonify(df.to_dict(orient='records')) 
-
-
 
 #Back and Front end connection:
 if __name__ == '__main__':

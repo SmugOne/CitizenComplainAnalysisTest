@@ -203,7 +203,7 @@ def Main():
         'ID', 'Name', 'Complaint', 'Location',
         'Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score',
         'Sadness Score', 'Surprise Score',
-        'Predicted Agency', 'Flagged Words', 'Image ID', 'Complaint Status',
+        'Predicted Agency', 'Flagged Words', 'Image ID', 'Status',
     ]]
 
     #Save and return file

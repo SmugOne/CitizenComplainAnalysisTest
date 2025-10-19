@@ -10,9 +10,9 @@ import ComplaintStatusScreen from "../../screens/Citizen/ComplaintStatusScreen";
 import AboutScreen from "../../screens/Citizen/AboutScreen";
 
 // Admin Screens
-import AdminLoginScreen from "../../screens/Citizen/Admin/AdminLoginScreen";
-import DashboardScreen from "../../screens/Citizen/Admin/DashboardScreen";
-import ComplaintListScreen from "../../screens/Citizen/Admin/ComplaintListScreen";
+// import AdminLoginScreen from "../../screens/Citizen/Admin/AdminLoginScreen";
+// import DashboardScreen from "../../screens/Citizen/Admin/DashboardScreen";
+// import ComplaintListScreen from "../../screens/Citizen/Admin/ComplaintListScreen";
 
 const Stack = createStackNavigator();
 
@@ -28,9 +28,9 @@ export default function AppNavigator() {
         <Stack.Screen name="AboutScreen" component={AboutScreen} />
 
         {/* Admin routes */}
-        <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
+        {/* <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
         <Stack.Screen name="AdminDashboard" component={DashboardScreen} />
-        <Stack.Screen name="ComplaintList" component={ComplaintListScreen} />
+        <Stack.Screen name="ComplaintList" component={ComplaintListScreen} /> */}
       </Stack.Navigator>
     </NavigationContainer>
   );

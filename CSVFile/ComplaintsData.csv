@@ -1,46 +1,52 @@
-ID,Name,Raw Complaint,Location,Status,Category,Image ID,Status
-1,John Doe,Mabagal ang serbisyo dito sa ospital!,,,,,UNSOLVED
-2,Mark Lawrence,May kurakot dito sa barangay,,,,,UNSOLVED
-3,Amaron Karl,Ang laki na ng sunog! Asan yung bumbero!?,,,,,UNSOLVED
-4,Von Der Hugg,Theres a widespread corruption within the Department of Health,,,,,UNSOLVED
-5,Sterner Marina,May nagkakalat,,,,,UNSOLVED
-6,Mikko Samis,Maraming naipon na basura dito,,,,,UNSOLVED
-7,Daniel Maki,Mabagal traffic dito,,,,,UNSOLVED
-8,Powell Corana,Grabe! Ang bagal dito ng usad ng trapiko dito sa amin!,,,,,UNSOLVED
-9,Anonymous,Theres garbage on the street,,,,,UNSOLVED
-10,Anonymous,There's corruption going on at the school branch with a principal,,,,,UNSOLVED
-11,Mark Mike,There's lack of water in my area,"{'accuracy': 100, 'longitude': 120.9788143, 'altitude': 101.80000305175781, 'heading': 0, 'latitude': 14.3756576, 'altitudeAccuracy': 100, 'speed': 0}",,,,UNSOLVED
-12,Anonymous,Slow wifi,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}",,,,UNSOLVED
-13,Anonymous,My area lacked water supplies! ,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}",,,,UNSOLVED
-14,Anonymous,Water supplies are low here! Where is government intervention?? ,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}",,,,UNSOLVED
-15,Ace,Too many corrupt officers in our school,"{'accuracy': 20, 'longitude': 120.9268819, 'altitude': 60.89999771118164, 'heading': 0, 'latitude': 14.4055953, 'altitudeAccuracy': 2.5460093021392822, 'speed': 0}",,,,UNSOLVED
-16,Anonymous,education quality is low,"{'accuracy': 17.464000701904297, 'longitude': 120.9268788, 'altitude': 60.89999771118164, 'heading': 0, 'latitude': 14.4055957, 'altitudeAccuracy': 1.9850099086761475, 'speed': 0}",,,,UNSOLVED
-17,Anonymous,madaming kurakot,Imus,,,,UNSOLVED
-18,Ace,corrupt barangay officials in imus cavite,Imus,,,,UNSOLVED
-19,Anonymous,corrupt,Imus,,,,UNSOLVED
-20,vincent,pogi,Imus,,,,UNSOLVED
-21,Vincent ,pogi,Imus,,,,UNSOLVED
-22,Anonymous,Inaabuso ang pondo ng bayan,Bacoor,,,,UNSOLVED
-23,Anonymous,corrupt,Dasmariñas,,,,UNSOLVED
-24,Hansel Mark,We have constant blackouts,Dasmariñas,,,,UNSOLVED
-25,JP,Mababang quality ng education,Dasmariñas,,,,UNSOLVED
-26,Ace,Abusong mga officers sa barangay,Dasmariñas,,,,UNSOLVED
-27,JP,Abusive officers,Dasmariñas,,,,UNSOLVED
-28,ac,smpl,Dasmariñas,,,,UNSOLVED
-29,Anonymous,Lack of water,Dasmariñas,,,,UNSOLVED
-30,Anonymous,sample,,,,,UNSOLVED
-31,John Test,The road is rough,"Lat: 14.4048128, Long: 120.979456",Infrastructure,,,UNSOLVED
-32,Anonymous,I saw trash in the street!,"Lat: 14.4048128, Long: 120.979456",Environment,,,UNSOLVED
-33,Anonymous,I saw trash in the street!,"Lat: 14.4048128, Long: 120.979456",Environment,,,UNSOLVED
-34,Anonymous,I saw trash in the street!,"Lat: 14.4048128, Long: 120.979456",Environment,,,UNSOLVED
-35,Anonymous,I saw trash in the street!,"Lat: 14.4048128, Long: 120.979456",Environment,,,UNSOLVED
-36,Anonymous,I think there's corruption within the police,"Lat: 14.4048128, Long: 120.979456",Safety & Security,,,UNSOLVED
-37,Anonymous,I think the bridge is about to break!,"Lat: 14.4048128, Long: 120.979456",Infrastructure,,,UNSOLVED
-38,Testerman,I think may nangaabuso ng flood control projects,"Lat: 14.4048128, Long: 120.979456",Infrastructure,,,UNSOLVED
-39,Anonymous,My neighbor is noisy!,"Lat: 14.4048128, Long: 120.979456",Community Concerns,,,UNSOLVED
-40,Anonymous,Theres flood,"Lat: 14.3415351, Long: 120.9560698",Infrastructure,,,UNSOLVED
-41,Anonymous,There is something bothering me in the road,"Lat: 14.4048128, Long: 120.9827328",,Safety & Security,,UNSOLVED
-42,Anonymous,Theres garbage on the street,"Lat: 14.4048128, Long: 120.9827328",,DENR,,UNSOLVED
-43,Anonymous,Theres damage on the sidewalk,"Lat: 14.3757583, Long: 120.9788229",,DPWH,,UNSOLVED
-44,Anonymous,The sidewalk is destroyed,"Lat: 14.4048128, Long: 120.9827328",,DPWH,,UNSOLVED
-45,Anonymous,Theres corruption within the police,"Lat: 14.4048128, Long: 120.9827328",,OMBUDSMAN,,UNSOLVED
+ID,Name,Raw Complaint,Location,Status,Category,Image ID
+1,John Doe,Mabagal ang serbisyo dito sa ospital!,,UNSOLVED,,
+2,Mark Lawrence,May kurakot dito sa barangay,,UNSOLVED,,
+3,Amaron Karl,Ang laki na ng sunog! Asan yung bumbero!?,,UNSOLVED,,
+4,Von Der Hugg,Theres a widespread corruption within the Department of Health,,UNSOLVED,,
+5,Sterner Marina,May nagkakalat,,UNSOLVED,,
+6,Mikko Samis,Maraming naipon na basura dito,,UNSOLVED,,
+7,Daniel Maki,Mabagal traffic dito,,UNSOLVED,,
+8,Powell Corana,Grabe! Ang bagal dito ng usad ng trapiko dito sa amin!,,UNSOLVED,,
+9,Anonymous,Theres garbage on the street,,UNSOLVED,,
+10,Anonymous,There's corruption going on at the school branch with a principal,,UNSOLVED,,
+11,Mark Mike,There's lack of water in my area,"{'accuracy': 100, 'longitude': 120.9788143, 'altitude': 101.80000305175781, 'heading': 0, 'latitude': 14.3756576, 'altitudeAccuracy': 100, 'speed': 0}",UNSOLVED,,
+12,Anonymous,Slow wifi,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}",UNSOLVED,,
+13,Anonymous,My area lacked water supplies! ,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}",UNSOLVED,,
+14,Anonymous,Water supplies are low here! Where is government intervention?? ,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}",UNSOLVED,,
+15,Ace,Too many corrupt officers in our school,"{'accuracy': 20, 'longitude': 120.9268819, 'altitude': 60.89999771118164, 'heading': 0, 'latitude': 14.4055953, 'altitudeAccuracy': 2.5460093021392822, 'speed': 0}",UNSOLVED,,
+16,Anonymous,education quality is low,"{'accuracy': 17.464000701904297, 'longitude': 120.9268788, 'altitude': 60.89999771118164, 'heading': 0, 'latitude': 14.4055957, 'altitudeAccuracy': 1.9850099086761475, 'speed': 0}",UNSOLVED,,
+17,Anonymous,madaming kurakot,Imus,UNSOLVED,,
+18,Ace,corrupt barangay officials in imus cavite,Imus,UNSOLVED,,
+19,Anonymous,corrupt,Imus,UNSOLVED,,
+20,vincent,pogi,Imus,UNSOLVED,,
+21,Vincent ,pogi,Imus,UNSOLVED,,
+22,Anonymous,Inaabuso ang pondo ng bayan,Bacoor,UNSOLVED,,
+23,Anonymous,corrupt,Dasmariñas,UNSOLVED,,
+24,Hansel Mark,We have constant blackouts,Dasmariñas,UNSOLVED,,
+25,JP,Mababang quality ng education,Dasmariñas,UNSOLVED,,
+26,Ace,Abusong mga officers sa barangay,Dasmariñas,UNSOLVED,,
+27,JP,Abusive officers,Dasmariñas,UNSOLVED,,
+28,ac,smpl,Dasmariñas,UNSOLVED,,
+29,Anonymous,Lack of water,Dasmariñas,UNSOLVED,,
+30,Anonymous,sample,,UNSOLVED,,
+31,John Test,The road is rough,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,
+32,Anonymous,I saw trash in the street!,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,
+33,Anonymous,I saw trash in the street!,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,
+34,Anonymous,I saw trash in the street!,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,
+35,Anonymous,I saw trash in the street!,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,
+36,Anonymous,I think there's corruption within the police,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,
+37,Anonymous,I think the bridge is about to break!,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,
+38,Testerman,I think may nangaabuso ng flood control projects,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,
+39,Anonymous,My neighbor is noisy!,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,
+40,Anonymous,Theres flood,"Lat: 14.3415351, Long: 120.9560698",UNSOLVED,,
+41,Anonymous,There is something bothering me in the road,"Lat: 14.4048128, Long: 120.9827328",UNSOLVED,,
+42,Anonymous,Theres garbage on the street,"Lat: 14.4048128, Long: 120.9827328",UNSOLVED,,
+43,Anonymous,Theres damage on the sidewalk,"Lat: 14.3757583, Long: 120.9788229",UNSOLVED,,
+44,Anonymous,The sidewalk is destroyed,"Lat: 14.4048128, Long: 120.9827328",UNSOLVED,,
+45,Anonymous,Theres corruption within the police,"Lat: 14.4048128, Long: 120.9827328",UNSOLVED,,
+46,Anonymous,Theres trash in my area,,UNSOLVED,,
+47,Anonymous,Theres trash in my area,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,
+48,Anonymous,Theres flooding in my area,,UNSOLVED,,
+49,Anonymous,Theres brownout in my place,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,
+50,Anonymous,Malubak ang kalsada,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,
+51,Anonymous,Makalat yung lugar,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,

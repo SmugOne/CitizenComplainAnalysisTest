@@ -61,11 +61,11 @@ def run_arrangement():
 
     #Distribute Data from ComplaintsFormScreen
     data = request.get_json()
-    name = data.get('name')
-    complaint = data.get('complaint')
-    location = data.get('location')
-    category = data.get('category')
-    imageID = data.get('imageID')  
+    name = data.get('name') or 'Anonymous'
+    complaint = data.get('complaint') or ''
+    location = data.get('location') or ''
+    category = data.get('category') or ''
+    imageID = data.get('imageID') or ''
     status = data.get('status') or "UNSOLVED" 
 
     #Datasets:
@@ -82,12 +82,13 @@ def run_arrangement():
         'ID': ID,
         'Name': name,
         'Raw Complaint': complaint,
-        'Location': str(location) if location else '',
-        'Category': str(category) if category else '',
-        'Image ID': str(imageID) if imageID else '',
-        'Status': status,
+        'Location': str(location),
+        'Category': str(category),
+        'Image ID': str(imageID),
+        'Status': str(status),
     }
     Database = pd.concat([Database, pd.DataFrame([new_row])], ignore_index=True)
+    Database = Database.fillna('')
 
     #Save updated database and returns it
     Database.to_csv("CSVFile/ComplaintsData.csv", index=False, encoding='cp1252')
@@ -104,7 +105,11 @@ def run_arrangement():
 def Main():
     #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
+    Database = Database.fillna('')
     Training_Data = pd.read_csv("CSVFile/TrainingDataset.csv", encoding='cp1252')
+
+    #Set Status if empty
+    Database['Status'] = Database['Status'].replace('', 'UNSOLVED')
 
     #Training Model (Emotion):
     Training_Data['Emotion'] = Training_Data['Emotion'].str.strip().str.lower()

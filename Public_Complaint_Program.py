@@ -67,6 +67,7 @@ def run_arrangement():
     category = data.get('category') or ''
     imageID = data.get('imageID') or ''
     status = data.get('status') or "UNSOLVED" 
+    password = data.get('password') or ''
 
     #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
@@ -86,6 +87,7 @@ def run_arrangement():
         'Category': str(category),
         'Image ID': str(imageID),
         'Status': str(status),
+        'Password': str(password),
     }
     Database = pd.concat([Database, pd.DataFrame([new_row])], ignore_index=True)
     Database = Database.fillna('')
@@ -97,7 +99,7 @@ def run_arrangement():
     #Message to user if complaint submission is successful (used on SubmitComplaintScreen.js)
     return jsonify({
         "id": int(ID),
-        "message": "Complaint submitted! Check your ID to track its status."
+        "message": "Complaint submitted! Take a screenshot or a picture of the ID and password below to track its status."
     })
 
 
@@ -208,7 +210,7 @@ def Main():
         'ID', 'Name', 'Complaint', 'Location',
         'Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score',
         'Sadness Score', 'Surprise Score',
-        'Predicted Agency', 'Flagged Words', 'Image ID', 'Status',
+        'Predicted Agency', 'Flagged Words', 'Image ID', 'Status', 'Password',
     ]]
 
     #Save and return file
@@ -225,8 +227,13 @@ def get_complaints():
     except FileNotFoundError:
         df = Main()
 
-    # Replace all NaN, NaT, and pd.NA values with None
+    #Replace all NaN, NaT, and pd.NA values with None
     df = df.replace({pd.NA: None, pd.NaT: None, float('nan'): None})
+
+    #Ensure ID is int
+    df['ID'] = df['ID'].astype(str).str.strip().replace('', '0')
+    df['ID'] = df['ID'].apply(lambda x: str(int(float(x))) if x.replace('.', '', 1).isdigit() else x)
+
     return jsonify(df.to_dict(orient='records')) 
 
 #Back and Front end connection:

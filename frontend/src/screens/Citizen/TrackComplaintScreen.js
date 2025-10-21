@@ -1,30 +1,66 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from "react-native";
 import Layout from "../../components/Layout";
-
-const demoStatusDB = {
-  "C-00123": "Resolved",
-  "C-00124": "In Progress",
-};
+import { API_URL } from "@env";
 
 export default function TrackComplaintScreen({ route, navigation }) {
   const [inputId, setInputId] = useState(route?.params?.complaintId || "");
-  const [status, setStatus] = useState("");
+  const [complaint, setComplaint] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [isPasswordStep, setIsPasswordStep] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
 
-  const handleTrack = () => {
+  const handleTrack = async () => {
     if (!inputId.trim()) {
-      setStatus("");
+      setComplaint(null);
       setError("Please enter a Complaint ID.");
       return;
     }
-    if (demoStatusDB[inputId.trim()]) {
-      setStatus(demoStatusDB[inputId.trim()]);
+
+    setLoading(true);
+    setError("");
+    setComplaint(null);
+    setIsPasswordStep(false);
+    setIsVerified(false);
+
+    try {
+      const response = await fetch(`${API_URL}/api/complaints`);
+      const data = await response.json();
+
+      const found = data.find(
+        (item) => parseInt(item.ID) === parseInt(inputId.trim())
+      );
+
+      if (found) {
+        setComplaint(found);
+        setIsPasswordStep(true); // Now show password input
+        setError("");
+      } else {
+        setError("No complaint found with that ID.");
+      }
+    } catch (err) {
+      console.error("Error fetching complaints:", err);
+      setError("Unable to connect to the server.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordCheck = () => {
+    if (passwordInput.trim() === complaint.Password) {
+      setIsVerified(true);
       setError("");
     } else {
-      setStatus("");
-      setError("No complaint found with that ID.");
+      setError("Incorrect password. Please try again.");
     }
+  };
+
+  const renderStatus = (status) => {
+    if (status === "UNSOLVED") return "Under Review";
+    if (status === "SOLVED") return "Resolved";
+    return "Under Review";
   };
 
   return (
@@ -35,6 +71,7 @@ export default function TrackComplaintScreen({ route, navigation }) {
           Enter your complaint ID below to check the status of your complaint.
         </Text>
       </View>
+
       <View style={styles.trackBox}>
         <Text style={styles.label}>Complaint ID:</Text>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -43,22 +80,61 @@ export default function TrackComplaintScreen({ route, navigation }) {
             value={inputId}
             onChangeText={setInputId}
             placeholder="Enter Complaint ID"
+            keyboardType="numeric"
           />
           <TouchableOpacity style={styles.trackBtn} onPress={handleTrack}>
-            <Text style={styles.trackBtnText}>Track</Text>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.trackBtnText}>Track</Text>
+            )}
           </TouchableOpacity>
         </View>
+
+        {/* Error message */}
         {error ? (
           <View style={styles.resultCard}>
             <Text style={[styles.statusText, { color: "red" }]}>{error}</Text>
           </View>
-        ) : status ? (
-          <View style={styles.resultCard}>
-            <Text style={[styles.statusText, { color: "#197278" }]}>
-              Complaint Status: {status}
-            </Text>
-          </View>
         ) : null}
+
+        {/* Password step */}
+        {isPasswordStep && !isVerified && (
+          <View style={styles.resultCard}>
+            <Text style={styles.statusText}>
+              Enter the password for Complaint ID {complaint.ID}:
+            </Text>
+            <TextInput
+              style={[styles.input, { marginTop: 10, width: "100%" }]}
+              value={passwordInput}
+              onChangeText={setPasswordInput}
+              placeholder="Enter Password"
+              secureTextEntry
+            />
+            <TouchableOpacity
+              style={[styles.trackBtn, { marginTop: 10 }]}
+              onPress={handlePasswordCheck}
+            >
+              <Text style={styles.trackBtnText}>Submit</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Verified complaint details */}
+        {isVerified && complaint && (
+          <View style={styles.resultCard}>
+            <Text style={styles.statusTitle}>Complaint ID: {complaint.ID}</Text>
+            <Text style={styles.complaintText}>{complaint.Complaint}</Text>
+            <Text style={styles.statusText}>
+              Status: {renderStatus(complaint.Status)}
+            </Text>
+            {complaint.PredictedAgency ? (
+              <Text style={styles.agencyText}>
+                Assigned Agency: {complaint.PredictedAgency}
+              </Text>
+            ) : null}
+          </View>
+        )}
       </View>
     </Layout>
   );
@@ -67,6 +143,7 @@ export default function TrackComplaintScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   card: { backgroundColor: "#fbf3df", padding: 22, borderRadius: 12, marginBottom: 18 },
   title: { fontSize: 28, textAlign: "center", fontWeight: "800", color: "#11493f" },
+
   subtitle: { marginTop: 8, textAlign: "center", color: "#11493f" },
   trackBox: {
     backgroundColor: "#fff",
@@ -93,11 +170,14 @@ const styles = StyleSheet.create({
   },
   trackBtnText: { color: "#fff", fontWeight: "bold" },
   resultCard: {
-    backgroundColor: "#e8f0ea",
+    backgroundColor: "#ffffffff",
     padding: 10,
     borderRadius: 6,
     marginTop: 10,
     alignItems: "center",
   },
-  statusText: { color: "#11493f", fontStyle: "italic" },
+  statusTitle: {color: "#197278", fontWeight: "700", fontSize: 18, marginBottom: 6,},
+  complaintText: {color: "#11493f", fontSize: 16, textAlign: "center", marginBottom: 8,},
+  statusText: { color: "#11493f", fontWeight: "700", fontSize: 18 },
+  agencyText: { color: "#197278", fontStyle: "italic", marginTop: 5 },
 });

@@ -26,6 +26,16 @@ export default function SubmitComplaintScreen({ navigation }) {
   const [image, setImage] = useState(null);
   const [imageLoading, setImageLoading] = useState(false);
 
+  //Random 5-letter password generator
+  const generatePassword = () => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let pass = "";
+  for (let i = 0; i < 5; i++) {
+    pass += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return pass;
+};
+
   const handleGetLocation = async () => {
     setLocLoading(true);
     try {
@@ -76,6 +86,7 @@ export default function SubmitComplaintScreen({ navigation }) {
   if (!canSubmit) return;
   let imageId = null;
   let imageUrl = null;
+  const generatedPassword = generatePassword();
 
   //Upload image to backend
   if (image) {
@@ -119,15 +130,23 @@ export default function SubmitComplaintScreen({ navigation }) {
         imageID: imageId,
         imageUrl: imageUrl,
         status: "UNSOLVED",
+        password: generatedPassword,
       }),
     });
+
+    //alerts user after submitting complaint
     const data = await response.json();
-    alert(`${data.message}\nComplaint ID: ${data.id}`); //See Public_Complaint_Program.py at return jsonify
+    alert(
+      `Complaint submitted! Please take a screenshot or picture of the COMPLAINT ID and PASSWORD to track its status.\n\n` +
+      `  \n` +
+      `COMPLAINT ID: ${data.id}\n` +
+      `PASSWORD: ${generatedPassword}`
+    );
 
     //Reset form after success(?)
     setName("");
     setComplaint("");
-    setCategory(categories[0]);
+    setCategory(defaultCategories[0]);
     setLocation("");
     setAnonymous(false);
     setImage(null);

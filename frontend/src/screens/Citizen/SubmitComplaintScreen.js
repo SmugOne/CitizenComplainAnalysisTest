@@ -31,7 +31,7 @@ export default function SubmitComplaintScreen({ navigation }) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let pass = "";
   for (let i = 0; i < 5; i++) {
-    pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    pass = pass + chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return pass;
 };

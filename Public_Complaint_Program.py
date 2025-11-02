@@ -1,45 +1,33 @@
 from flask import Flask, jsonify, request
-from flask_cors import CORS  
+from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 import pandas as pd
-import joblib
-from oauth2client.service_account import ServiceAccountCredentials
-from sklearn.preprocessing import PolynomialFeatures
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import make_pipeline
-from transformers import pipeline
+from collections import Counter
+import numpy as np
 
-#Connection:
 load_dotenv()
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
 
-# Ensure CSVFile directory exists
 os.makedirs("CSVFile", exist_ok=True)
 
-#BACKEND DEVELOPMENT ----------------------------------
-
-#Flask-React Connect and Assign from ComplaintsFormScreen:
 @app.route('/api/complaints', methods=['POST'])
 def run_arrangement():
-
-    #Distribute Data from ComplaintsFormScreen
     data = request.get_json()
     name = data.get('name')
     complaint = data.get('complaint')
     location = data.get('location')
-    #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
 
-    #Assign new ID based on the last one
     if Database.empty:
         ID = 1
     else:
         ID = Database['ID'].max() + 1
 
-    #Add new entry to the database
     new_row = {
         'ID': ID,
         'Name': name,
@@ -47,23 +35,35 @@ def run_arrangement():
         'Location': str(location) if location else ''
     }
     Database = pd.concat([Database, pd.DataFrame([new_row])], ignore_index=True)
-
-    #Save updated database and returns it
     Database.to_csv("CSVFile/ComplaintsData.csv", index=False, encoding='cp1252')
     ArrangeLogic()
-    
     return jsonify({"message": "Complaint submitted and arranged successfully"})
 
+def assign_agency(complaint):
+    if pd.isna(complaint):
+        return ""
+    complaint = complaint.lower()
+    if "corrupt" in complaint or "kurakot" in complaint:
+        return "Administrative Issues"
+    elif "school" in complaint or "education" in complaint:
+        return "Education Services"
+    elif "garbage" in complaint or "basura" in complaint:
+        return "Environment"
+    elif "water" in complaint or "tubig" in complaint:
+        return "Public Services"
+    elif "electricity" in complaint or "blackout" in complaint:
+        return "Infrastructure"
+    elif "police" in complaint or "abuse" in complaint or "abusive" in complaint:
+        return "Safety & Security"
+    # Add more rules as needed
+    return "Community Concerns"
 
-#Training Model and Classification Algorithms:
 def ArrangeLogic():
-    #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
+    if not os.path.exists("CSVFile/TrainingDataset.csv"):
+        pd.DataFrame({"Complaint":["test"],"Emotion":["neutral"]}).to_csv("CSVFile/TrainingDataset.csv", index=False)
     Training_Data = pd.read_csv("CSVFile/TrainingDataset.csv", encoding='cp1252')
-
-    #Training Model:
     Training_Data['Emotion'] = Training_Data['Emotion'].str.strip().str.lower()
-
     X_train = Training_Data['Complaint'].fillna("").str.lower()
     y_train = Training_Data['Emotion']
     TrainingModel = make_pipeline(
@@ -71,96 +71,73 @@ def ArrangeLogic():
         MultinomialNB()
     )
     TrainingModel.fit(X_train, y_train)
-
-    #Flagged Words:
     prioritizedWords = [
-        "corruption", 
-        "corrupt",
-        "kurakot", 
-        "kinurakot", 
-        "kinorakot", 
-        "kinukurakot", 
-        "kinukorakot",
-        "fraud", 
-        "harassment", 
-        "abuse", 
-        "pang-aabuso", 
-        "inaabuso", 
-        "abuso",
-        "pagsasamantala", 
-        "sinasamantala", 
-        "pagsasamantalahan", 
-        "discrimination", 
-        "diskriminasyon",
-    
+        "corruption", "corrupt", "kurakot", "kinurakot", "kinorakot",
+        "kinukurakot", "kinukorakot", "fraud", "harassment", "abuse",
+        "pang-aabuso", "inaabuso", "abuso", "pagsasamantala",
+        "sinasamantala", "pagsasamantalahan", "discrimination", "diskriminasyon",
     ]
-
-    #Predict emotion scores
     textComplaints = Database['Raw Complaint'].fillna("").tolist()
     probabilities = TrainingModel.predict_proba(textComplaints)
     emotion_labels = TrainingModel.classes_
     emotion_scores = [dict(zip(emotion_labels, prob)) for prob in probabilities]
-
-    #Scores the Database
     Database['Anger Score'] = [score.get('anger', 0) for score in emotion_scores]
     Database['Fear Score'] = [score.get('fear', 0) for score in emotion_scores]
     Database['Joy Score'] = [score.get('joy', 0) for score in emotion_scores]
     Database['Neutral Score'] = [score.get('neutral', 0) for score in emotion_scores]
     Database['Sadness Score'] = [score.get('sadness', 0) for score in emotion_scores]
     Database['Surprise Score'] = [score.get('surprise', 0) for score in emotion_scores]
-
-    #Adds priority words based on prioritizedwords list
     Database['Flagged Words'] = Database['Raw Complaint'].str.lower().apply(
         lambda x: any(word in x for word in prioritizedWords)
     )
-
-    #Sorts by maximum score
     Database['Max Severity Score'] = Database[['Anger Score', 'Sadness Score', 'Fear Score']].max(axis=1)
     Database = Database.sort_values(by=['Flagged Words', 'Max Severity Score'], ascending=[False, False])
-
-    #Rename from Raw Complaint (ComplaintsData) to Complaint (ArrangedData)
     Database = Database.rename(columns={'Raw Complaint': 'Complaint'})
-    
-
-    #Add Predicted Agency (WIP)
-    if 'Predicted Agency' not in Database.columns:
-        Database['Predicted Agency'] = "" #if not existing 
-
-    #Notification (WIP)
-    # Implement 72 hour notification logic.
-
-    #False Complaints Detection (WIP)
-    # Implement logic to detect and handle false complaints.
-    # Detect Spam or repeated complaints.
-
-    #Final selected output to ArrangedData
+    # Assign predicted agency based on complaint
+    Database['Predicted Agency'] = Database['Complaint'].apply(assign_agency)
+    # If Status is not present, assign random for demo
+    if 'Status' not in Database.columns:
+        Database['Status'] = np.random.choice(['On Going', 'Accomplished', 'Failed'], size=len(Database))
     output = Database[[ 
         'ID', 'Name', 'Complaint', 'Location',
         'Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score',
         'Sadness Score', 'Surprise Score',
-        'Predicted Agency', 'Flagged Words'
+        'Predicted Agency', 'Flagged Words', 'Status'
     ]]
-
-    #Save and return file
     output.to_csv("CSVFile/ArrangedData.csv", index=False)
     return output
 
-
-#Takes result from ArrangedData 
 @app.route('/api/complaints', methods=['GET'])
 def get_complaints():
     try:
         df = pd.read_csv('CSVFile/ArrangedData.csv')
     except FileNotFoundError:
         df = ArrangeLogic()
-
-    # Replace all NaN, NaT, and pd.NA values with None
     df = df.replace({pd.NA: None, pd.NaT: None, float('nan'): None})
-
     return jsonify(df.to_dict(orient='records'))
 
+@app.route('/api/admin/stats', methods=['GET'])
+def get_admin_stats():
+    try:
+        df = pd.read_csv('CSVFile/ArrangedData.csv')
+    except FileNotFoundError:
+        df = ArrangeLogic()
+    category_labels = [
+        "Infrastructure", "Public Services", "Safety & Security",
+        "Environment", "Administrative Issues", "Community Concerns"
+    ]
+    status_labels = ["On Going", "Accomplished", "Failed"]
+    category_col = "Predicted Agency" if "Predicted Agency" in df.columns else "Category"
+    status_col = "Status" if "Status" in df.columns else None
+    category_counts = Counter(df[category_col].dropna()) if category_col in df else Counter()
+    status_counts = Counter(df[status_col].dropna()) if status_col and status_col in df else Counter()
+    category_result = {label: int(category_counts.get(label, 0)) for label in category_labels}
+    status_result = {label: int(status_counts.get(label, 0)) for label in status_labels}
+    return jsonify({
+        "categoryCounts": category_result,
+        "statusCounts": status_result
+    })
 
-#Back and Front end connection:
 if __name__ == '__main__':
-    ArrangeLogic()  #Run once
+    ArrangeLogic()
     app.run(host="0.0.0.0", port=5000, debug=True)

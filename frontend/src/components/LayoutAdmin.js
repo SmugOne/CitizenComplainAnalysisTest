@@ -95,10 +95,12 @@ export default function LayoutAdmin({ children, navigation }) {
             </TouchableWithoutFeedback>
           )}
 
-          {/* Main content area */}
+          {/* Main content area: vertical scroll only */}
           <View style={styles.mainArea}>
-            <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
-              {children}
+            <ScrollView style={{ flex: 1 }}>
+              <View style={styles.contentContainer}>
+                {children}
+              </View>
             </ScrollView>
             <View style={styles.footer}>
               <Text style={styles.footerText}>

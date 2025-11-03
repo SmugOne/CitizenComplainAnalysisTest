@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from flask_cors import CORS  
+from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 import pandas as pd
@@ -13,12 +13,10 @@ from sklearn.pipeline import make_pipeline
 from werkzeug.utils import secure_filename
 from transformers import pipeline
 
-#Connection:
 load_dotenv()
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
 
-# Ensure CSVFile directory exists
 os.makedirs("CSVFile", exist_ok=True)
 
 #BACKEND DEVELOPMENT ----------------------------------
@@ -58,8 +56,6 @@ def upload_image():
 #Flask-React Connect and Assign from ComplaintsFormScreen:
 @app.route('/api/complaints', methods=['POST'])
 def run_arrangement():
-
-    #Distribute Data from ComplaintsFormScreen
     data = request.get_json()
     name = data.get('name') or 'Anonymous'
     complaint = data.get('complaint') or ''
@@ -72,13 +68,11 @@ def run_arrangement():
     #Datasets:
     Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
 
-    #Assign new ID based on the last one
     if Database.empty:
         ID = 1
     else:
         ID = Database['ID'].max() + 1
 
-    #Add new entry to the database
     new_row = {
         'ID': ID,
         'Name': name,
@@ -102,6 +96,24 @@ def run_arrangement():
         "message": "Complaint submitted! Take a screenshot or a picture of the ID and password below to track its status."
     })
 
+def assign_agency(complaint):
+    if pd.isna(complaint):
+        return ""
+    complaint = complaint.lower()
+    if "corrupt" in complaint or "kurakot" in complaint:
+        return "Administrative Issues"
+    elif "school" in complaint or "education" in complaint:
+        return "Education Services"
+    elif "garbage" in complaint or "basura" in complaint:
+        return "Environment"
+    elif "water" in complaint or "tubig" in complaint:
+        return "Public Services"
+    elif "electricity" in complaint or "blackout" in complaint:
+        return "Infrastructure"
+    elif "police" in complaint or "abuse" in complaint or "abusive" in complaint:
+        return "Safety & Security"
+    # Add more rules as needed
+    return "Community Concerns"
 
 #Training Model and Classification Algorithms:
 def Main():
@@ -115,7 +127,6 @@ def Main():
 
     #Training Model (Emotion):
     Training_Data['Emotion'] = Training_Data['Emotion'].str.strip().str.lower()
-
     X_train = Training_Data['Complaint'].fillna("").str.lower()
     y_train = Training_Data['Emotion']
     TrainingModel = make_pipeline(
@@ -156,31 +167,21 @@ def Main():
         "discrimination", 
         "diskriminasyon", 
     ]
-
-    #Predict emotion scores
     textComplaints = Database['Raw Complaint'].fillna("").tolist()
     probabilities = TrainingModel.predict_proba(textComplaints)
     emotion_labels = TrainingModel.classes_
     emotion_scores = [dict(zip(emotion_labels, prob)) for prob in probabilities]
-
-    #Scores the Database
     Database['Anger Score'] = [score.get('anger', 0) for score in emotion_scores]
     Database['Fear Score'] = [score.get('fear', 0) for score in emotion_scores]
     Database['Joy Score'] = [score.get('joy', 0) for score in emotion_scores]
     Database['Neutral Score'] = [score.get('neutral', 0) for score in emotion_scores]
     Database['Sadness Score'] = [score.get('sadness', 0) for score in emotion_scores]
     Database['Surprise Score'] = [score.get('surprise', 0) for score in emotion_scores]
-
-    #Adds priority words based on prioritizedwords list
     Database['Flagged Words'] = Database['Raw Complaint'].str.lower().apply(
         lambda x: any(word in x for word in prioritizedWords)
     )
-
-    #Sorts by maximum score
     Database['Max Severity Score'] = Database[['Anger Score', 'Sadness Score', 'Fear Score']].max(axis=1)
     Database = Database.sort_values(by=['Flagged Words', 'Max Severity Score'], ascending=[False, False])
-
-    #Rename from Raw Complaint (ComplaintsData) to Complaint (ArrangedData)
     Database = Database.rename(columns={'Raw Complaint': 'Complaint'})
     
     #Add Predicted Agency:
@@ -212,13 +213,9 @@ def Main():
         'Sadness Score', 'Surprise Score',
         'Predicted Agency', 'Flagged Words', 'Image ID', 'Status', 'Password',
     ]]
-
-    #Save and return file
     output.to_csv("CSVFile/ArrangedData.csv", index=False)
     return output
 
-
-#Takes result from ArrangedData 
 @app.route('/api/complaints', methods=['GET'])
 def get_complaints():
     try:
@@ -236,7 +233,6 @@ def get_complaints():
 
     return jsonify(df.to_dict(orient='records')) 
 
-#Back and Front end connection:
 if __name__ == '__main__':
     Main()  #Run once
     app.run(host="0.0.0.0", port=5000, debug=True)

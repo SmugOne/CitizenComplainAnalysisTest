@@ -64,19 +64,6 @@ export default function Layout({ children, navigation }) {
             <MaterialIcons name="menu" size={22} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.title}>CITIZEN COMPLAINT PORTAL</Text>
-          <View style={styles.headerRight}>
-            <TouchableOpacity onPress={handleNotification} style={styles.iconButton}>
-              <MaterialIcons name="notifications" size={26} color="#ffd66b" />
-              {notificationCount > 0 && (
-                <View style={styles.notifBadge}>
-                  <Text style={styles.notifBadgeText}>{notificationCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleLogin} style={styles.iconButton}>
-              <MaterialIcons name="person" size={27} color="#ffd66b" />
-            </TouchableOpacity>
-          </View>
         </View>
 
         <View style={styles.bodyWrap}>

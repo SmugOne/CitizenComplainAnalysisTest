@@ -192,7 +192,7 @@ export default function SubmitComplaintScreen({ navigation }) {
               style={styles.select}
               value={category.value}
               onChange={(e) =>
-                setCategory(categories.find((cat) => cat.value === e.target.value))
+                setCategory(defaultCategories.find((cat) => cat.value === e.target.value))
               }
             >
               {defaultCategories.map((cat) => (
@@ -206,7 +206,7 @@ export default function SubmitComplaintScreen({ navigation }) {
               selectedValue={category.value}
               style={styles.picker}
               onValueChange={(value) =>
-                setCategory(categories.find((cat) => cat.value === value))
+                setCategory(defaultCategories.find((cat) => cat.value === value))
               }
             >
               {defaultCategories.map((cat) => (

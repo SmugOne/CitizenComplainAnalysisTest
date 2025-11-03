@@ -35,7 +35,7 @@ export default function TrackComplaintScreen({ route, navigation }) {
 
       if (found) {
         setComplaint(found);
-        setIsPasswordStep(true); // Now show password input
+        setIsPasswordStep(true); //Now show password input
         setError("");
       } else {
         setError("No complaint found with that ID.");

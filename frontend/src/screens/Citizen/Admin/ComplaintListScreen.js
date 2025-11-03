@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
-import Layout from "../../../components/Layout";
+import Layout from "../../../components/LayoutAdmin";
 
 // Dummy complaints for demo
 const complaints = [

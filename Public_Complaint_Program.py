@@ -12,6 +12,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import make_pipeline
 from werkzeug.utils import secure_filename
 from transformers import pipeline
+from collections import Counter
 
 #Connection:
 load_dotenv()
@@ -226,6 +227,28 @@ def get_complaints():
     df['ID'] = df['ID'].apply(lambda x: str(int(float(x))) if x.replace('.', '', 1).isdigit() else x)
 
     return jsonify(df.to_dict(orient='records')) 
+
+@app.route('/api/admin/stats', methods=['GET'])
+def get_admin_stats():
+    try:
+        df = pd.read_csv('CSVFile/ArrangedData.csv')
+    except FileNotFoundError:
+        df = Main()
+    category_labels = [
+        "Infrastructure", "Public Services", "Safety & Security",
+        "Environment", "Administrative Issues", "Community Concerns"
+    ]
+    status_labels = ["On Going", "Accomplished", "Failed"]
+    category_col = "Predicted Agency" if "Predicted Agency" in df.columns else "Category"
+    status_col = "Status" if "Status" in df.columns else None
+    category_counts = Counter(df[category_col].dropna()) if category_col in df else Counter()
+    status_counts = Counter(df[status_col].dropna()) if status_col and status_col in df else Counter()
+    category_result = {label: int(category_counts.get(label, 0)) for label in category_labels}
+    status_result = {label: int(status_counts.get(label, 0)) for label in status_labels}
+    return jsonify({
+        "categoryCounts": category_result,
+        "statusCounts": status_result
+    })
 
 #Back and Front end connection:
 if __name__ == '__main__':

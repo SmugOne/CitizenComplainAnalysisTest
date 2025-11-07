@@ -95,6 +95,9 @@ def run_arrangement():
     Database.to_csv("CSVFile/ComplaintsData.csv", index=False, encoding='cp1252')
     Main()
 
+    #Return ID to frontend. Do not remove
+    return jsonify({"message": "Complaint submitted successfully", "ID": str(int(ID))})
+
 #Training Model and Classification Algorithms:
 def Main():
     #Datasets:

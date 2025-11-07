@@ -139,7 +139,7 @@ export default function SubmitComplaintScreen({ navigation }) {
     alert(
       `Complaint submitted! Please take a screenshot or picture of the COMPLAINT ID and PASSWORD to track its status.\n\n` +
       `  \n` +
-      `COMPLAINT ID: ${data.id}\n` +
+      `COMPLAINT ID: ${data.ID}\n` +
       `PASSWORD: ${generatedPassword}`
     );
 

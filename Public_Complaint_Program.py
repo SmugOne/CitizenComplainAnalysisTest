@@ -132,25 +132,12 @@ def Main():
 
     #Flagged Words:
     prioritizedWords = [
-        "corruption", 
-        "corrupt",
-        "kurakot", 
-        "kinurakot", 
-        "kinorakot", 
-        "kinukurakot", 
-        "kinukorakot",
-        "nangungurakot",
-        "fraud", 
-        "harassment", 
-        "abuse", 
-        "pang-aabuso", 
-        "inaabuso", 
-        "abuso",
-        "pagsasamantala", 
-        "sinasamantala", 
-        "pagsasamantalahan", 
-        "discrimination", 
-        "diskriminasyon", 
+        "corruption", "corrupt", "kurakot", "kinurakot", "kinorakot", "kinukurakot","kinukorakot","nangungurakot",
+        "fraud", "harassment", 
+        "abuse", "pang-aabuso", "inaabuso", "abuso", "nangaabuso", "nang-aabuso",
+        "exploitation", "exploit", "exploited",
+        "pagsasamantala", "sinasamantala", "pagsasamantalahan", "samantala", 
+        "discrimination", "diskriminasyon", 
     ]
 
     #Predict emotion scores

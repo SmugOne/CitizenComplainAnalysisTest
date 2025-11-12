@@ -78,8 +78,8 @@ export default function LayoutAdmin({ children, navigation }) {
               <TouchableOpacity onPress={() => nav("ComplaintList")} style={styles.sidebarLink}>
                 <Text style={styles.sidebarLinkText}>Complaints</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => nav("AdminLogin")} style={styles.sidebarLink}>
-                <Text style={styles.sidebarLinkText}>Logout</Text>
+              <TouchableOpacity onPress={() => nav("Statistics")} style={styles.sidebarLink}>
+                <Text style={styles.sidebarLinkText}>Statistics</Text>
               </TouchableOpacity>
               <View style={styles.divider} />
               <TouchableOpacity onPress={() => nav("CitizenHome")} style={styles.sidebarLink}>
@@ -96,13 +96,12 @@ export default function LayoutAdmin({ children, navigation }) {
           )}
 
           {/* Main content */}
-          <View style={styles.mainArea}>
-            <ScrollView
-              style={{ flex: 1 }}
-              contentContainerStyle={{ minHeight: "100%", paddingBottom: 120 }}
-            >
-              <View style={styles.contentContainer}>{children}</View>
-            </ScrollView>
+            <View style={styles.mainArea}>
+            <ScrollView style={{ flex: 1 }}>
+              <View style={styles.contentContainer}>
+                {children}
+              </View>
+              </ScrollView>
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>
@@ -179,6 +178,7 @@ const styles = StyleSheet.create({
   mainArea: {
     flex: 1,
     padding: 18,
+    minHeight: 0,
     zIndex: 10,
     flexDirection: "column",
     minHeight: "100%",

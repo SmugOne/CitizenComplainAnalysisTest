@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView, Dimensions } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import Layout from "../../../components/LayoutAdmin";
 import { API_URL } from "@env";
-import { BarChart, PieChart } from "react-native-chart-kit";
 
 const CATEGORY_OPTIONS = [
   "All",
@@ -15,11 +14,9 @@ const CATEGORY_OPTIONS = [
   "Community Concerns"
 ];
 const STATUS_OPTIONS = ["All", "On Going", "Accomplished", "Failed"];
-const screenWidth = Dimensions.get("window").width;
 
 export default function DashboardScreen({ navigation }) {
   const [complaints, setComplaints] = useState([]);
-  const [stats, setStats] = useState(null);
   const [category, setCategory] = useState("All");
   const [status, setStatus] = useState("All");
   const [loading, setLoading] = useState(true);
@@ -36,11 +33,6 @@ export default function DashboardScreen({ navigation }) {
         setFetchError(true);
         setLoading(false);
       });
-
-    fetch(`${API_URL}/api/admin/stats`)
-      .then(res => res.json())
-      .then(data => setStats(data))
-      .catch(() => {});
   }, []);
 
   const filteredComplaints = complaints.filter(row => {
@@ -51,251 +43,129 @@ export default function DashboardScreen({ navigation }) {
     return categoryMatch && statusMatch;
   });
 
-  const flaggedCount = filteredComplaints.filter(row => row["Flagged Words"] === true || row["Flagged Words"] === "True").length;
+  const flaggedCount = filteredComplaints.filter(
+    row => row["Flagged Words"] === true || row["Flagged Words"] === "True"
+  ).length;
+
   const avgSeverity = filteredComplaints.length
     ? (
         filteredComplaints.reduce(
-          (sum, row) => sum + (parseFloat(row["Anger Score"]) || 0) + (parseFloat(row["Fear Score"]) || 0) + (parseFloat(row["Sadness Score"]) || 0),
+          (sum, row) =>
+            sum +
+            (parseFloat(row["Anger Score"]) || 0) +
+            (parseFloat(row["Fear Score"]) || 0) +
+            (parseFloat(row["Sadness Score"]) || 0),
           0
         ) /
         (filteredComplaints.length * 3)
       ).toFixed(2)
     : "0.00";
 
-  const pieData =
-    stats &&
-    Object.entries(stats.statusCounts).map(([key, value], idx) => ({
-      name: key,
-      population: value,
-      color: ["#2563EB", "#16A34A", "#DC2626"][idx] || "#ccc",
-      legendFontColor: "#11493f",
-      legendFontSize: 14
-    }));
-
-  // Use a large minWidth to trigger horizontal scroll when graphs/table overflow
-  //const dashboardMinWidth = 1400;
-  const widgetWidth = 320;
-
   return (
     <Layout navigation={navigation}>
-        <View style={{flex: 1, paddingBottom: 80,}}>
-
-          {/* Filters */}
-          <View style={styles.filtersRow}>
-            <View style={styles.filter}>
-              <Text style={styles.label}>Complaint Category Stats</Text>
-              <Picker
-                selectedValue={category}
-                style={styles.picker}
-                onValueChange={setCategory}
-              >
-                {CATEGORY_OPTIONS.map(opt => (
-                  <Picker.Item label={opt} value={opt} key={opt} />
-                ))}
-              </Picker>
-            </View>
-            <View style={styles.filter}>
-              <Text style={styles.label}>Status of Complaints</Text>
-              <Picker
-                selectedValue={status}
-                style={styles.picker}
-                onValueChange={setStatus}
-              >
-                {STATUS_OPTIONS.map(opt => (
-                  <Picker.Item label={opt} value={opt} key={opt} />
-                ))}
-              </Picker>
-            </View>
+      <View style={{ flex: 1, paddingBottom: 80 }}>
+        {/* Filters */}
+        <View style={styles.filtersRow}>
+          <View style={styles.filter}>
+            <Text style={styles.label}>Complaint Category</Text>
+            <Picker
+              selectedValue={category}
+              style={styles.picker}
+              onValueChange={setCategory}>
+              {CATEGORY_OPTIONS.map(opt => (
+                <Picker.Item label={opt} value={opt} key={opt} />
+              ))}
+            </Picker>
           </View>
-
-          {/* Widgets */}
-          <View style={styles.widgetsRow}>
-            <View style={[styles.widget, { backgroundColor: "#eaf3fc" }]}>
-              <Text style={[styles.widgetTitle, { color: "#11493f" }]}>Total Complaints</Text>
-              <Text style={styles.widgetValue}>{filteredComplaints.length}</Text>
-            </View>
-            <View style={[styles.widget, { backgroundColor: "#fbeaec" }]}>
-              <Text style={[styles.widgetTitle, { color: "#c00" }]}>Flagged Complaints</Text>
-              <Text style={[styles.widgetValue, { color: "#c00" }]}>{flaggedCount}</Text>
-            </View>
-            <View style={[styles.widget, { backgroundColor: "#eafbe5" }]}>
-              <Text style={[styles.widgetTitle, { color: "#197278" }]}>Avg. Severity Score</Text>
-              <Text style={styles.widgetValue}>{avgSeverity}</Text>
-            </View>
+          <View style={styles.filter}>
+            <Text style={styles.label}>Status of Complaints</Text>
+            <Picker
+              selectedValue={status}
+              style={styles.picker}
+              onValueChange={setStatus}>
+              {STATUS_OPTIONS.map(opt => (
+                <Picker.Item label={opt} value={opt} key={opt} />
+              ))}
+            </Picker>
           </View>
+        </View>
 
-          {/* Table */}
-          <View style={{ maxHeight: 400, width: "100%", marginTop: 20 }}>
-            <ScrollView style={{ flex: 1 }}>
-              <View style={styles.tableContainer}>
-                <View style={styles.tableHeader}>
-                  <Text style={styles.headerCell}>ID</Text>
-                  <Text style={styles.headerCell}>Name</Text>
-                  <Text style={styles.headerCell}>Complaint</Text>
-                  <Text style={styles.headerCell}>Category</Text>
-                  <Text style={styles.headerCell}>Status</Text>
-                </View>
+        {/* Widgets */}
+        <View style={styles.widgetsRow}>
+          <View style={[styles.widget, { backgroundColor: "#eaf3fc" }]}>
+            <Text style={[styles.widgetTitle, { color: "#11493f" }]}>Total Complaints</Text>
+            <Text style={styles.widgetValue}>{filteredComplaints.length}</Text>
+          </View>
+          <View style={[styles.widget, { backgroundColor: "#fbeaec" }]}>
+            <Text style={[styles.widgetTitle, { color: "#c00" }]}>Flagged Urgent Complaints</Text>
+            <Text style={[styles.widgetValue, { color: "#c00" }]}>{flaggedCount}</Text>
+          </View>
+          <View style={[styles.widget, { backgroundColor: "#eafbe5" }]}>
+            <Text style={[styles.widgetTitle, { color: "#197278" }]}>Avg. Severity Score</Text>
+            <Text style={styles.widgetValue}>{avgSeverity}</Text>
+          </View>
+        </View>
 
-                {loading ? (
-                  <Text style={{ margin: 10, color: "#11493f" }}>Loading...</Text>
-                ) : fetchError ? (
-                  <Text style={{ color: "red", margin: 10 }}>Error loading data.</Text>
-                ) : filteredComplaints.length === 0 ? (
-                  <Text style={{ margin: 10, color: "#11493f" }}>
-                    No complaints found for the selected filters.
-                  </Text>
-                ) : (
-                  filteredComplaints.map((row) => {
-                    const isFlagged =
-                      row["Flagged Words"] === true || row["Flagged Words"] === "True";
-                    return (
-                      <View
-                        style={[styles.tableRow, isFlagged && styles.flaggedRow]}
-                        key={row.ID}
-                      >
-                        <Text style={styles.cell}>
-                          {isFlagged ? "🚩 " : ""}
-                          {row.ID}
-                        </Text>
-                        <Text style={styles.cell}>{row.Name}</Text>
-                        <Text style={[styles.cell, { width: 320, textAlign: "left" }]}>
-                          {row.Complaint}
-                        </Text>
-                        <Text style={styles.cell}>
-                          {row["Predicted Agency"] || row["Category"]}
-                        </Text>
-                        <Text
-                          style={[
-                            styles.cell,
-                            { fontWeight: "bold", color: "#197278" },
-                            isFlagged && { color: "#DC2626" },
-                          ]}
-                        >
-                          {row.Status}
-                        </Text>
-                      </View>
-                    );
-                  })
-                )}
+        {/* Table */}
+        <View style={{ maxHeight: 400, width: "100%", marginTop: 20 }}>
+          <ScrollView style={{ flex: 1 }}>
+            <View style={styles.tableContainer}>
+              <View style={styles.tableHeader}>
+                <Text style={styles.headerCell}>ID</Text>
+                <Text style={styles.headerCell}>Name</Text>
+                <Text style={styles.headerCell}>Complaint</Text>
+                <Text style={styles.headerCell}>Category</Text>
+                <Text style={styles.headerCell}>Status</Text>
               </View>
-            </ScrollView>
-          </View>
 
-          {/* Charts */}
-          <ScrollView 
-          horizontal 
-          nestedScrollEnabled={true}
-          contentContainerStyle={{ minWidth: 1400, paddingTop: 20 }}>
-            <View style={{ width: 1400 }}>
-              <View style={styles.chartsGrid}>
-
-                <View style={styles.chartCol}>
-                  <Text style={styles.graphTitle}>Complaints by Category</Text>
-                  {stats && (
-                    <BarChart
-                      data={{
-                        labels: Object.keys(stats.categoryCounts),
-                        datasets: [{ data: Object.values(stats.categoryCounts) }],
-                      }}
-                      width={600}
-                      height={220}
-                      fromZero
-                      showBarTops={false}
-                      withInnerLines
-                      verticalLabelRotation={30}
-                      chartConfig={{
-                        backgroundColor: "#fff",
-                        backgroundGradientFrom: "#fff",
-                        backgroundGradientTo: "#fff",
-                        decimalPlaces: 0,
-                        color: () => "#197278",
-                        labelColor: () => "#11493f",
-                        barPercentage: 0.7,
-                      }}
-                      style={{ backgroundColor: "transparent" }}
-                    />
-                  )}
-                </View>
-
-                <View style={styles.chartCol}>
-                  <Text style={styles.graphTitle}>Complaints by Status</Text>
-                  {stats && (
-                    <BarChart
-                      data={{
-                        labels: Object.keys(stats.statusCounts),
-                        datasets: [{ data: Object.values(stats.statusCounts) }],
-                      }}
-                      width={420}
-                      height={220}
-                      fromZero
-                      showBarTops={false}
-                      withInnerLines
-                      verticalLabelRotation={30}
-                      chartConfig={{
-                        backgroundColor: "#fff",
-                        backgroundGradientFrom: "#fff",
-                        backgroundGradientTo: "#fff",
-                        decimalPlaces: 0,
-                        color: () => "#16A34A",
-                        labelColor: () => "#11493f",
-                        barPercentage: 0.7,
-                      }}
-                    />
-                  )}
-                </View>
-
-                <View style={styles.chartCol}>
-                  <Text style={styles.graphTitle}>Status Distribution</Text>
-                  {pieData && (
-                    <PieChart
-                      data={pieData}
-                      width={280}
-                      height={220}
-                      chartConfig={{
-                        color: () => "#197278",
-                        labelColor: () => "#11493f",
-                      }}
-                      accessor="population"
-                      backgroundColor="transparent"
-                      paddingLeft="8"
-                      center={[10, 0]}
-                      absolute
-                    />
-                  )}
-                </View>
-
-              </View>
+              {loading ? (
+                <Text style={{ margin: 10, color: "#11493f" }}>Loading...</Text>
+              ) : fetchError ? (
+                <Text style={{ color: "red", margin: 10 }}>Error loading data.</Text>
+              ) : filteredComplaints.length === 0 ? (
+                <Text style={{ margin: 10, color: "#11493f" }}>
+                  No complaints found for the selected filters.
+                </Text>
+              ) : (
+                filteredComplaints.map((row) => {
+                  const isFlagged =
+                    row["Flagged Words"] === true || row["Flagged Words"] === "True";
+                  return (
+                    <View
+                      style={[styles.tableRow, isFlagged && styles.flaggedRow]}
+                      key={row.ID}>
+                      <Text style={styles.cell}>
+                        {isFlagged ? "🚩 " : ""}
+                        {row.ID}
+                      </Text>
+                      <Text style={styles.cell}>{row.Name}</Text>
+                      <Text style={[styles.cell, { width: 320, textAlign: "left" }]}>
+                        {row.Complaint}
+                      </Text>
+                      <Text style={styles.cell}>
+                        {row["Predicted Agency"] || row["Category"]}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.cell,
+                          { fontWeight: "bold", color: "#197278" },
+                          isFlagged && { color: "#DC2626" },
+                        ]}>
+                        {row.Status}
+                      </Text>
+                    </View>
+                  );
+                })
+              )}
             </View>
           </ScrollView>
         </View>
+      </View>
     </Layout>
   );
 }
 
 const styles = StyleSheet.create({
-  dashboardCard: {
-    backgroundColor: "#fff",
-    borderRadius: 18,
-    padding: 32,
-    alignSelf: "flex-start",
-    width: "100%",
-    maxWidth: 1800,
-    minHeight: 400,
-    marginBottom: 32,
-    elevation: 3,
-    shadowColor: "#197278",
-    shadowOpacity: 0.08,
-    shadowRadius: 7,
-    shadowOffset: { width: 0, height: 3 }
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: "800",
-    color: "#11493f",
-    marginBottom: 24,
-    textAlign: "center",
-    fontFamily: "sans-serif"
-  },
   filtersRow: {
     flexDirection: "row",
     justifyContent: "center",
@@ -392,24 +262,5 @@ const styles = StyleSheet.create({
   },
   flaggedRow: {
     backgroundColor: "#ffeaea"
-  },
-  chartsGrid: {
-    width: "100%",
-    marginTop: 28,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    gap: 40
-  },
-  chartCol: {
-    alignItems: "center",
-    flex: 1
-  },
-  graphTitle: {
-    fontWeight: "bold",
-    color: "#11493f",
-    marginBottom: 6,
-    fontSize: 17,
-    textAlign: "center"
   }
 });

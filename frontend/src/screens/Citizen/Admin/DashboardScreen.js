@@ -73,14 +73,15 @@ export default function DashboardScreen({ navigation }) {
     }));
 
   // Use a large minWidth to trigger horizontal scroll when graphs/table overflow
-  const dashboardMinWidth = 1400;
+  //const dashboardMinWidth = 1400;
   const widgetWidth = 320;
 
   return (
     <Layout navigation={navigation}>
-      <ScrollView horizontal style={{ width: "100%" }}>
-        <View style={[styles.dashboardCard, { minWidth: dashboardMinWidth, width: "100%" }]}>
-          <Text style={styles.title}>Admin Dashboard</Text>
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 120 }}
+          style={{ flex: 1 }}>
+        <View style={{flex: 1, paddingBottom: 80,}}>
 
           {/* Filters */}
           <View style={styles.filtersRow}>
@@ -127,135 +128,147 @@ export default function DashboardScreen({ navigation }) {
           </View>
 
           {/* Table */}
-          <ScrollView horizontal style={{ width: "100%" }}>
-            <View style={styles.tableContainer}>
-              <View style={styles.tableHeader}>
-                <Text style={styles.headerCell}>ID</Text>
-                <Text style={styles.headerCell}>Name</Text>
-                <Text style={styles.headerCell}>Complaint</Text>
-                <Text style={styles.headerCell}>Category</Text>
-                <Text style={styles.headerCell}>Status</Text>
-              </View>
-              {loading ? (
-                <Text style={{ margin: 10, color: "#11493f" }}>Loading...</Text>
-              ) : fetchError ? (
-                <Text style={{ color: "red", margin: 10 }}>Error loading data.</Text>
-              ) : filteredComplaints.length === 0 ? (
-                <Text style={{ margin: 10, color: "#11493f" }}>No complaints found for the selected filters.</Text>
-              ) : (
-                filteredComplaints.map(row => {
-                  const isFlagged = row["Flagged Words"] === true || row["Flagged Words"] === "True";
-                  return (
-                    <View
-                      style={[
-                        styles.tableRow,
-                        isFlagged && styles.flaggedRow
-                      ]}
-                      key={row.ID}
-                    >
-                      <Text style={styles.cell}>
-                        {isFlagged ? "🚩 " : ""}
-                        {row.ID}
-                      </Text>
-                      <Text style={styles.cell}>{row.Name}</Text>
-                      <Text style={[styles.cell, { width: 320, textAlign: "left" }]}>{row.Complaint}</Text>
-                      <Text style={styles.cell}>{row["Predicted Agency"] || row["Category"]}</Text>
-                      <Text
-                        style={[
-                          styles.cell,
-                          { fontWeight: "bold", color: "#197278" },
-                          isFlagged && { color: "#DC2626" }
-                        ]}
+          <View style={{ maxHeight: 400, width: "100%", marginTop: 20 }}>
+            <ScrollView style={{ flex: 1 }}>
+              <View style={styles.tableContainer}>
+                <View style={styles.tableHeader}>
+                  <Text style={styles.headerCell}>ID</Text>
+                  <Text style={styles.headerCell}>Name</Text>
+                  <Text style={styles.headerCell}>Complaint</Text>
+                  <Text style={styles.headerCell}>Category</Text>
+                  <Text style={styles.headerCell}>Status</Text>
+                </View>
+
+                {loading ? (
+                  <Text style={{ margin: 10, color: "#11493f" }}>Loading...</Text>
+                ) : fetchError ? (
+                  <Text style={{ color: "red", margin: 10 }}>Error loading data.</Text>
+                ) : filteredComplaints.length === 0 ? (
+                  <Text style={{ margin: 10, color: "#11493f" }}>
+                    No complaints found for the selected filters.
+                  </Text>
+                ) : (
+                  filteredComplaints.map((row) => {
+                    const isFlagged =
+                      row["Flagged Words"] === true || row["Flagged Words"] === "True";
+                    return (
+                      <View
+                        style={[styles.tableRow, isFlagged && styles.flaggedRow]}
+                        key={row.ID}
                       >
-                        {row.Status}
-                      </Text>
-                    </View>
-                  );
-                })
-              )}
-            </View>
-          </ScrollView>
+                        <Text style={styles.cell}>
+                          {isFlagged ? "🚩 " : ""}
+                          {row.ID}
+                        </Text>
+                        <Text style={styles.cell}>{row.Name}</Text>
+                        <Text style={[styles.cell, { width: 320, textAlign: "left" }]}>
+                          {row.Complaint}
+                        </Text>
+                        <Text style={styles.cell}>
+                          {row["Predicted Agency"] || row["Category"]}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.cell,
+                            { fontWeight: "bold", color: "#197278" },
+                            isFlagged && { color: "#DC2626" },
+                          ]}
+                        >
+                          {row.Status}
+                        </Text>
+                      </View>
+                    );
+                  })
+                )}
+              </View>
+            </ScrollView>
+          </View>
 
           {/* Charts */}
-          <View style={styles.chartsGrid}>
-            <View style={styles.chartCol}>
-              <Text style={styles.graphTitle}>Complaints by Category</Text>
-              {stats && (
-                <BarChart
-                  data={{
-                    labels: Object.keys(stats.categoryCounts),
-                    datasets: [{ data: Object.values(stats.categoryCounts) }]
-                  }}
-                  width={600} // wider width for more space for rotated labels
-                  height={220}
-                  fromZero
-                  showBarTops={false}
-                  withInnerLines
-                  verticalLabelRotation={30}
-                  chartConfig={{
-                    backgroundColor: "#fff",
-                    backgroundGradientFrom: "#fff",
-                    backgroundGradientTo: "#fff",
-                    decimalPlaces: 0,
-                    color: () => "#197278",
-                    labelColor: () => "#11493f",
-                    barPercentage: 0.7,
-                    style: {}
-                  }}
-                  style={{ marginBottom: 0, backgroundColor: "transparent" }}
-                />
-              )}
+          <ScrollView horizontal style={{ width: "100%" }}>
+            <View style={{ width: 1400 }}>
+              <View style={styles.chartsGrid}>
+
+                <View style={styles.chartCol}>
+                  <Text style={styles.graphTitle}>Complaints by Category</Text>
+                  {stats && (
+                    <BarChart
+                      data={{
+                        labels: Object.keys(stats.categoryCounts),
+                        datasets: [{ data: Object.values(stats.categoryCounts) }],
+                      }}
+                      width={600}
+                      height={220}
+                      fromZero
+                      showBarTops={false}
+                      withInnerLines
+                      verticalLabelRotation={30}
+                      chartConfig={{
+                        backgroundColor: "#fff",
+                        backgroundGradientFrom: "#fff",
+                        backgroundGradientTo: "#fff",
+                        decimalPlaces: 0,
+                        color: () => "#197278",
+                        labelColor: () => "#11493f",
+                        barPercentage: 0.7,
+                      }}
+                      style={{ backgroundColor: "transparent" }}
+                    />
+                  )}
+                </View>
+
+                <View style={styles.chartCol}>
+                  <Text style={styles.graphTitle}>Complaints by Status</Text>
+                  {stats && (
+                    <BarChart
+                      data={{
+                        labels: Object.keys(stats.statusCounts),
+                        datasets: [{ data: Object.values(stats.statusCounts) }],
+                      }}
+                      width={420}
+                      height={220}
+                      fromZero
+                      showBarTops={false}
+                      withInnerLines
+                      verticalLabelRotation={30}
+                      chartConfig={{
+                        backgroundColor: "#fff",
+                        backgroundGradientFrom: "#fff",
+                        backgroundGradientTo: "#fff",
+                        decimalPlaces: 0,
+                        color: () => "#16A34A",
+                        labelColor: () => "#11493f",
+                        barPercentage: 0.7,
+                      }}
+                    />
+                  )}
+                </View>
+
+                <View style={styles.chartCol}>
+                  <Text style={styles.graphTitle}>Status Distribution</Text>
+                  {pieData && (
+                    <PieChart
+                      data={pieData}
+                      width={280}
+                      height={220}
+                      chartConfig={{
+                        color: () => "#197278",
+                        labelColor: () => "#11493f",
+                      }}
+                      accessor="population"
+                      backgroundColor="transparent"
+                      paddingLeft="8"
+                      center={[10, 0]}
+                      absolute
+                    />
+                  )}
+                </View>
+
+              </View>
             </View>
-            <View style={styles.chartCol}>
-              <Text style={styles.graphTitle}>Complaints by Status</Text>
-              {stats && (
-                <BarChart
-                  data={{
-                    labels: Object.keys(stats.statusCounts),
-                    datasets: [{ data: Object.values(stats.statusCounts) }]
-                  }}
-                  width={420}
-                  height={220}
-                  fromZero
-                  showBarTops={false}
-                  withInnerLines
-                  verticalLabelRotation={30}
-                  chartConfig={{
-                    backgroundColor: "#fff",
-                    backgroundGradientFrom: "#fff",
-                    backgroundGradientTo: "#fff",
-                    decimalPlaces: 0,
-                    color: () => "#16A34A",
-                    labelColor: () => "#11493f",
-                    barPercentage: 0.7,
-                    style: {}
-                  }}
-                  style={{ marginBottom: 0, backgroundColor: "transparent" }}
-                />
-              )}
-            </View>
-            <View style={styles.chartCol}>
-              <Text style={styles.graphTitle}>Status Distribution</Text>
-              {pieData && (
-                <PieChart
-                  data={pieData}
-                  width={280}
-                  height={220}
-                  chartConfig={{
-                    color: () => "#197278",
-                    labelColor: () => "#11493f"
-                  }}
-                  accessor="population"
-                  backgroundColor="transparent"
-                  paddingLeft="8"
-                  center={[10, 0]}
-                  absolute
-                />
-              )}
-            </View>
-          </View>
+          </ScrollView>
         </View>
-      </ScrollView>
+        </ScrollView>
     </Layout>
   );
 }

@@ -83,25 +83,27 @@ export default function LayoutAdmin({ children, navigation }) {
               </TouchableOpacity>
               <View style={styles.divider} />
               <TouchableOpacity onPress={() => nav("CitizenHome")} style={styles.sidebarLink}>
-                <Text style={[styles.sidebarLinkText, { color: "#ffd66b" }]}>Back to Citizen</Text>
+                <Text style={[styles.sidebarLinkText, { color: "#ffd66b" }]}>Log out</Text>
               </TouchableOpacity>
             </ScrollView>
           </Animated.View>
 
-          {/* Backdrop for overlay mode */}
+          {/* Backdrop */}
           {!isWide && sidebarOpen && (
             <TouchableWithoutFeedback onPress={() => setSidebarOpen(false)}>
               <View style={styles.backdrop} />
             </TouchableWithoutFeedback>
           )}
 
-          {/* Main content area: vertical scroll only */}
+          {/* Main content */}
           <View style={styles.mainArea}>
-            <ScrollView style={{ flex: 1 }}>
-              <View style={styles.contentContainer}>
-                {children}
-              </View>
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{ minHeight: "100%", paddingBottom: 120 }}
+            >
+              <View style={styles.contentContainer}>{children}</View>
             </ScrollView>
+
             <View style={styles.footer}>
               <Text style={styles.footerText}>
                 Admin Panel &copy; {new Date().getFullYear()} Citizen Complaint Portal
@@ -179,7 +181,8 @@ const styles = StyleSheet.create({
     padding: 18,
     zIndex: 10,
     flexDirection: "column",
-    minHeight: 0,
+    minHeight: "100%",
+    overflow: "auto",
     justifyContent: "flex-start",
   },
   contentContainer: { flexGrow: 1, paddingBottom: 6 },

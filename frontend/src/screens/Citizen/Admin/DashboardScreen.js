@@ -78,9 +78,6 @@ export default function DashboardScreen({ navigation }) {
 
   return (
     <Layout navigation={navigation}>
-        <ScrollView
-          contentContainerStyle={{ paddingBottom: 120 }}
-          style={{ flex: 1 }}>
         <View style={{flex: 1, paddingBottom: 80,}}>
 
           {/* Filters */}
@@ -268,7 +265,6 @@ export default function DashboardScreen({ navigation }) {
             </View>
           </ScrollView>
         </View>
-        </ScrollView>
     </Layout>
   );
 }

@@ -78,7 +78,7 @@ export default function LayoutAdmin({ children, navigation }) {
               <TouchableOpacity onPress={() => nav("ComplaintList")} style={styles.sidebarLink}>
                 <Text style={styles.sidebarLinkText}>Complaints</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => nav("Statistics")} style={styles.sidebarLink}>
+              <TouchableOpacity onPress={() => nav("StatisticsScreen")} style={styles.sidebarLink}>
                 <Text style={styles.sidebarLinkText}>Statistics</Text>
               </TouchableOpacity>
               <View style={styles.divider} />

@@ -39,8 +39,8 @@ export default function DashboardScreen({ navigation }) {
     const cat = row["Predicted Agency"] || row["Category"] || "";
     const stat = row["Status"] || "";
     const categoryMatch = category === "All" || cat === category;
-    const statusMatch = status === "All" || stat === status;
-    return categoryMatch && statusMatch;
+    const onlyUnsolved = stat === "UNSOLVED";
+    return categoryMatch && onlyUnsolved;
   });
 
   const flaggedCount = filteredComplaints.filter(
@@ -64,6 +64,9 @@ export default function DashboardScreen({ navigation }) {
   return (
     <Layout navigation={navigation}>
       <View style={{ flex: 1, paddingBottom: 80 }}>
+        <Text style={styles.title}>Emotionally Urgent Complaints</Text>
+
+        
         {/* Filters */}
         <View style={styles.filtersRow}>
           <View style={styles.filter}>
@@ -166,6 +169,13 @@ export default function DashboardScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#11493f",
+    marginBottom: 16,
+    textAlign: "center",
+  },
   filtersRow: {
     flexDirection: "row",
     justifyContent: "center",

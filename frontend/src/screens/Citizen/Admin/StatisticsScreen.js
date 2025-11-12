@@ -3,12 +3,26 @@ import { View, Text, StyleSheet, ScrollView, Dimensions } from "react-native";
 import { BarChart, PieChart } from "react-native-chart-kit";
 import Layout from "../../../components/LayoutAdmin";
 import { API_URL } from "@env";
+import { Picker } from "@react-native-picker/picker";
+
+const CATEGORY_OPTIONS = [
+  "All",
+  "Infrastructure",
+  "Public Services",
+  "Safety & Security",
+  "Environment",
+  "Administrative Issues",
+  "Community Concerns"
+];
+const STATUS_OPTIONS = ["All", "On Going", "Accomplished", "Failed"];
 
 const screenWidth = Dimensions.get("window").width;
 
 export default function StatisticsScreen({ navigation }) {
   const [stats, setStats] = useState(null);
   const [fetchError, setFetchError] = useState(false);
+  const [category, setCategory] = useState("All");
+  const [status, setStatus] = useState("All");
 
   useEffect(() => {
     fetch(`${API_URL}/api/admin/stats`)
@@ -44,13 +58,6 @@ export default function StatisticsScreen({ navigation }) {
         <Text style={styles.title}>Statistics Overview</Text>
 
         {stats ? (
-          <>
-            {/* Horizontal scroll to fit wide charts */}
-            <ScrollView
-              horizontal
-              nestedScrollEnabled
-              contentContainerStyle={{ minWidth: 1400, paddingVertical: 20 }}
-            >
               <View style={{ width: 1400 }}>
                 <View style={styles.chartsGrid}>
                   {/* Complaints by Category */}
@@ -128,8 +135,7 @@ export default function StatisticsScreen({ navigation }) {
                   </View>
                 </View>
               </View>
-            </ScrollView>
-          </>
+          
         ) : (
           <View style={styles.center}>
             <Text>Loading statistics...</Text>

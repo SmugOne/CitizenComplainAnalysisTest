@@ -182,7 +182,10 @@ export default function DashboardScreen({ navigation }) {
           </View>
 
           {/* Charts */}
-          <ScrollView horizontal style={{ width: "100%" }}>
+          <ScrollView 
+          horizontal 
+          nestedScrollEnabled={true}
+          contentContainerStyle={{ minWidth: 1400, paddingTop: 20 }}>
             <View style={{ width: 1400 }}>
               <View style={styles.chartsGrid}>
 

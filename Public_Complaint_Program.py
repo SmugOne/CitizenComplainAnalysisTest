@@ -180,8 +180,7 @@ def Main():
         Database['Predicted Agency'] = predicted_agencies
 
     #False Complaints Detection (WIP)
-    # Implement logic to detect and handle false complaints.
-    # Detect Spam or repeated complaints.
+    # Handle as spam
 
     #Category (WIP)
     # Implement admin changes on complaints category
@@ -229,7 +228,7 @@ def get_admin_stats():
         "Infrastructure", "Public Services", "Safety & Security",
         "Environment", "Administrative Issues", "Community Concerns"
     ]
-    status_labels = ["On Going", "Accomplished", "Failed"]
+    status_labels = ["Unsolved", "Solved", "Spam"]
     category_col = "Predicted Agency" if "Predicted Agency" in df.columns else "Category"
     status_col = "Status" if "Status" in df.columns else None
     category_counts = Counter(df[category_col].dropna()) if category_col in df else Counter()

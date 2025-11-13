@@ -32,9 +32,9 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.infoText}>Issue resolved, feedback welcomed!</Text>
           </View>
         </View>
-        {/* Right: News/Announcements */}
+        {/* Right: Announcements */}
         <View style={styles.announcements}>
-          <Text style={styles.sectionTitle}>News / Announcements</Text>
+          <Text style={styles.sectionTitle}>Announcements</Text>
           <View style={styles.announceCard}>
             <Text style={styles.announceTitle}>🚧 Infrastructure upgrades in progress!</Text>
             <Text style={styles.announceBody}>Expect minor roadwork delays in Barangay Center until 09/30/2025.</Text>

@@ -13,7 +13,7 @@ const CATEGORY_OPTIONS = [
   "Administrative Issues",
   "Community Concerns"
 ];
-const STATUS_OPTIONS = ["All", "On Going", "Accomplished", "Failed"];
+//const STATUS_OPTIONS = ["Unsolved", "Solved", "Accomplished", "Failed"];
 
 export default function DashboardScreen({ navigation }) {
   const [complaints, setComplaints] = useState([]);
@@ -80,7 +80,7 @@ export default function DashboardScreen({ navigation }) {
               ))}
             </Picker>
           </View>
-          <View style={styles.filter}>
+          {/*<View style={styles.filter}>
             <Text style={styles.label}>Status of Complaints</Text>
             <Picker
               selectedValue={status}
@@ -90,7 +90,7 @@ export default function DashboardScreen({ navigation }) {
                 <Picker.Item label={opt} value={opt} key={opt} />
               ))}
             </Picker>
-          </View>
+          </View>*/}
         </View>
 
         {/* Widgets */}

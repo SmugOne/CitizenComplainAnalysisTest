@@ -14,7 +14,7 @@ const CATEGORY_OPTIONS = [
   "Administrative Issues",
   "Community Concerns"
 ];
-const STATUS_OPTIONS = ["All", "On Going", "Accomplished", "Failed"];
+const STATUS_OPTIONS = ["Unsolved", "Solved", "Spam",]; 
 
 const screenWidth = Dimensions.get("window").width;
 

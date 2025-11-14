@@ -72,7 +72,7 @@ export default function StatisticsScreen({ navigation }) {
                         labels: Object.keys(stats.categoryCounts),
                         datasets: [{ data: Object.values(stats.categoryCounts) }],
                       }}
-                      width={600}
+                      width={screenWidth*0.32-28}
                       height={350}
                       fromZero
                       showBarTops={false}
@@ -99,7 +99,7 @@ export default function StatisticsScreen({ navigation }) {
                         labels: Object.keys(stats.statusCounts),
                         datasets: [{ data: Object.values(stats.statusCounts) }],
                       }}
-                      width={420}
+                      width={screenWidth*0.32-28}
                       height={350}
                       fromZero
                       showBarTops={false}
@@ -177,6 +177,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     minHeight: 350,
+    width: screenWidth * 0.32,
     alignItems: "center",
   },
   graphTitle: {

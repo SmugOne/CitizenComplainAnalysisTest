@@ -13,6 +13,7 @@ const defaultCategories = [
   {label: "Electricity Services", value: "DOE"},
   {label: "Education Services", value: "DEPED"},
   {label: "Corruption", value: "OMBUDSMAN"},
+  {label: "Transport Issue", value: "DOTR"},
   {label: "Others", value: ""},
 ];
 

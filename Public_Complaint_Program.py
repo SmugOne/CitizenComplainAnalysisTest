@@ -225,19 +225,30 @@ def get_admin_stats():
     except FileNotFoundError:
         df = Main()
     category_labels = [
-        "Infrastructure", "Public Services", "Safety & Security",
-        "Environment", "Administrative Issues", "Community Concerns"
+        "All",
+        "DPWH",
+        "DOH",
+        "DENR",
+        "OMBUDSMAN",
+        "LTO",
+        "MMDA",
+        "PNP",
+        "DEPED",
+        "BFP",
+        "DOTR"
     ]
-    status_labels = ["Unsolved", "Solved", "Spam"]
     category_col = "Predicted Agency" if "Predicted Agency" in df.columns else "Category"
     status_col = "Status" if "Status" in df.columns else None
+
+    # Count categories
     category_counts = Counter(df[category_col].dropna()) if category_col in df else Counter()
+
+    # Count statuses exactly from the CSV (case-insensitive optional)
     status_counts = Counter(df[status_col].dropna()) if status_col and status_col in df else Counter()
-    category_result = {label: int(category_counts.get(label, 0)) for label in category_labels}
-    status_result = {label: int(status_counts.get(label, 0)) for label in status_labels}
+
     return jsonify({
-        "categoryCounts": category_result,
-        "statusCounts": status_result
+        "categoryCounts": dict(category_counts),
+        "statusCounts": dict(status_counts)
     })
 
 #Back and Front end connection:

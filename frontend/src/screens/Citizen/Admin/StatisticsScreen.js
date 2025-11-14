@@ -7,12 +7,16 @@ import { Picker } from "@react-native-picker/picker";
 
 const CATEGORY_OPTIONS = [
   "All",
-  "Infrastructure",
-  "Public Services",
-  "Safety & Security",
-  "Environment",
-  "Administrative Issues",
-  "Community Concerns"
+  "DPWH",
+  "DOH",
+  "DENR",
+  "OMBUDSMAN",
+  "LTO",
+  "MMDA",
+  "PNP",
+  "DEPED",
+  "BFP",
+  "DOTR",
 ];
 const STATUS_OPTIONS = ["Unsolved", "Solved", "Spam",]; 
 
@@ -79,7 +83,7 @@ export default function StatisticsScreen({ navigation }) {
                         backgroundGradientFrom: "#fff",
                         backgroundGradientTo: "#fff",
                         decimalPlaces: 0,
-                        color: () => "#197278",
+                        color: () => "#16A34A",
                         labelColor: () => "#11493f",
                         barPercentage: 0.7,
                       }}
@@ -169,7 +173,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
+    shadowOpacity: 5,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     alignItems: "center",

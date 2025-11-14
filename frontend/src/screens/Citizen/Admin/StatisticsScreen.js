@@ -73,7 +73,7 @@ export default function StatisticsScreen({ navigation }) {
                         datasets: [{ data: Object.values(stats.categoryCounts) }],
                       }}
                       width={600}
-                      height={220}
+                      height={350}
                       fromZero
                       showBarTops={false}
                       withInnerLines
@@ -100,7 +100,7 @@ export default function StatisticsScreen({ navigation }) {
                         datasets: [{ data: Object.values(stats.statusCounts) }],
                       }}
                       width={420}
-                      height={220}
+                      height={350}
                       fromZero
                       showBarTops={false}
                       withInnerLines
@@ -176,6 +176,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 5,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
+    minHeight: 350,
     alignItems: "center",
   },
   graphTitle: {

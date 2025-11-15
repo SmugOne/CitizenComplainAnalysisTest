@@ -218,6 +218,7 @@ def get_complaints():
 
     return jsonify(df.to_dict(orient='records')) 
 
+#Sends Statistics for Admin Dashboard:
 @app.route('/api/admin/stats', methods=['GET'])
 def get_admin_stats():
     try:
@@ -240,16 +241,41 @@ def get_admin_stats():
     category_col = "Predicted Agency" if "Predicted Agency" in df.columns else "Category"
     status_col = "Status" if "Status" in df.columns else None
 
-    # Count categories
+    #Count categories
     category_counts = Counter(df[category_col].dropna()) if category_col in df else Counter()
 
-    # Count statuses exactly from the CSV (case-insensitive optional)
+    #Count statuses exactly from the CSV (case-insensitive optional)
     status_counts = Counter(df[status_col].dropna()) if status_col and status_col in df else Counter()
 
     return jsonify({
         "categoryCounts": dict(category_counts),
         "statusCounts": dict(status_counts)
     })
+
+#Update ComplaintList and ArrangedComplaint from Admin Dashboard:
+@app.route('/api/complaints/update', methods=['POST'])
+def update_complaint():
+    data = request.get_json()
+    complaint_id = str(data.get("id"))
+    status = data.get("status")
+    agency = data.get("agency")
+    remark = data.get("remark")
+
+    #Update ArrangedData.csv
+    arranged_path = "CSVFile/ArrangedData.csv"
+    arranged = pd.read_csv(arranged_path, encoding='cp1252')
+    arranged.loc[arranged['ID'].astype(str) == complaint_id, ['Status', 'Predicted Agency']] = [status, agency]
+    arranged.to_csv(arranged_path, index=False, encoding='cp1252')
+
+    #Update ComplaintsData.csv (add Remark column if not exists)
+    list_path = "CSVFile/ComplaintsData.csv"
+    comp_list = pd.read_csv(list_path, encoding='cp1252')
+    if "Remark" not in comp_list.columns:
+        comp_list["Remark"] = ""
+    comp_list.loc[comp_list['ID'].astype(str) == complaint_id, ['Status', 'Category', 'Remark']] = [status, agency, remark]
+    comp_list.to_csv(list_path, index=False, encoding='cp1252')
+
+    return jsonify({"success": True})
 
 #Back and Front end connection:
 if __name__ == '__main__':

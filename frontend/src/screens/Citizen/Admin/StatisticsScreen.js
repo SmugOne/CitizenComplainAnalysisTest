@@ -62,83 +62,88 @@ export default function StatisticsScreen({ navigation }) {
         <Text style={styles.title}>Statistics Overview</Text>
 
         {stats ? (
-              <View style={{ width: 1400 }}>
-                <View style={styles.chartsGrid}>
-                  {/* Complaints by Category */}
-                  <View style={styles.chartCol}>
-                    <Text style={styles.graphTitle}>Complaints by Category</Text>
-                    <BarChart
-                      data={{
-                        labels: Object.keys(stats.categoryCounts),
-                        datasets: [{ data: Object.values(stats.categoryCounts) }],
-                      }}
-                      width={screenWidth*0.32-28}
-                      height={350}
-                      fromZero
-                      showBarTops={false}
-                      withInnerLines
-                      verticalLabelRotation={30}
-                      chartConfig={{
-                        backgroundColor: "#fff",
-                        backgroundGradientFrom: "#fff",
-                        backgroundGradientTo: "#fff",
-                        decimalPlaces: 0,
-                        color: () => "#16A34A",
-                        labelColor: () => "#11493f",
-                        barPercentage: 0.7,
-                      }}
-                      style={{ backgroundColor: "transparent" }}
-                    />
-                  </View>
-
-                  {/* Complaints by Status */}
-                  <View style={styles.chartCol}>
-                    <Text style={styles.graphTitle}>Complaints by Status</Text>
-                    <BarChart
-                      data={{
-                        labels: Object.keys(stats.statusCounts),
-                        datasets: [{ data: Object.values(stats.statusCounts) }],
-                      }}
-                      width={screenWidth*0.32-28}
-                      height={350}
-                      fromZero
-                      showBarTops={false}
-                      withInnerLines
-                      verticalLabelRotation={30}
-                      chartConfig={{
-                        backgroundColor: "#fff",
-                        backgroundGradientFrom: "#fff",
-                        backgroundGradientTo: "#fff",
-                        decimalPlaces: 0,
-                        color: () => "#16A34A",
-                        labelColor: () => "#11493f",
-                        barPercentage: 0.7,
-                      }}
-                    />
-                  </View>
-
-                  {/* Pie Chart */}
-                  <View style={styles.chartCol}>
-                    <Text style={styles.graphTitle}>Status Distribution</Text>
-                    {pieData && (
-                      <PieChart
-                        data={pieData}
-                        width={280}
-                        height={220}
-                        chartConfig={{
-                          color: () => "#197278",
-                          labelColor: () => "#11493f",
-                        }}
-                        accessor="population"
-                        backgroundColor="transparent"
-                        paddingLeft="8"
-                        center={[10, 0]}
-                        absolute
-                      />
-                    )}
-                  </View>
-                </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={true}>
+            <View
+              style={{
+                flexDirection: "row",
+                gap: 30,
+                minWidth: screenWidth * 1.2,
+              }}
+            >
+              {/* Complaints by Category */}
+              <View style={[styles.chartCol, { width: 950 }]}>
+                <Text style={styles.graphTitle}>Complaints by Category</Text>
+                <BarChart
+                  data={{
+                    labels: Object.keys(stats.categoryCounts),
+                    datasets: [{ data: Object.values(stats.categoryCounts) }],
+                  }}
+                  width={900}
+                  height={350}
+                  fromZero
+                  showBarTops={false}
+                  withInnerLines
+                  verticalLabelRotation={30}
+                  chartConfig={{
+                    backgroundColor: "#fff",
+                    backgroundGradientFrom: "#fff",
+                    backgroundGradientTo: "#fff",
+                    decimalPlaces: 0,
+                    color: () => "#16A34A",
+                    labelColor: () => "#11493f",
+                    barPercentage: 0.7,
+                  }}
+                />
               </View>
+
+              {/* Complaints by Status */}
+              <View style={styles.chartCol}>
+                <Text style={styles.graphTitle}>Complaints by Status</Text>
+                <BarChart
+                  data={{
+                    labels: Object.keys(stats.statusCounts),
+                    datasets: [{ data: Object.values(stats.statusCounts) }],
+                  }}
+                  width={420}
+                  height={350}
+                  fromZero
+                  showBarTops={false}
+                  withInnerLines
+                  verticalLabelRotation={30}
+                  chartConfig={{
+                    backgroundColor: "#fff",
+                    backgroundGradientFrom: "#fff",
+                    backgroundGradientTo: "#fff",
+                    decimalPlaces: 0,
+                    color: () => "#16A34A",
+                    labelColor: () => "#11493f",
+                    barPercentage: 0.7,
+                  }}
+                />
+              </View>
+
+              {/* Pie Chart */}
+              <View style={styles.chartCol}>
+                <Text style={styles.graphTitle}>Status Distribution</Text>
+                {pieData && (
+                  <PieChart
+                    data={pieData}
+                    width={280}
+                    height={220}
+                    chartConfig={{
+                      color: () => "#197278",
+                      labelColor: () => "#11493f",
+                    }}
+                    accessor="population"
+                    backgroundColor="transparent"
+                    paddingLeft="8"
+                    center={[10, 0]}
+                    absolute
+                  />
+                )}
+              </View>
+            </View>
+          </ScrollView>
           
         ) : (
           <View style={styles.center}>

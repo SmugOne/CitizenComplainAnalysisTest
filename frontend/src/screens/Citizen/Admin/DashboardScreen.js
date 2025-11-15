@@ -137,7 +137,7 @@ export default function DashboardScreen({ navigation }) {
         ID: selectedComplaint.ID,
         status: newStatus,
         agency: newAgency,
-        remarks: remarks
+        remarks: remark
       })
     })
       .then(res => res.json())
@@ -277,8 +277,8 @@ export default function DashboardScreen({ navigation }) {
               <Text style={styles.modalLabel}>Remarks</Text>
               <TextInput
                 style={styles.modalInput}
-                value={remarks}
-                onChangeText={setRemarks}
+                value={remark}
+                onChangeText={setRemark}
                 multiline
               />
 

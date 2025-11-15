@@ -126,7 +126,7 @@ export default function TrackComplaintScreen({ route, navigation }) {
             <Text style={styles.statusTitle}>Complaint ID: {complaint.ID}</Text>
             <Text style={styles.complaintText}>{complaint.Complaint}</Text>
             <Text style={styles.statusText}>
-              Status: {renderStatus(complaint.Status)}
+              Marked Status: {renderStatus(complaint.Status)}
             </Text>
             {complaint.PredictedAgency ? (
               <Text style={styles.agencyText}>

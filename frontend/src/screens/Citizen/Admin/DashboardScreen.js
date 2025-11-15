@@ -6,12 +6,16 @@ import { API_URL } from "@env";
 
 const CATEGORY_OPTIONS = [
   "All",
-  "Infrastructure",
-  "Public Services",
-  "Safety & Security",
-  "Environment",
-  "Administrative Issues",
-  "Community Concerns"
+  "DPWH",
+  "DOH",
+  "DENR",
+  "OMBUDSMAN",
+  "LTO",
+  "MMDA",
+  "PNP",
+  "DEPED",
+  "BFP",
+  "DOTR",
 ];
 //const STATUS_OPTIONS = ["Unsolved", "Solved", "Accomplished", "Failed"];
 
@@ -110,7 +114,7 @@ export default function DashboardScreen({ navigation }) {
         </View>
 
         {/* Table */}
-        <View style={{ maxHeight: 400, width: "100%", marginTop: 20 }}>
+        <View style={{ maxHeight: 300, width: "100%", marginTop: 20 }}>
           <ScrollView style={{ flex: 1 }}>
             <View style={styles.tableContainer}>
               <View style={styles.tableHeader}>

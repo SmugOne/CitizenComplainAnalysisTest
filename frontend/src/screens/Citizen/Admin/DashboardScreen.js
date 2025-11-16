@@ -5,6 +5,7 @@ import Layout from "../../../components/LayoutAdmin";
 import { API_URL } from "@env";
 import { Modal, TextInput, Button, TouchableOpacity } from "react-native";
 
+//For filters
 const CATEGORY_OPTIONS = [
   "All",
   "DPWH",
@@ -19,7 +20,21 @@ const CATEGORY_OPTIONS = [
   "DOTR",
 ];
 
-//For table
+//For agency assignment in resolve screen
+const AGENCY_OPTIONS = [
+  "DPWH",
+  "DOH",
+  "DENR",
+  "OMBUDSMAN",
+  "LTO",
+  "MMDA",
+  "PNP",
+  "DEPED",
+  "BFP",
+  "DOTR",
+];
+
+//Table column widths
 const COLUMN_WIDTHS = {
   ID: 60,
   Name: 120,
@@ -32,13 +47,15 @@ const COLUMN_WIDTHS = {
 };
 
 export default function DashboardScreen({ navigation }) {
-  //For action button
+  //For action button:
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [newStatus, setNewStatus] = useState("UNSOLVED");
   const [newAgency, setNewAgency] = useState("All");
   const [remark, setRemark] = useState("");
-  //For table and filter states
+  //Switch from table to resolve screen
+  const [screen, setScreen] = useState("table");
+  //For table and filter states:
   const [complaints, setComplaints] = useState([]);
   const [category, setCategory] = useState("All");
   const [status, setStatus] = useState("All");
@@ -58,12 +75,12 @@ export default function DashboardScreen({ navigation }) {
       });
   }, []);
 
-  const openModal = (complaint) => {
+  const openResolver = (complaint) => {
     setSelectedComplaint(complaint);
     setNewStatus(complaint.Status || "UNSOLVED");
     setNewAgency(complaint["Predicted Agency"] || complaint["Category"] || "All");
-    setRemark(""); // start empty
-    setModalVisible(true);
+    setRemark(""); 
+    setScreen("resolve");
   };
 
   const handleSubmit = () => {
@@ -150,6 +167,78 @@ export default function DashboardScreen({ navigation }) {
       .catch(err => alert("Error saving changes."));
   };
 
+//Main resolver screen:
+  if (screen === "resolve" && selectedComplaint) {
+    return (
+      <Layout navigation={navigation}>
+        <View style={styles.resolveContainer}>
+          <Text style={styles.resolveTitle}>
+            Resolve Complaint #{selectedComplaint.ID}
+          </Text>
+
+          {/* Status Picker */}
+          <Text style={styles.resolveLabel}>Update Status</Text>
+          <Picker
+            selectedValue={newStatus}
+            onValueChange={setNewStatus}
+            style={styles.resolvePicker}
+          >
+            <Picker.Item label="UNSOLVED" value="UNSOLVED" />
+            <Picker.Item label="SOLVED" value="SOLVED" />
+            <Picker.Item label="SPAM" value="SPAM" />
+          </Picker>
+
+          {/* Agency Picker */}
+          <Text style={styles.resolveLabel}>Update Agency</Text>
+          <Picker
+            selectedValue={newAgency}
+            onValueChange={setNewAgency}
+            style={styles.resolvePicker}
+          >
+            {AGENCY_OPTIONS.map(a => (
+              <Picker.Item label={a} value={a} key={a} />
+            ))}
+          </Picker>
+
+          {/* Remarks */}
+          <Text style={styles.resolveLabel}>Remarks</Text>
+          <TextInput
+            style={styles.resolveInput}
+            multiline
+            value={remark}
+            onChangeText={setRemark}
+            placeholder="Write remarks..."
+          />
+
+          {/* Buttons */}
+          <View style={styles.resolveButtons}>
+            <TouchableOpacity
+              style={styles.cancelBtn}
+              onPress={() => setScreen("table")}
+            >
+              <Text>Back</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.updateBtn,
+                { opacity: remark.trim() ? 1 : 0.5 }
+              ]}
+              disabled={!remark.trim()}
+              onPress={submitResolution}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                Update
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+        </View>
+      </Layout>
+    );
+  }
+
+//Main dashboard table screen
   return (
     <Layout navigation={navigation}>
       <View style={{ flex: 1, paddingBottom: 80 }}>
@@ -243,7 +332,7 @@ export default function DashboardScreen({ navigation }) {
                         <Text style={[styles.cell, { width: COLUMN_WIDTHS.ImageID }]}>{row["Image ID"]}</Text>
                         <TouchableOpacity
                           style={[styles.resolveBtn, { width: COLUMN_WIDTHS.Action }]}
-                          onPress={() => openModal(row)}
+                          onPress={() => openResolver(row)}
                         >
                           <Text style={{ color: "#fff", fontWeight: "bold" }}>Resolve</Text>
                         </TouchableOpacity>
@@ -258,7 +347,7 @@ export default function DashboardScreen({ navigation }) {
         {modalVisible && (
           <View style={styles.modalOverlay}>
             <View style={styles.modalBox}>
-              <Text style={styles.modalTitle}>Resolve Complaint #{selectedComplaint.ID}</Text>
+              <Text style={styles.modalTitle}>Resolve Complaint ID #{selectedComplaint.ID}</Text>
 
               <Text style={styles.modalLabel}>Status</Text>
               <Picker selectedValue={newStatus} onValueChange={setNewStatus}>
@@ -359,7 +448,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8
   },
   resolveBtn: {
-    backgroundColor: "#DC2626", // red color
+    backgroundColor: "#DC2626", 
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
@@ -417,5 +506,54 @@ const styles = StyleSheet.create({
   },
   flaggedRow: {
     backgroundColor: "#ffeaea"
+  },
+  resolveContainer: {
+  flex: 1,
+  padding: 20,
+  },
+  resolveTitle: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#11493f",
+    marginBottom: 20,
+  },
+  resolveLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 10,
+  },
+  resolvePicker: {
+    backgroundColor: "#e6f0ff",
+    borderRadius: 10,
+    marginBottom: 12,
+    height: 50
+  },
+  resolveInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    padding: 10,
+    height: 120,
+    marginTop: 6,
+    textAlignVertical: "top",
+  },
+  resolveButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20
+  },
+  cancelBtn: {
+    backgroundColor: "#ccc",
+    padding: 12,
+    borderRadius: 10,
+    width: "45%",
+    alignItems: "center"
+  },
+  updateBtn: {
+    backgroundColor: "#197278",
+    padding: 12,
+    borderRadius: 10,
+    width: "45%",
+    alignItems: "center"
   }
 });

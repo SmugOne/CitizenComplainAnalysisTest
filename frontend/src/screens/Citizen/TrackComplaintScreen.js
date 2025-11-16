@@ -129,12 +129,6 @@ export default function TrackComplaintScreen({ route, navigation }) {
               <Text style={styles.remarksText}>Remarks: {complaint.Remarks}</Text>
             ) : null}
 
-            {complaint.PredictedAgency ? (
-              <Text style={styles.agencyText}>
-                Assigned Agency: {complaint.PredictedAgency}
-              </Text>
-            ) : null}
-
             {/* Send Feedback Button only for SOLVED or SPAM */}
             {(complaint.Status === "SOLVED" || complaint.Status === "SPAM") && (
               <TouchableOpacity

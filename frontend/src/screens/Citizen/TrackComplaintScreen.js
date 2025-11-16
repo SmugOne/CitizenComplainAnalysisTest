@@ -26,22 +26,18 @@ export default function TrackComplaintScreen({ route, navigation }) {
     setIsVerified(false);
 
     try {
-      const response = await fetch(`${API_URL}/api/complaints`);
+      const response = await fetch(`${API_URL}/api/complaints/track/${inputId.trim()}`);
       const data = await response.json();
 
-      const found = data.find(
-        (item) => parseInt(item.ID) === parseInt(inputId.trim())
-      );
-
-      if (found) {
-        setComplaint(found);
-        setIsPasswordStep(true); //Now show password input
+      if (data.found) {
+        setComplaint(data.complaint);
+        setIsPasswordStep(true); //prompt password
         setError("");
       } else {
-        setError("No complaint found with that ID.");
+        setError(data.message || "No complaint found with that ID.");
       }
     } catch (err) {
-      console.error("Error fetching complaints:", err);
+      console.error("Error fetching complaint:", err);
       setError("Unable to connect to the server.");
     } finally {
       setLoading(false);
@@ -128,6 +124,11 @@ export default function TrackComplaintScreen({ route, navigation }) {
             <Text style={styles.statusText}>
               Marked Status: {renderStatus(complaint.Status)}
             </Text>
+
+            {complaint.Remarks ? (
+              <Text style={styles.remarksText}>Remarks: {complaint.Remarks}</Text>
+            ) : null}
+
             {complaint.PredictedAgency ? (
               <Text style={styles.agencyText}>
                 Assigned Agency: {complaint.PredictedAgency}
@@ -178,6 +179,7 @@ const styles = StyleSheet.create({
   },
   statusTitle: {color: "#197278", fontWeight: "700", fontSize: 18, marginBottom: 6,},
   complaintText: {color: "#11493f", fontSize: 16, textAlign: "center", marginBottom: 8,},
-  statusText: { color: "#11493f", fontWeight: "700", fontSize: 18 },
+  statusText: { color: "#11493f", fontWeight: "700", fontSize: 18, marginTop: 20 },
   agencyText: { color: "#197278", fontStyle: "italic", marginTop: 5 },
+  remarksText: { color: "#11493f", fontWeight: "700", fontSize: 18 },
 });

@@ -199,6 +199,35 @@ def Main():
     output.to_csv("CSVFile/ArrangedData.csv", index=False)
     return output
 
+#Track Complaint Status from TrackComplaintScreen:
+@app.route('/api/complaints/track/<complaint_id>', methods=['GET'])
+def track_complaint(complaint_id):
+    complaint_id = str(complaint_id).strip()
+    
+    # Load live complaints
+    df_live = pd.read_csv('CSVFile/ArrangedData.csv', encoding='cp1252').fillna('')
+    found_live = df_live[df_live['ID'].astype(str) == complaint_id]
+
+    if not found_live.empty:
+        complaint_data = found_live.iloc[0].to_dict()
+        status = complaint_data['Status'].upper()
+        
+        if status in ['UNSOLVED']:
+            complaint_data['Remarks'] = ""
+            return jsonify({"found": True, "complaint": complaint_data})
+        
+        # If SOLVED or SPAM, fetch archive for Remarks
+        df_archive = pd.read_csv('CSVFile/Archive.csv', encoding='cp1252').fillna('')
+        found_archive = df_archive[df_archive['ID'].astype(str) == complaint_id]
+        
+        if not found_archive.empty:
+            complaint_data['Remarks'] = found_archive.iloc[0].get('Remarks', '')
+        else:
+            complaint_data['Remarks'] = ""
+        
+        return jsonify({"found": True, "complaint": complaint_data})
+
+    return jsonify({"found": False, "message": "Complaint ID not found."})
 
 #Takes result from ArrangedData 
 @app.route('/api/complaints', methods=['GET'])

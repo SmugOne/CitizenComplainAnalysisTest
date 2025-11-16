@@ -134,8 +134,20 @@ export default function TrackComplaintScreen({ route, navigation }) {
                 Assigned Agency: {complaint.PredictedAgency}
               </Text>
             ) : null}
+
+            {/* Send Feedback Button only for SOLVED or SPAM */}
+            {(complaint.Status === "SOLVED" || complaint.Status === "SPAM") && (
+              <TouchableOpacity
+                style={styles.feedbackBtn}
+                onPress={() =>
+                  navigation.navigate("SendFeedback", { complaintId: complaint.ID })
+                }
+              >
+                <Text style={styles.feedbackBtnText}>Send Feedback</Text>
+              </TouchableOpacity>
+            )}
           </View>
-        )}
+           )}
       </View>
     </Layout>
   );
@@ -182,4 +194,7 @@ const styles = StyleSheet.create({
   statusText: { color: "#11493f", fontWeight: "700", fontSize: 18, marginTop: 20 },
   agencyText: { color: "#197278", fontStyle: "italic", marginTop: 5 },
   remarksText: { color: "#11493f", fontWeight: "700", fontSize: 18 },
+
+  feedbackBtn: {marginTop: 15, backgroundColor: "#197278", paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8,},
+  feedbackBtnText: {color: "#fff", fontWeight: "bold", textAlign: "center",},
 });

@@ -275,6 +275,28 @@ def update_complaint():
     comp_list.loc[comp_list['ID'].astype(str) == complaint_id, ['Status', 'Category', 'Remark']] = [status, agency, remark]
     comp_list.to_csv(list_path, index=False, encoding='cp1252')
 
+    #Update Archive.csv
+    archive_path = "CSVFile/Archive.csv"
+    if status.upper() in ["SOLVED", "SPAM"]:
+        archive = pd.read_csv(archive_path, encoding='cp1252') if os.path.exists(archive_path) else pd.DataFrame(columns=[ 
+            "ID", "Name", "Complaint", "Location", "Agency", "Image ID", "Status", "Remarks"
+        ]) #If status is Solved or Spam, data is appended.
+
+        row_to_archive = comp_list.loc[comp_list['ID'].astype(str) == complaint_id, [
+            "ID", "Name", "Raw Complaint", "Location", "Category", "Image ID", "Status", "Remark"
+        ]].copy()
+
+        #Rename columns for Archive
+        row_to_archive = row_to_archive.rename(columns={
+            "Raw Complaint": "Complaint",
+            "Category": "Agency",
+            "Remark": "Remarks"
+        })
+
+        #Append
+        archive = pd.concat([archive, row_to_archive], ignore_index=True)
+        archive.to_csv(archive_path, index=False, encoding='cp1252')
+
     return jsonify({"success": True})
 
 #Back and Front end connection:

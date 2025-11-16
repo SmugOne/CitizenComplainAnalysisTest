@@ -55,6 +55,7 @@ export default function DashboardScreen({ navigation }) {
   const [remark, setRemark] = useState("");
   //Switch from table to resolve screen
   const [screen, setScreen] = useState("table");
+  const [resolveTab, setResolveTab] = useState("details"); 
   //For table and filter states:
   const [complaints, setComplaints] = useState([]);
   const [category, setCategory] = useState("All");
@@ -83,43 +84,7 @@ export default function DashboardScreen({ navigation }) {
     setScreen("resolve");
   };
 
-  const handleSubmit = () => {
-    if (!remark.trim()) {
-      alert("Please add a remark before submitting.");
-      return;
-    }
-
-    fetch(`${API_URL}/api/complaints/update`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: selectedComplaint.ID,
-        status: newStatus,
-        agency: newAgency,
-        remark,
-      }),
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          alert("Complaint updated successfully!");
-          setModalVisible(false);
-
-          //Refresh frontend state
-          setComplaints(prev =>
-            prev.map(c =>
-              c.ID === selectedComplaint.ID
-                ? { ...c, Status: newStatus, "Predicted Agency": newAgency }
-                : c
-            )
-          );
-        } else {
-          alert("Failed to update complaint.");
-        }
-      })
-      .catch(() => alert("Failed to update complaint."));
-  };
-
+  //Only show UNSOLVED complaints
   const filteredComplaints = complaints.filter(row => {
     const cat = (row["Predicted Agency"] || row["Category"] || "").toUpperCase();
     const stat = (row["Status"] || "").toUpperCase();
@@ -146,15 +111,16 @@ export default function DashboardScreen({ navigation }) {
       ).toFixed(2)
     : "0.00";
 
+  //Submit resolution changes
   const submitResolution = () => {
-    fetch(`${API_URL}/api/admin/updateComplaint`, {
+    fetch(`${API_URL}/api/complaints/update`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        ID: selectedComplaint.ID,
+        id: selectedComplaint.ID,
         status: newStatus,
         agency: newAgency,
-        remarks: remark
+        remark: remark,
       })
     })
       .then(res => res.json())
@@ -162,7 +128,7 @@ export default function DashboardScreen({ navigation }) {
         alert("Complaint updated.");
         setModalVisible(false);
         //Refresh after update
-        navigation.replace("DashboardScreen");
+        navigation.goBack();
       })
       .catch(err => alert("Error saving changes."));
   };
@@ -176,8 +142,28 @@ export default function DashboardScreen({ navigation }) {
             Resolve Complaint #{selectedComplaint.ID}
           </Text>
 
+          {/* Complaint Details */}
+          {resolveTab === "details" && (
+          <View style={styles.detailsBox}>
+            <Text style={styles.detailLabel}>Name:</Text>
+            <Text style={styles.detailValue}>{selectedComplaint.Name}</Text>
+
+            <Text style={styles.detailLabel}>Location:</Text>
+            <Text style={styles.detailValue}>{selectedComplaint.Location}</Text>
+
+            <Text style={styles.detailLabel}>Complaint:</Text>
+            <Text style={styles.detailValue}>{selectedComplaint.Complaint}</Text>
+
+            <Text style={styles.detailLabel}>Image ID:</Text>
+            <Text style={styles.detailValue}>
+              {selectedComplaint.ImageID || "None"}
+            </Text>
+          </View>
+        )}
+
           {/* Status Picker */}
-          <Text style={styles.resolveLabel}>Update Status</Text>
+          <View style={styles.actionBox}>
+          <Text style={styles.resolveLabel}>Change and update status</Text>
           <Picker
             selectedValue={newStatus}
             onValueChange={setNewStatus}
@@ -189,7 +175,7 @@ export default function DashboardScreen({ navigation }) {
           </Picker>
 
           {/* Agency Picker */}
-          <Text style={styles.resolveLabel}>Update Agency</Text>
+          <Text style={styles.resolveLabel}>Change and update agency</Text>
           <Picker
             selectedValue={newAgency}
             onValueChange={setNewAgency}
@@ -231,8 +217,8 @@ export default function DashboardScreen({ navigation }) {
                 Update
               </Text>
             </TouchableOpacity>
+           </View>
           </View>
-
         </View>
       </Layout>
     );
@@ -344,51 +330,6 @@ export default function DashboardScreen({ navigation }) {
             </View>
           </ScrollView>
         </View>
-        {modalVisible && (
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalBox}>
-              <Text style={styles.modalTitle}>Resolve Complaint ID #{selectedComplaint.ID}</Text>
-
-              <Text style={styles.modalLabel}>Status</Text>
-              <Picker selectedValue={newStatus} onValueChange={setNewStatus}>
-                <Picker.Item label="UNSOLVED" value="UNSOLVED" />
-                <Picker.Item label="SOLVED" value="SOLVED" />
-                <Picker.Item label="SPAM" value="SPAM" />
-              </Picker>
-
-              <Text style={styles.modalLabel}>Agency</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={newAgency}
-                onChangeText={setNewAgency}
-              />
-
-              <Text style={styles.modalLabel}>Remarks</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={remark}
-                onChangeText={setRemark}
-                multiline
-              />
-
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={styles.cancelBtn}
-                  onPress={() => setModalVisible(false)}
-                >
-                  <Text>Cancel</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.saveBtn}
-                  onPress={submitResolution}
-                >
-                  <Text style={{ color: "#fff" }}>Save</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        )}
       </View>
     </Layout>
   );
@@ -555,5 +496,44 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     width: "45%",
     alignItems: "center"
-  }
+  },
+  tabHeader: {
+  flexDirection: "row",
+  marginBottom: 20,
+  },
+  tabBtn: {
+    flex: 1,
+    padding: 12,
+    backgroundColor: "#ddd",
+    alignItems: "center",
+    borderRadius: 6,
+  },
+  activeTab: {
+    backgroundColor: "#4a90e2",
+  },
+  tabText: {
+    color: "#000",
+    fontWeight: "bold",
+  },
+  detailsBox: {
+    backgroundColor: "#f7f7f7",
+    padding: 15,
+    borderRadius: 10,
+  },
+  detailLabel: {
+    fontWeight: "bold",
+    marginTop: 8,
+  },
+  detailValue: {
+    marginLeft: 10,
+    marginBottom: 4,
+  },
+  actionBox: {
+    backgroundColor: "#ffffff",
+    padding: 18,
+    borderRadius: 12,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
 });

@@ -1,8 +1,33 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Image } from "react-native";
 import Layout from "../../components/Layout";
+import { API_URL } from "@env";
 
 export default function HomeScreen({ navigation }) {
+  const [resolvedCount, setResolvedCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/complaints`);
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+          const resolved = data.filter(c => c.Status === "SOLVED" || c.Status === "SPAM").length;
+          const total = data.filter(c => c.Status === "UNSOLVED" || c.Status === "SOLVED" || c.Status === "SPAM").length;
+
+          setResolvedCount(resolved);
+          setTotalCount(total);
+        }
+      } catch (err) {
+        console.error("Error fetching complaints stats:", err);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   return (
     <Layout navigation={navigation}>
       {/* Top: Banner */}
@@ -70,7 +95,10 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.benefitText}>Open Stats</Text>
           </View>
         </View>
-        <Text style={styles.statsText}>Complaints resolved: <Text style={{fontWeight: "bold"}}>0</Text> | Total complaints: <Text style={{fontWeight: "bold"}}>0</Text></Text>
+          <Text style={styles.statsText}>
+            Complaints resolved: <Text style={{ fontWeight: "bold" }}>{resolvedCount}</Text> | 
+            Total complaints: <Text style={{ fontWeight: "bold" }}>{totalCount}</Text>
+          </Text>
       </View>
     </Layout>
   );

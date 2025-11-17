@@ -18,6 +18,7 @@ const CATEGORY_OPTIONS = [
   "DEPED",
   "BFP",
   "DOTR",
+  "DITC",
 ];
 
 //For agency assignment in resolve screen
@@ -32,6 +33,8 @@ const AGENCY_OPTIONS = [
   "DEPED",
   "BFP",
   "DOTR",
+  "DITC",
+  "NONE",
 ];
 
 //Table column widths

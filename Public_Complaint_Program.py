@@ -265,7 +265,8 @@ def get_admin_stats():
         "PNP",
         "DEPED",
         "BFP",
-        "DOTR"
+        "DOTR",
+        "DITC",
     ]
     category_col = "Predicted Agency" if "Predicted Agency" in df.columns else "Category"
     status_col = "Status" if "Status" in df.columns else None

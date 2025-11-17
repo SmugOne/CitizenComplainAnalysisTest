@@ -56,7 +56,7 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remark
 55,Anonymous,Sira sira ang daanan,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,Krt07,
 56,Anonymous,Pangit kalsada,,SOLVED,DPWH,,6JAQd,Sent inspectors
 57,Anonymous,Pangit kalsada,,UNSOLVED,,,NnmVc,
-58,Anonymous,Test,,UNSOLVED,,,UtKQm,
+58,Anonymous,Test,,SPAM,NONE,,UtKQm,Marked as spam
 59,Anonymous,Sira yung kalsada,"Lat: 14.2802944, Long: 120.7238656",UNSOLVED,,,mtZfh,
 60,Anonymous,Balakubak si Ellison,,UNSOLVED,,,EclG6,
 61,Anonymous,Nangungurakot si Ellison!,"Lat: 14.31563, Long: 120.9553525",UNSOLVED,,,oZQix,

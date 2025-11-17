@@ -51,7 +51,7 @@ export default function DashboardScreen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [newStatus, setNewStatus] = useState("UNSOLVED");
-  const [newAgency, setNewAgency] = useState("All");
+  const [newAgency, setNewAgency] = useState("");
   const [remark, setRemark] = useState("");
   //Switch from table to resolve screen
   const [screen, setScreen] = useState("table");
@@ -79,7 +79,7 @@ export default function DashboardScreen({ navigation }) {
   const openResolver = (complaint) => {
     setSelectedComplaint(complaint);
     setNewStatus(complaint.Status || "UNSOLVED");
-    setNewAgency(complaint["Predicted Agency"] || complaint["Category"] || "All");
+    setNewAgency(complaint["Predicted Agency"] || complaint["Category"] || "");
     setRemark(""); 
     setScreen("resolve");
   };
@@ -89,8 +89,8 @@ export default function DashboardScreen({ navigation }) {
     const cat = (row["Predicted Agency"] || row["Category"] || "").toUpperCase();
     const stat = (row["Status"] || "").toUpperCase();
     const categoryMatch = category === "All" || cat === category.toUpperCase();
-    const onlyUnsolved = stat === "UNSOLVED";
-    return categoryMatch && onlyUnsolved;
+    const resolvable = stat === "UNSOLVED" || stat === "UNDER REVIEW";;
+    return categoryMatch && resolvable;
   });
 
   const flaggedCount = filteredComplaints.filter(
@@ -170,6 +170,7 @@ export default function DashboardScreen({ navigation }) {
             style={styles.resolvePicker}
           >
             <Picker.Item label="UNSOLVED" value="UNSOLVED" />
+            <Picker.Item label="UNDER REVIEW" value="UNDER REVIEW" />
             <Picker.Item label="SOLVED" value="SOLVED" />
             <Picker.Item label="SPAM" value="SPAM" />
           </Picker>

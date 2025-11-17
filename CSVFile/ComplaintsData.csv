@@ -1,4 +1,4 @@
-ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remarks
+ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remark
 1,John Doe,Mabagal ang serbisyo dito sa ospital!,,UNSOLVED,,,q7TnE,
 2,Mark Lawrence,May kurakot dito sa barangay,,UNSOLVED,,,H3xYp,
 3,Amaron Karl,Ang laki na ng sunog! Asan yung bumbero!?,,UNSOLVED,,,aS9kR,
@@ -17,7 +17,7 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remarks
 16,Anonymous,education quality is low,"{'accuracy': 17.464000701904297, 'longitude': 120.9268788, 'altitude': 60.89999771118164, 'heading': 0, 'latitude': 14.4055957, 'altitudeAccuracy': 1.9850099086761475, 'speed': 0}",UNSOLVED,,,wZ5cR,
 17,Anonymous,madaming kurakot,Imus,UNSOLVED,,,E3dXm,
 18,Ace,corrupt barangay officials in imus cavite,Imus,UNSOLVED,,,sL9vQ,
-19,Anonymous,corrupt,Imus,UNSOLVED,,,M4yTb,
+19,Anonymous,corrupt,Imus,SPAM,OMBUDSMAN,,M4yTb,Redirected to Imus ombudsman office
 20,vincent,pogi,Imus,UNSOLVED,,,jG6nP,
 21,Vincent ,pogi,Imus,UNSOLVED,,,R1hKx,
 22,Anonymous,Inaabuso ang pondo ng bayan,Bacoor,UNSOLVED,,,nF8qD,
@@ -54,7 +54,7 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remarks
 53,Anonymous,Kulang ang tubig at mahina,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,kyxGH,
 54,Anonymous,May kurakot sa police station,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,Z4Qrl,
 55,Anonymous,Sira sira ang daanan,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,Krt07,
-56,Anonymous,Pangit kalsada,,SOLVED,DPWH,,6JAQd,
+56,Anonymous,Pangit kalsada,,SOLVED,DPWH,,6JAQd,Sent inspectors
 57,Anonymous,Pangit kalsada,,UNSOLVED,,,NnmVc,
 58,Anonymous,Test,,UNSOLVED,,,UtKQm,
 59,Anonymous,Sira yung kalsada,"Lat: 14.2802944, Long: 120.7238656",UNSOLVED,,,mtZfh,
@@ -64,3 +64,5 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remarks
 63,Juan Dela Cruz,This is a test complaint!,"Lat: 14.2802944, Long: 120.7238656",UNSOLVED,,,5MfJt,
 64,Anonymous,Test Complaint,"Lat: 14.3338498, Long: 120.9542344",UNSOLVED,,,YJuel,
 65,Anonymous,Test complaint,"Lat: 14.3338498, Long: 120.9542344",UNSOLVED,,,zTzp0,
+66,Anonymous,Sira yung kalsada,"Lat: 14.3312666, Long: 120.9553525",UNSOLVED,DPWH,,T5NpK,
+67,Anonymous,Marumi ang tubig dito sa ilog,"Lat: 14.3312666, Long: 120.9553525",UNSOLVED,DENR,,HGTLn,

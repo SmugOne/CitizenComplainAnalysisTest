@@ -204,9 +204,9 @@ def Main():
 def track_complaint(complaint_id):
     complaint_id = str(complaint_id).strip()
     
-    # Load live complaints
-    df_live = pd.read_csv('CSVFile/ArrangedData.csv', encoding='cp1252').fillna('')
-    found_live = df_live[df_live['ID'].astype(str) == complaint_id]
+    #Load live complaints
+    ArrangedData = pd.read_csv('CSVFile/ArrangedData.csv', encoding='cp1252').fillna('')
+    found_live = ArrangedData[ArrangedData['ID'].astype(str) == complaint_id]
 
     if not found_live.empty:
         complaint_data = found_live.iloc[0].to_dict()
@@ -216,7 +216,7 @@ def track_complaint(complaint_id):
             complaint_data['Remarks'] = ""
             return jsonify({"found": True, "complaint": complaint_data})
         
-        # If SOLVED or SPAM, fetch archive for Remarks
+        #If SOLVED or SPAM, fetch archive for Remarks
         df_archive = pd.read_csv('CSVFile/Archive.csv', encoding='cp1252').fillna('')
         found_archive = df_archive[df_archive['ID'].astype(str) == complaint_id]
         

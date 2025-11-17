@@ -170,7 +170,6 @@ export default function DashboardScreen({ navigation }) {
             style={styles.resolvePicker}
           >
             <Picker.Item label="UNSOLVED" value="UNSOLVED" />
-            <Picker.Item label="UNDER REVIEW" value="UNDER REVIEW" />
             <Picker.Item label="SOLVED" value="SOLVED" />
             <Picker.Item label="SPAM" value="SPAM" />
           </Picker>

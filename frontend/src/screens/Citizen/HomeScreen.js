@@ -15,7 +15,7 @@ export default function HomeScreen({ navigation }) {
 
         if (Array.isArray(data)) {
           const resolved = data.filter(c => c.Status === "SOLVED" || c.Status === "SPAM").length;
-          const total = data.filter(c => c.Status === "UNSOLVED" || c.Status === "SOLVED" || c.Status === "SPAM").length;
+          const total = data.filter(c => c.Status === "UNSOLVED" || c.Status === "SOLVED" || c.Status === "SPAM" || c.Status === "UNDER REVIEW").length;
 
           setResolvedCount(resolved);
           setTotalCount(total);

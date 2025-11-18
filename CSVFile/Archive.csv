@@ -1,4 +1,5 @@
-ID,Name,Complaint,Location,Agency,Image ID,Status,Remarks,Feedback,Password
-56,Anonymous,Pangit kalsada,,DPWH,,SOLVED,Sent inspectors,,6JAQd
-19,Anonymous,corrupt,Imus,OMBUDSMAN,,SPAM,Redirected to Imus ombudsman office,,M4yTb
-58,Anonymous,Test,,NONE,,SPAM,Marked as spam,,
+ID,Name,Complaint,Location,Agency,Image ID,Status,Remarks,Feedback
+56,Anonymous,Pangit kalsada,,DPWH,,SOLVED,Sent inspectors,
+19,Anonymous,corrupt,Imus,OMBUDSMAN,,SPAM,Redirected to Imus ombudsman office,
+58,Anonymous,Test,,NONE,,SPAM,Marked as spam,
+60,Anonymous,Balakubak si Ellison,,NONE,,SPAM,Marked as spam,

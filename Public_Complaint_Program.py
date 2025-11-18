@@ -286,9 +286,28 @@ def get_admin_stats():
 @app.route('/api/complaints/update', methods=['POST'])
 def update_complaint():
     data = request.get_json()
+
+    allowed = [
+        "DPWH",
+        "DOH",
+        "DENR",
+        "OMBUDSMAN",
+        "LTO",
+        "MMDA",
+        "PNP",
+        "DEPED",
+        "BFP",
+        "DOTR",
+        "DITC",
+        "NONE",
+    ]
+
+    #load data
     complaint_id = str(data.get("id"))
     status = data.get("status")
-    agency = data.get("agency")
+    agency = data.get("agency", "NONE")
+    if agency not in allowed:
+        return jsonify({"error": "Invalid agency"}), 400
     remark = data.get("remark")
 
     #Changes status to UNDER REVIEW if there is remark but status is UNSOLVED

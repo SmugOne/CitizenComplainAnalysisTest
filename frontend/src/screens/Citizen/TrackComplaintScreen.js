@@ -133,12 +133,30 @@ export default function TrackComplaintScreen({ route, navigation }) {
             {(complaint.Status === "SOLVED" || complaint.Status === "SPAM") && (
               <TouchableOpacity
                 style={styles.feedbackBtn}
-                onPress={() =>
-                  navigation.navigate("SendFeedback", { complaintId: complaint.ID })
-                }
-              >
+                onPress={async () => {
+                  try {
+                    const feedback = "Write your feedback..."; 
+                    const res = await fetch(`${API_URL}/api/complaints/feedback`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        ID: complaint.ID,
+                        Feedback: feedback,
+                      }),
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                      alert("Feedback sent!");
+                    } else {
+                      alert("Failed to send feedback");
+                    }
+                  } catch (err) {
+                    alert("Error sending feedback.");
+                  }
+                }}
+                >
                 <Text style={styles.feedbackBtnText}>Send Feedback</Text>
-              </TouchableOpacity>
+                </TouchableOpacity>
             )}
           </View>
            )}

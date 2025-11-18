@@ -24,6 +24,8 @@ os.makedirs("CSVFile", exist_ok=True)
 
 #BACKEND DEVELOPMENT ----------------------------------
 
+#-------------------------IMAGE BACKEND-------------------------
+
 #Image Folder:
 ImageFolder = os.path.join(os.getcwd(),'ImageFolder')
 os.makedirs(ImageFolder, exist_ok=True)
@@ -53,6 +55,8 @@ def upload_image():
         "file_name": saved_filename,
         "imageUrl": f"/uploads/{saved_filename}"
     })
+
+#-------------------------COMPLAINT INPUT BACKEND-------------------------
 
 #Flask-React Connect and Assign from ComplaintsFormScreen:
 @app.route('/api/complaints', methods=['POST'])
@@ -97,6 +101,8 @@ def run_arrangement():
 
     #Return ID to frontend. Do not remove
     return jsonify({"message": "Complaint submitted successfully", "ID": str(int(ID))})
+
+#-------------------------MAIN ALGORITHM LIST BACKEND-------------------------
 
 #Training Model and Classification Algorithms:
 def Main():
@@ -179,14 +185,6 @@ def Main():
         predicted_agencies = AgencyModel.predict(Database['Complaint'].fillna("").str.lower())
         Database['Predicted Agency'] = predicted_agencies
 
-    #False Complaints Detection (WIP)
-    # Handle as spam
-
-    #Category (WIP)
-    # Implement admin changes on complaints category
-
-    #Location must be within Dasma only (WIP)
-
     #Final selected output to ArrangedData
     output = Database[[ 
         'ID', 'Name', 'Complaint', 'Location',
@@ -198,6 +196,8 @@ def Main():
     #Save and return file
     output.to_csv("CSVFile/ArrangedData.csv", index=False)
     return output
+
+#-------------------------TRACK COMPLAINT BACKEND-------------------------
 
 #Track Complaint Status from TrackComplaintScreen:
 @app.route('/api/complaints/track/<complaint_id>', methods=['GET'])
@@ -229,7 +229,9 @@ def track_complaint(complaint_id):
 
     return jsonify({"found": False, "message": "Complaint ID not found."})
 
-#Takes result from ArrangedData 
+#-------------------------ADMIN DASHBOARD BACKEND-------------------------
+
+#Sends Complaints for Admin Dashboard:
 @app.route('/api/complaints', methods=['GET'])
 def get_complaints():
     try:
@@ -282,7 +284,7 @@ def get_admin_stats():
         "statusCounts": dict(status_counts)
     })
 
-#Update ComplaintList and ArrangedComplaint from Admin Dashboard:
+#Update ComplaintList and ArrangedComplaint for Admin Dashboard:
 @app.route('/api/complaints/update', methods=['POST'])
 def update_complaint():
     data = request.get_json()
@@ -351,6 +353,36 @@ def update_complaint():
         archive.to_csv(archive_path, index=False, encoding='cp1252')
 
     return jsonify({"success": True})
+
+#-------------------------FEEDBACK BACKEND-------------------------
+
+@app.route("/api/complaints/feedback", methods=["POST"])
+def submit_feedback():
+    file_path = "CSVFile/Archive.csv"
+    Archive = pd.read_csv(file_path, encoding='cp1252')
+
+    data = request.get_json()
+    complaint_id = data.get("ID")
+    feedback_text = data.get("Feedback")
+
+    if not complaint_id or feedback_text is None:
+        return jsonify({"success": False, "message": "Missing ID or Feedback"}), 400
+
+    try:
+        # Check if complaint exists
+        if str(complaint_id) not in Archive["ID"].astype(str).values:
+            return jsonify({"success": False, "message": "Complaint not found"}), 404
+
+        # Update Feedback column
+        Archive.loc[Archive["ID"].astype(str) == str(complaint_id), "Feedback"] = feedback_text
+
+        # Save CSV
+        Archive.to_csv(file_path, index=False, encoding='cp1252')
+
+        return jsonify({"success": True, "message": "Feedback saved"})
+
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 #Back and Front end connection:
 if __name__ == '__main__':

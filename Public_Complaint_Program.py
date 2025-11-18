@@ -192,7 +192,7 @@ def Main():
         'ID', 'Name', 'Complaint', 'Location',
         'Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score',
         'Sadness Score', 'Surprise Score',
-        'Predicted Agency', 'Flagged Words', 'Image ID', 'Status', 'Password',
+        'Predicted Agency', 'Flagged Words', 'Image ID', 'Status', 'Password', 'Remark'
     ]]
 
     #Save and return file
@@ -221,7 +221,7 @@ def track_complaint(complaint_id):
         found_archive = df_archive[df_archive['ID'].astype(str) == complaint_id]
         
         if not found_archive.empty:
-            complaint_data['Remarks'] = found_archive.iloc[0].get('Remarks', '')
+            complaint_data['Remarks'] = found_archive.iloc[0].get('Remark', '')
         else:
             complaint_data['Remarks'] = ""
         
@@ -332,7 +332,7 @@ def update_complaint():
     archive_path = "CSVFile/Archive.csv"
     if status.upper() in ["SOLVED", "SPAM"]:
         archive = pd.read_csv(archive_path, encoding='cp1252') if os.path.exists(archive_path) else pd.DataFrame(columns=[ 
-            "ID", "Name", "Complaint", "Location", "Agency", "Image ID", "Status", "Remarks"
+            "ID", "Name", "Complaint", "Location", "Agency", "Image ID", "Status", "Remark"
         ]) #If status is Solved or Spam, data is appended.
 
         row_to_archive = comp_list.loc[comp_list['ID'].astype(str) == complaint_id, [
@@ -343,7 +343,7 @@ def update_complaint():
         row_to_archive = row_to_archive.rename(columns={
             "Raw Complaint": "Complaint",
             "Category": "Agency",
-            "Remark": "Remarks"
+            "Remark": "Remark",
         })
 
         #Append

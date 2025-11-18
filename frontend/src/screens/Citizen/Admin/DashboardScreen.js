@@ -83,7 +83,10 @@ export default function DashboardScreen({ navigation }) {
     setSelectedComplaint(complaint);
     setNewStatus(complaint.Status || "UNSOLVED");
     setNewAgency(complaint["Predicted Agency"] || complaint["Category"] || "");
-    setRemark(""); 
+    setRemark(complaint.Status?.toUpperCase() === "UNDER REVIEW" && complaint.Remark
+      ? complaint.Remark
+      : ""
+  );
     setScreen("resolve");
   };
 
@@ -131,7 +134,7 @@ export default function DashboardScreen({ navigation }) {
         alert("Complaint updated.");
         setModalVisible(false);
         //Refresh after update
-        navigation.goBack();
+        setScreen("table");
       })
       .catch(err => alert("Error saving changes."));
   };
@@ -175,7 +178,6 @@ export default function DashboardScreen({ navigation }) {
             <Picker.Item label="UNSOLVED" value="UNSOLVED" />
             <Picker.Item label="SOLVED" value="SOLVED" />
             <Picker.Item label="SPAM" value="SPAM" />
-            <Picker.Item label="UNDER REVIEW" value="UNDER REVIEW" />
           </Picker>
 
           {/* Agency Picker */}

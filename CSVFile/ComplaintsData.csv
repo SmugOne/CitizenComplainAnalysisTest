@@ -14,7 +14,7 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remark
 13,Anonymous,My area lacked water supplies! ,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}",UNSOLVED,,,gR8eB,
 14,Anonymous,Water supplies are low here! Where is government intervention?? ,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}",UNSOLVED,,,T2qVf,
 15,Ace,Too many corrupt officers in our school,"{'accuracy': 20, 'longitude': 120.9268819, 'altitude': 60.89999771118164, 'heading': 0, 'latitude': 14.4055953, 'altitudeAccuracy': 2.5460093021392822, 'speed': 0}",UNSOLVED,,,uH7kJ,
-16,Anonymous,education quality is low,"{'accuracy': 17.464000701904297, 'longitude': 120.9268788, 'altitude': 60.89999771118164, 'heading': 0, 'latitude': 14.4055957, 'altitudeAccuracy': 1.9850099086761475, 'speed': 0}",UNSOLVED,,,wZ5cR,
+16,Anonymous,education quality is low,"{'accuracy': 17.464000701904297, 'longitude': 120.9268788, 'altitude': 60.89999771118164, 'heading': 0, 'latitude': 14.4055957, 'altitudeAccuracy': 1.9850099086761475, 'speed': 0}",UNDER REVIEW,DEPED,,wZ5cR,Reviewing classes
 17,Anonymous,madaming kurakot,Imus,UNSOLVED,,,E3dXm,
 18,Ace,corrupt barangay officials in imus cavite,Imus,UNSOLVED,,,sL9vQ,
 19,Anonymous,corrupt,Imus,SPAM,OMBUDSMAN,,M4yTb,Redirected to Imus ombudsman office
@@ -27,7 +27,7 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remark
 26,Ace,Abusong mga officers sa barangay,Dasmari�as,UNSOLVED,,,zM3yL,
 27,JP,Abusive officers,Dasmari�as,UNSOLVED,,,Q2jXp,
 28,ac,smpl,Dasmari�as,UNSOLVED,,,kH6nT,
-29,Anonymous,Lack of water,Dasmari�as,UNSOLVED,,,W8dFe,
+29,Anonymous,Lack of water,Dasmari�as,UNDER REVIEW,DENR,,W8dFe,Sending inspectors
 30,Anonymous,sample,,UNSOLVED,,,rV1qS,
 31,John Test,The road is rough,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,,F7xCb,
 32,Anonymous,I saw trash in the street!,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,,oN5mG,

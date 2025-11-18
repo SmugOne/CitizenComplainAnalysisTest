@@ -175,6 +175,7 @@ export default function DashboardScreen({ navigation }) {
             <Picker.Item label="UNSOLVED" value="UNSOLVED" />
             <Picker.Item label="SOLVED" value="SOLVED" />
             <Picker.Item label="SPAM" value="SPAM" />
+            <Picker.Item label="UNDER REVIEW" value="UNDER REVIEW" />
           </Picker>
 
           {/* Agency Picker */}

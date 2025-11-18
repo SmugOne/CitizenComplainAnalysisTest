@@ -291,6 +291,10 @@ def update_complaint():
     agency = data.get("agency")
     remark = data.get("remark")
 
+    #Changes status to UNDER REVIEW if there is remark but status is UNSOLVED
+    if status == "UNSOLVED" and remark.strip() != "":
+        status = "UNDER REVIEW"
+
     #Update ArrangedData.csv
     arranged_path = "CSVFile/ArrangedData.csv"
     arranged = pd.read_csv(arranged_path, encoding='cp1252')

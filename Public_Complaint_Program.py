@@ -402,6 +402,34 @@ def submit_feedback():
     archive.to_csv(archive_path, index=False, encoding='cp1252')
 
     return jsonify({"success": True, "message": "Feedback submitted"})
+
+#-------------------------COMPLAINT LIST SCREEN BACKEND-------------------------
+
+@app.route("/api/active_complaints")
+def get_active_complaints():
+    path = "CSVFile/ComplaintsData.csv"
+    if os.path.exists(path):
+        df = pd.read_csv(path, encoding='cp1252').fillna('')
+    else:
+        df = pd.DataFrame(columns=[
+            "ID", "Name", "Raw Complaint", "Location",
+            "Category", "Image ID", "Status", "Password", "Remark"
+        ])
+    df = df[df["Status"].isin(["UNSOLVED", "UNDER REVIEW"])]
+    return jsonify(df.to_dict(orient="records"))
+
+@app.route("/api/archive_complaints")
+def get_archive_complaints():
+    path = "CSVFile/Archive.csv"
+    if os.path.exists(path):
+        df = pd.read_csv(path, encoding='cp1252').fillna('')
+    else:
+        df = pd.DataFrame(columns=[
+            "ID", "Name", "Complaint", "Location",
+            "Agency", "Image ID", "Status", "Remark", "Feedback"
+        ])
+    df = df[df["Status"].isin(["SOLVED", "SPAM"])]
+    return jsonify(df.to_dict(orient="records"))
     
 #-------------------------END POINT-------------------------
 

@@ -378,21 +378,17 @@ def submit_feedback():
         "ID", "Name", "Complaint", "Location", "Agency", "Image ID", "Status", "Remark", "Feedback"
     ])
 
-    # Ensure Feedback column exists
-    if "Feedback" not in archive.columns:
-        archive["Feedback"] = ""
-
-    # Check if feedback already submitted
+    #Check if feedback already submitted
     if complaint_id in archive['ID'].astype(str).values:
         existing_feedback = archive.loc[archive['ID'].astype(str) == complaint_id, "Feedback"].values[0]
         if existing_feedback and existing_feedback.strip() != "":
             return jsonify({"success": False, "message": "You already made a feedback."})
 
-    # Update feedback in Archive.csv
+    #Update feedback in Archive.csv
     if complaint_id in archive['ID'].astype(str).values:
         archive.loc[archive['ID'].astype(str) == complaint_id, "Feedback"] = feedback
     else:
-        # If complaint is not yet in Archive (maybe not SOLVED/SPAM), copy it from ArrangedData
+        #If complaint is not yet in Archive copy it from ArrangedData
         row_to_archive = arranged.loc[arranged['ID'].astype(str) == complaint_id].copy()
         row_to_archive = row_to_archive.rename(columns={
             "Complaint": "Complaint",

@@ -4,7 +4,7 @@ import { Picker } from "@react-native-picker/picker";
 import Layout from "../../../components/LayoutAdmin";
 import { API_URL } from "@env";
 
-// Column widths
+// Column widths for active complaints
 const COLUMN_WIDTHS = {
   ID: 60,
   Name: 120,
@@ -27,6 +27,7 @@ const STATUS_OPTIONS_ARCHIVE = ["All", "SOLVED", "SPAM"];
 export default function ComplaintListScreen({ navigation }) {
   const [activeComplaints, setActiveComplaints] = useState([]);
   const [archivedComplaints, setArchivedComplaints] = useState([]);
+  const [viewMode, setViewMode] = useState("Active"); // "Active" or "Archive"
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [statusFilterActive, setStatusFilterActive] = useState("All");
   const [statusFilterArchive, setStatusFilterArchive] = useState("All");
@@ -64,16 +65,30 @@ export default function ComplaintListScreen({ navigation }) {
     });
   };
 
-  const activeFiltered = filterComplaints(activeComplaints, categoryFilter, statusFilterActive);
-  const archiveFiltered = filterComplaints(archivedComplaints, categoryFilter, statusFilterArchive);
+  const currentComplaints = viewMode === "Active"
+    ? filterComplaints(activeComplaints, categoryFilter, statusFilterActive)
+    : filterComplaints(archivedComplaints, categoryFilter, statusFilterArchive);
+
+  const currentStatusOptions = viewMode === "Active" ? STATUS_OPTIONS_ACTIVE : STATUS_OPTIONS_ARCHIVE;
 
   return (
     <Layout navigation={navigation}>
       <View style={{ flex: 1, padding: 16 }}>
-        <Text style={styles.title}>Active Complaints</Text>
+        <Text style={styles.title}>
+          {viewMode === "Active" ? "Active Complaints" : "Archived Complaints"}
+        </Text>
 
         {/* Filters */}
         <View style={styles.filterRow}>
+          <Picker
+            selectedValue={viewMode}
+            style={styles.picker}
+            onValueChange={setViewMode}
+          >
+            <Picker.Item label="Active Complaints" value="Active" />
+            <Picker.Item label="Archived Complaints" value="Archive" />
+          </Picker>
+
           <Picker
             selectedValue={categoryFilter}
             style={styles.picker}
@@ -83,106 +98,80 @@ export default function ComplaintListScreen({ navigation }) {
           </Picker>
 
           <Picker
-            selectedValue={statusFilterActive}
+            selectedValue={viewMode === "Active" ? statusFilterActive : statusFilterArchive}
             style={styles.picker}
-            onValueChange={setStatusFilterActive}
+            onValueChange={val => viewMode === "Active" ? setStatusFilterActive(val) : setStatusFilterArchive(val)}
           >
-            {STATUS_OPTIONS_ACTIVE.map(opt => <Picker.Item label={opt} value={opt} key={opt} />)}
+            {currentStatusOptions.map(opt => <Picker.Item label={opt} value={opt} key={opt} />)}
           </Picker>
         </View>
 
-        {/* Active complaints table */}
-        <ScrollView style={{ maxHeight: 300 }}>
+        {/* Table */}
+        <ScrollView style={{ maxHeight: 400 }}>
           <View style={styles.tableContainer}>
             <View style={styles.tableHeader}>
-              <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.ID }]}>ID</Text>
-              <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Name }]}>Name</Text>
-              <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Complaint }]}>Complaint</Text>
-              <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Category }]}>Category</Text>
-              <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Status }]}>Status</Text>
-              <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Location }]}>Location</Text>
-              <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Action }]}>Action</Text>
+              {viewMode === "Active" ? (
+                <>
+                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.ID }]}>ID</Text>
+                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Name }]}>Name</Text>
+                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Complaint }]}>Complaint</Text>
+                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Category }]}>Category</Text>
+                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Status }]}>Status</Text>
+                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Location }]}>Location</Text>
+                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Action }]}>Action</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={[styles.headerCell, { width: 60 }]}>ID</Text>
+                  <Text style={[styles.headerCell, { width: 120 }]}>Name</Text>
+                  <Text style={[styles.headerCell, { width: 320 }]}>Complaint</Text>
+                  <Text style={[styles.headerCell, { width: 150 }]}>Location</Text>
+                  <Text style={[styles.headerCell, { width: 120 }]}>Agency</Text>
+                  <Text style={[styles.headerCell, { width: 120 }]}>Image ID</Text>
+                  <Text style={[styles.headerCell, { width: 100 }]}>Status</Text>
+                  <Text style={[styles.headerCell, { width: 150 }]}>Remark</Text>
+                  <Text style={[styles.headerCell, { width: 150 }]}>Feedback</Text>
+                </>
+              )}
             </View>
+
             {loading ? (
               <Text style={{ margin: 10, color: "#11493f" }}>Loading...</Text>
             ) : fetchError ? (
               <Text style={{ margin: 10, color: "red" }}>Error loading data.</Text>
-            ) : activeFiltered.length === 0 ? (
-              <Text style={{ margin: 10, color: "#11493f" }}>No active complaints found.</Text>
+            ) : currentComplaints.length === 0 ? (
+              <Text style={{ margin: 10, color: "#11493f" }}>No {viewMode.toLowerCase()} complaints found.</Text>
             ) : (
-              activeFiltered.map(c => (
+              currentComplaints.map(c => (
                 <View style={styles.tableRow} key={c.ID || c.id}>
-                  <Text style={[styles.cell, { width: COLUMN_WIDTHS.ID }]}>{c.ID || c.id}</Text>
-                  <Text style={[styles.cell, { width: COLUMN_WIDTHS.Name }]}>{c.Name}</Text>
-                  <Text style={[styles.cell, { width: COLUMN_WIDTHS.Complaint, textAlign: "left" }]}>{c.Complaint || c["Raw Complaint"]}</Text>
-                  <Text style={[styles.cell, { width: COLUMN_WIDTHS.Category }]}>{c["Predicted Agency"] || c["Category"]}</Text>
-                  <Text style={[styles.cell, { width: COLUMN_WIDTHS.Status }]}>{c.Status}</Text>
-                  <Text style={[styles.cell, { width: COLUMN_WIDTHS.Location }]}>{c.Location}</Text>
-                  <TouchableOpacity
-                    style={[styles.actionBtn, { width: COLUMN_WIDTHS.Action }]}
-                    onPress={() => navigation.navigate("ComplaintStatus", { complaintId: c.ID || c.id })}
-                  >
-                    <Text style={styles.actionBtnText}>Resolve</Text>
-                  </TouchableOpacity>
-                </View>
-              ))
-            )}
-          </View>
-        </ScrollView>
-
-        {/* Archived complaints */}
-        <Text style={[styles.title, { marginTop: 24 }]}>Archived Complaints</Text>
-
-        {/* Filters */}
-        <View style={styles.filterRow}>
-          <Picker
-            selectedValue={categoryFilter}
-            style={styles.picker}
-            onValueChange={setCategoryFilter}
-          >
-            {CATEGORY_OPTIONS.map(opt => <Picker.Item label={opt} value={opt} key={opt} />)}
-          </Picker>
-
-          <Picker
-            selectedValue={statusFilterArchive}
-            style={styles.picker}
-            onValueChange={setStatusFilterArchive}
-          >
-            {STATUS_OPTIONS_ARCHIVE.map(opt => <Picker.Item label={opt} value={opt} key={opt} />)}
-          </Picker>
-        </View>
-
-        <ScrollView style={{ maxHeight: 300 }}>
-          <View style={styles.tableContainer}>
-            <View style={styles.tableHeader}>
-              <Text style={[styles.headerCell, { width: 60 }]}>ID</Text>
-              <Text style={[styles.headerCell, { width: 120 }]}>Name</Text>
-              <Text style={[styles.headerCell, { width: 320 }]}>Complaint</Text>
-              <Text style={[styles.headerCell, { width: 150 }]}>Location</Text>
-              <Text style={[styles.headerCell, { width: 120 }]}>Agency</Text>
-              <Text style={[styles.headerCell, { width: 120 }]}>Image ID</Text>
-              <Text style={[styles.headerCell, { width: 100 }]}>Status</Text>
-              <Text style={[styles.headerCell, { width: 150 }]}>Remark</Text>
-              <Text style={[styles.headerCell, { width: 150 }]}>Feedback</Text>
-            </View>
-            {loading ? (
-              <Text style={{ margin: 10, color: "#11493f" }}>Loading...</Text>
-            ) : fetchError ? (
-              <Text style={{ margin: 10, color: "red" }}>Error loading data.</Text>
-            ) : archiveFiltered.length === 0 ? (
-              <Text style={{ margin: 10, color: "#11493f" }}>No archived complaints found.</Text>
-            ) : (
-              archiveFiltered.map(c => (
-                <View style={styles.tableRow} key={c.ID || c.id}>
-                    <Text style={[styles.cell, { width: 60 }]}>{c.ID || c.id}</Text>
-                    <Text style={[styles.cell, { width: 120 }]}>{c.Name}</Text>
-                    <Text style={[styles.cell, { width: 320, textAlign: "left" }]}>{c.Complaint || c["Raw Complaint"]}</Text>
-                    <Text style={[styles.cell, { width: 150 }]}>{c.Location}</Text>
-                    <Text style={[styles.cell, { width: 120 }]}>{c.Agency || c["Predicted Agency"] || c["Category"]}</Text>
-                    <Text style={[styles.cell, { width: 120 }]}>{c["Image ID"]}</Text>
-                    <Text style={[styles.cell, { width: 100 }]}>{c.Status}</Text>
-                    <Text style={[styles.cell, { width: 150 }]}>{c.Remark || ""}</Text>
-                    <Text style={[styles.cell, { width: 150 }]}>{c.Feedback || ""}</Text>
+                  {viewMode === "Active" ? (
+                    <>
+                      <Text style={[styles.cell, { width: COLUMN_WIDTHS.ID }]}>{c.ID || c.id}</Text>
+                      <Text style={[styles.cell, { width: COLUMN_WIDTHS.Name }]}>{c.Name}</Text>
+                      <Text style={[styles.cell, { width: COLUMN_WIDTHS.Complaint, textAlign: "left" }]}>{c.Complaint || c["Raw Complaint"]}</Text>
+                      <Text style={[styles.cell, { width: COLUMN_WIDTHS.Category }]}>{c["Predicted Agency"] || c["Category"]}</Text>
+                      <Text style={[styles.cell, { width: COLUMN_WIDTHS.Status }]}>{c.Status}</Text>
+                      <Text style={[styles.cell, { width: COLUMN_WIDTHS.Location }]}>{c.Location}</Text>
+                      <TouchableOpacity
+                        style={[styles.actionBtn, { width: COLUMN_WIDTHS.Action }]}
+                        onPress={() => navigation.navigate("ComplaintStatus", { complaintId: c.ID || c.id })}
+                      >
+                        <Text style={styles.actionBtnText}>Resolve</Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={[styles.cell, { width: 60 }]}>{c.ID || c.id}</Text>
+                      <Text style={[styles.cell, { width: 120 }]}>{c.Name}</Text>
+                      <Text style={[styles.cell, { width: 320, textAlign: "left" }]}>{c.Complaint || c["Raw Complaint"]}</Text>
+                      <Text style={[styles.cell, { width: 150 }]}>{c.Location}</Text>
+                      <Text style={[styles.cell, { width: 120 }]}>{c.Agency || c["Predicted Agency"] || c["Category"]}</Text>
+                      <Text style={[styles.cell, { width: 120 }]}>{c["Image ID"]}</Text>
+                      <Text style={[styles.cell, { width: 100 }]}>{c.Status}</Text>
+                      <Text style={[styles.cell, { width: 150 }]}>{c.Remark || ""}</Text>
+                      <Text style={[styles.cell, { width: 150 }]}>{c.Feedback || ""}</Text>
+                    </>
+                  )}
                 </View>
               ))
             )}

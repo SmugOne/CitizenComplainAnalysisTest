@@ -190,7 +190,7 @@ def Main():
         'ID', 'Name', 'Complaint', 'Location',
         'Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score',
         'Sadness Score', 'Surprise Score',
-        'Predicted Agency', 'Flagged Words', 'Image ID', 'Status', 'Password', 'Remark'
+        'Predicted Agency', 'Flagged Words', 'Image ID', 'Status', 'Password', 'Remark',
     ]]
 
     #Save and return file
@@ -358,45 +358,54 @@ def update_complaint():
 
 @app.route("/api/complaints/feedback", methods=["POST"])
 def submit_feedback():
-    try:
-        file_path = "CSVFile/Archive.csv"
-        Archive = pd.read_csv(file_path, encoding="cp1252")
+    data = request.get_json()
+    complaint_id = str(data.get("ID", "")).strip()
+    feedback = data.get("Feedback", "").strip()
 
-        data = request.get_json()
-        complaint_id = data.get("ID")
-        feedback_text = data.get("Feedback")
+    if not complaint_id or not feedback:
+        return jsonify({"success": False, "message": "Missing ID or feedback"})
 
-        if not complaint_id or feedback_text is None:
-            return jsonify({"success": False, "message": "Missing ID or Feedback"}), 400
+    arranged_path = "CSVFile/ArrangedData.csv"
+    arranged = pd.read_csv(arranged_path, encoding='cp1252').fillna('')
 
-        #Ensure Feedback column exists
-        if "Feedback" not in Archive.columns:
-            Archive["Feedback"] = ""
+    # Check if complaint exists in ArrangedData
+    if complaint_id not in arranged['ID'].astype(str).values:
+        return jsonify({"success": False, "message": "Complaint ID not found"})
 
-        #Get status and existing feedback
-        row = Archive.loc[Archive["ID"].astype(str) == str(complaint_id)]
-        status = row["Status"].values[0]
-        existing_feedback = row["Feedback"].values[0]
+    # Load Archive
+    archive_path = "CSVFile/Archive.csv"
+    archive = pd.read_csv(archive_path, encoding='cp1252').fillna('') if os.path.exists(archive_path) else pd.DataFrame(columns=[
+        "ID", "Name", "Complaint", "Location", "Agency", "Image ID", "Status", "Remark", "Feedback"
+    ])
 
-        #Block if SOLVED/SPAM and feedback already exists
-        if status in ["SOLVED", "SPAM"] and str(existing_feedback).strip() != "":
-            return jsonify({
-                "success": False,
-                "message": "Feedback already submitted and cannot be changed."
-            }), 403
+    # Ensure Feedback column exists
+    if "Feedback" not in archive.columns:
+        archive["Feedback"] = ""
 
-        #Save new feedback
-        Archive.loc[
-            Archive["ID"].astype(str) == str(complaint_id),
-            "Feedback"
-        ] = feedback_text
+    # Check if feedback already submitted
+    if complaint_id in archive['ID'].astype(str).values:
+        existing_feedback = archive.loc[archive['ID'].astype(str) == complaint_id, "Feedback"].values[0]
+        if existing_feedback and existing_feedback.strip() != "":
+            return jsonify({"success": False, "message": "You already made a feedback."})
 
-        Archive.to_csv(file_path, index=False, encoding="cp1252")
+    # Update feedback in Archive.csv
+    if complaint_id in archive['ID'].astype(str).values:
+        archive.loc[archive['ID'].astype(str) == complaint_id, "Feedback"] = feedback
+    else:
+        # If complaint is not yet in Archive (maybe not SOLVED/SPAM), copy it from ArrangedData
+        row_to_archive = arranged.loc[arranged['ID'].astype(str) == complaint_id].copy()
+        row_to_archive = row_to_archive.rename(columns={
+            "Complaint": "Complaint",
+            "Predicted Agency": "Agency",
+            "Remark": "Remark"
+        })
+        row_to_archive = row_to_archive[["ID", "Name", "Complaint", "Location", "Agency", "Image ID", "Status", "Remark"]]
+        row_to_archive["Feedback"] = feedback
+        archive = pd.concat([archive, row_to_archive], ignore_index=True)
 
-        return jsonify({"success": True, "message": "Feedback saved"})
+    archive.to_csv(archive_path, index=False, encoding='cp1252')
 
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
+    return jsonify({"success": True, "message": "Feedback submitted"})
     
 #-------------------------END POINT-------------------------
 

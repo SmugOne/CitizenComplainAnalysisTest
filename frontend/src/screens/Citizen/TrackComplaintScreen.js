@@ -15,33 +15,34 @@ export default function TrackComplaintScreen({ route, navigation }) {
   const [feedbackText, setFeedbackText] = useState("");
 
   const handleFeedback = async () => {
-  if (!feedbackText.trim()) {
-    alert("Please enter feedback.");
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_URL}/api/complaints/feedback`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ID: complaint.ID,
-        Feedback: feedbackText,
-      }),
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      alert("Feedback submitted!");
-      setFeedbackMode(false);
-      setFeedbackText("");
-    } else {
-      alert("Failed to submit feedback.");
+    if (!feedbackText.trim()) {
+      alert("Please enter feedback.");
+      return;
     }
-  } catch (err) {
-    alert("Server error while sending feedback.");
-  }
- };
+
+    try {
+      const res = await fetch(`${API_URL}/api/complaints/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ID: complaint.ID,
+          Feedback: feedbackText,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("Feedback submitted!");
+        setFeedbackMode(false);
+        setFeedbackText("");
+      } else {
+        // Show backend-provided message, e.g., "Feedback already submitted"
+        alert(data.message || "Failed to submit feedback.");
+      }
+    } catch (err) {
+      alert("Server error while sending feedback.");
+    }
+  };
 
   const handleTrack = async () => {
     if (!inputId.trim()) {
@@ -85,9 +86,10 @@ export default function TrackComplaintScreen({ route, navigation }) {
   };
 
   const renderStatus = (status) => {
-    if (status === "UNSOLVED") return "Under Review";
-    if (status === "SOLVED") return "Resolved";
-    return "Under Review";
+    if (status === "UNSOLVED") return "Unsolved";
+    if (status === "UNDER REVIEW") return "Under Review";
+    if (status === "SOLVED") return "Solved";
+    if (status === "SPAM") return "Marked as Spam";
   };
 
   return (

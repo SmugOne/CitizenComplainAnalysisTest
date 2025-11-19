@@ -11,6 +11,37 @@ export default function TrackComplaintScreen({ route, navigation }) {
   const [passwordInput, setPasswordInput] = useState("");
   const [isPasswordStep, setIsPasswordStep] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [feedbackMode, setFeedbackMode] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+
+  const handleFeedback = async () => {
+  if (!feedbackText.trim()) {
+    alert("Please enter feedback.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/api/complaints/feedback`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ID: complaint.ID,
+        Feedback: feedbackText,
+      }),
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      alert("Feedback submitted!");
+      setFeedbackMode(false);
+      setFeedbackText("");
+    } else {
+      alert("Failed to submit feedback.");
+    }
+  } catch (err) {
+    alert("Server error while sending feedback.");
+  }
+ };
 
   const handleTrack = async () => {
     if (!inputId.trim()) {
@@ -130,33 +161,38 @@ export default function TrackComplaintScreen({ route, navigation }) {
             ) : null}
 
             {/* Send Feedback Button only for SOLVED or SPAM */}
-            {(complaint.Status === "SOLVED" || complaint.Status === "SPAM") && (
+            {(complaint.Status === "SOLVED" || complaint.Status === "SPAM") && !feedbackMode && (
               <TouchableOpacity
                 style={styles.feedbackBtn}
-                onPress={async () => {
-                  try {
-                    const feedback = "Write your feedback..."; 
-                    const res = await fetch(`${API_URL}/api/complaints/feedback`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        ID: complaint.ID,
-                        Feedback: feedback,
-                      }),
-                    });
-                    const data = await res.json();
-                    if (data.success) {
-                      alert("Feedback sent!");
-                    } else {
-                      alert("Failed to send feedback");
-                    }
-                  } catch (err) {
-                    alert("Error sending feedback.");
-                  }
-                }}
-                >
+                onPress={() => setFeedbackMode(true)}
+              >
                 <Text style={styles.feedbackBtnText}>Send Feedback</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* FEEDBACK INPUT BOX */}
+            {feedbackMode && (
+              <View style={{ width: "100%", marginTop: 15 }}>
+                <Text style={styles.statusText}>Write your feedback:</Text>
+
+                <TextInput
+                  style={[
+                    styles.input,
+                    { width: "100%", marginTop: 10, backgroundColor: "#f3ead3" }
+                  ]}
+                  multiline
+                  value={feedbackText}
+                  onChangeText={setFeedbackText}
+                  placeholder="Enter your feedback..."
+                />
+
+                <TouchableOpacity
+                  style={[styles.feedbackBtn, { marginTop: 10 }]}
+                  onPress={handleFeedback}
+                >
+                  <Text style={styles.feedbackBtnText}>Submit Feedback</Text>
                 </TouchableOpacity>
+              </View>
             )}
           </View>
            )}

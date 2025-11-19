@@ -358,31 +358,47 @@ def update_complaint():
 
 @app.route("/api/complaints/feedback", methods=["POST"])
 def submit_feedback():
-    file_path = "CSVFile/Archive.csv"
-    Archive = pd.read_csv(file_path, encoding='cp1252')
-
-    data = request.get_json()
-    complaint_id = data.get("ID")
-    feedback_text = data.get("Feedback")
-
-    if not complaint_id or feedback_text is None:
-        return jsonify({"success": False, "message": "Missing ID or Feedback"}), 400
-
     try:
-        # Check if complaint exists
-        if str(complaint_id) not in Archive["ID"].astype(str).values:
-            return jsonify({"success": False, "message": "Complaint not found"}), 404
+        file_path = "CSVFile/Archive.csv"
+        Archive = pd.read_csv(file_path, encoding="cp1252")
 
-        # Update Feedback column
-        Archive.loc[Archive["ID"].astype(str) == str(complaint_id), "Feedback"] = feedback_text
+        data = request.get_json()
+        complaint_id = data.get("ID")
+        feedback_text = data.get("Feedback")
 
-        # Save CSV
-        Archive.to_csv(file_path, index=False, encoding='cp1252')
+        if not complaint_id or feedback_text is None:
+            return jsonify({"success": False, "message": "Missing ID or Feedback"}), 400
+
+        #Ensure Feedback column exists
+        if "Feedback" not in Archive.columns:
+            Archive["Feedback"] = ""
+
+        #Get status and existing feedback
+        row = Archive.loc[Archive["ID"].astype(str) == str(complaint_id)]
+        status = row["Status"].values[0]
+        existing_feedback = row["Feedback"].values[0]
+
+        #Block if SOLVED/SPAM and feedback already exists
+        if status in ["SOLVED", "SPAM"] and str(existing_feedback).strip() != "":
+            return jsonify({
+                "success": False,
+                "message": "Feedback already submitted and cannot be changed."
+            }), 403
+
+        #Save new feedback
+        Archive.loc[
+            Archive["ID"].astype(str) == str(complaint_id),
+            "Feedback"
+        ] = feedback_text
+
+        Archive.to_csv(file_path, index=False, encoding="cp1252")
 
         return jsonify({"success": True, "message": "Feedback saved"})
 
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+    
+#-------------------------END POINT-------------------------
 
 #Back and Front end connection:
 if __name__ == '__main__':

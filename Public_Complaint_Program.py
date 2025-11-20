@@ -14,6 +14,11 @@ from werkzeug.utils import secure_filename
 from transformers import pipeline
 from collections import Counter
 
+
+#To do:
+# - Set dataset to Google Sheets. Get API.
+# - Add search bar and timestamp.
+
 #Connection:
 load_dotenv()
 app = Flask(__name__)

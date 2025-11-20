@@ -1,7 +1,7 @@
 Complaint,Emotion,Government Agency
 Kakairita annoying nitong traffic trapik! Sobrang bagal slow!,Anger,DPWH
-May nangungurakot corrupt sa munisipyo municipal,Neutral,Ombudsman
-Natatakot scared ako me dahil may kurakot corrupt sa aming our barangay,Fear,Ombudsman
+May nangungurakot corrupt sa munisipyo municipal,Neutral,OMBUDSMAN
+Natatakot scared ako me dahil may kurakot corrupt sa aming our barangay,Fear,OMBUDSMAN
 Maayos ito! Pero kailangan pa dagdagan itong mga bollard,Joy,DPWH
 There's so many idiots on the road!,Anger,MMDA
 Maraming mga tanga sa kalsada!,Anger,MMDA
@@ -29,9 +29,9 @@ Hala! May basura trash!,Surprise,DENR
 May kriminal criminal sa kabilang barangay,Neutral,PNP
 Maynagtatagong hiding kriminal,Fear,PNP
 Maraming mga kriminal! ,Fear,PNP
-Inaabuso ni mayor yung pera ng bayan! ,Anger,Ombudsman
-Mayor is abusing our funds! ,Anger,Ombudsman
-I am afraid. Ako ay takot dahil nagnanakaw steal money pera si Barangay,Fear,Ombudsman
+Inaabuso ni mayor yung pera ng bayan! ,Anger,OMBUDSMAN
+Mayor is abusing our funds! ,Anger,OMBUDSMAN
+I am afraid. Ako ay takot dahil nagnanakaw steal money pera si Barangay,Fear,OMBUDSMAN
 Mabagal slow ang serbisyo service ng ospital hospital,Neutral,DOH
 Walang nagmamando ng trapik! Ano ba yan! ,Anger,MMDA
 No one is manning the traffic! What is this?! ,Surprise ,MMDA
@@ -39,39 +39,39 @@ The traffic light is broken,Neutral,DPWH
 The tree is blocking my view,Neutral,DENR
 Hinaharang ng puno ang aking view,Neutral,DENR
 Ang daming sasakyan cars. Nakakalungkot sad,Sadness,MMDA
-Kulang ang gamit ng paaralan school!,Anger,DepEd
-We lack school supplies! What is this?! ,Surprise,DepEd
-May tumutulong tubig sa paaralan,Neutral,DepEd
+Kulang ang gamit ng paaralan school!,Anger,DEPED
+We lack school supplies! What is this?! ,Surprise,DEPED
+May tumutulong tubig sa paaralan,Neutral,DEPED
 Hindi pinigilan ang magnanakaw!! PNP ano na?? ,Anger,PNP
 Nobody stopped the robber! PNP where you at?? ,Anger,PNP
 Mabagal responde ng bumbero fireman,Neutral,BFP
 Maingay yung firetruck bumbero! ,Neutral,BFP
 Hindi napigil ang apoy fire. Nasunog bahay ko,Sadness,BFP
-Nawalan lost ako ng pera money dahil kinurakot corrupt,Sadness,Ombudsman
+Nawalan lost ako ng pera money dahil kinurakot corrupt,Sadness,OMBUDSMAN
 Hindi ininspect ng maayos ng mga bumbero,Neutral ,BFP
 The fireman didn't inspect properly,Neutral,BFP
 I love the fireman! They just need more training! ,Joy,BFP
-Mabait ang mga guro teacher! Taasan nalang ang suweldo raise,Joy,DepEd
-Inaabuso ako ni mayor. Tulong! ,Surprise,Ombudsman
-Inaabuso ako ni mayor. Tulong! ,Sadness,Ombudsman
+Mabait ang mga guro teacher! Taasan nalang ang suweldo raise,Joy,DEPED
+Inaabuso ako ni mayor. Tulong! ,Surprise,OMBUDSMAN
+Inaabuso ako ni mayor. Tulong! ,Sadness,OMBUDSMAN
 "Sobrang dumi ng kanal dito, hindi nililinis!",Anger,DPWH
 Why is the licensing process still so slow?!,Anger,LTO
-Wala na namang teacher sa klase namin kanina.,Sadness,DepEd
+Wala na namang teacher sa klase namin kanina.,Sadness,DEPED
 "Thank you sa mabilis na response ng MMDA, good job!",Joy,MMDA
 "Grabe, ang lakas ng sunog! Sana may dumating na bumbero agad.",Fear,BFP
 I feel safe knowing the police are patrolling the area.,Joy,PNP
 "Nakakatakot dito sa amin, walang street lights!",Fear,DPWH
 "Ang galing ng traffic enforcer, very polite!",Joy,MMDA
 The doctor was so rude! I didn’t feel helped at all.,Anger,DOH
-Bakit parang laging absent ang mga guro lately?,Neutral,DepEd
-"Ayos na sana, kaso ang tagal ng medical assistance.",Sadness,DOH
+Bakit parang laging absent ang mga guro lately?,Neutral,DEPED
+"Ayos na sana, kaso ang tagal ng medical assistance.",Sadness,DEPED
 "The road repairs are taking forever, nakakainis!",Anger,DPWH
 Ang lakas ng baha kahit konting ulan lang!,Sadness,DPWH
 Good job DENR! Sa wakas naayos ang illegal logging issue.,Joy,DENR
 "Nakakagulat, may sumisigaw sa kalye kagabi!",Surprise,PNP
 Someone is throwing garbage again sa creek!,Anger,DENR
 Hindi pa rin inaayos yung sirang traffic light!,Anger,DPWH
-Gusto ko lang sabihin salamat sa public school teachers!,Joy,DepEd
+Gusto ko lang sabihin salamat sa public school teachers!,Joy,DEPED
 Nakakatakot kasi walang bantay sa barangay hall gabi.,Fear,PNP
 Ambulance arrived so fast! Thank you DOH!,Joy,DOH
 Ang tagal dumating ng rescue! Nakakagalit!,Anger,BFP
@@ -82,22 +82,22 @@ The traffic enforcer just ignored the beating red light!,Anger,MMDA
 Gulat ako! May batang halos masagasaan kanina!,Surprise,DPWH
 "Hindi pa rin natatapos ang construction, abala na sobra.",Anger,DPWH
 Na-appreciate ko ang libreng medical check-up kanina.,Joy,DOH
-Hindi ko maintindihan bakit walang nakabantay sa paaralan tuwing gabi.,Neutral,DepEd
+Hindi ko maintindihan bakit walang nakabantay sa paaralan tuwing gabi.,Neutral,DEPED
 Sobrang bagal ng release ng fire clearance.,Anger,BFP
 Ang linis na ng kalsada! Salamat sa DENR!,Joy,DENR
 Bakit walang sumasagot sa hotline ng pulis?,Anger,PNP
 The garbage truck didn’t come again this week.,Sadness,DENR
-Masaya ako na pinansin ng DepEd yung request namin for more books.,Joy,DepEd
+Masaya ako na pinansin ng DepEd yung request namin for more books.,Joy,DEPED
 Nakakagulat! Biglang sumiklab yung apoy sa likod bahay!,Surprise,BFP
 Hindi pa rin naaayos yung sira sa waiting shed.,Neutral,DPWH
 "May sumisigaw kagabi, wala man lang nagrespond na tanod.",Fear,PNP
 Why is it so hard to get a student license?,Anger,LTO
-"Mabait si ma'am teacher, ang galing niya magturo!",Joy,DepEd
+"Mabait si ma'am teacher, ang galing niya magturo!",Joy,DEPED
 Ilang araw nang walang pickup ng basura!,Sadness,DENR
 Sana may dagdag na traffic lights sa intersection na ito.,Neutral,DPWH
 Ambulansya took forever! Emergency na nga eh!,Anger,DOH
 Hindi maayos ang pasilidad facility sa fire station!,Sadness,BFP
-Mayor should stop using funds for his own projects!,Anger,Ombudsman
+Mayor should stop using funds for his own projects!,Anger,OMBUDSMAN
 Mabagal ang serbisyo dito sa ospital!,Surprise,DOH
 Grabe! Wala na bang maaasahan dito sa LTO? Ang bagal!,Anger,LTO
 Matagal slow kumuha get ng lisensiya,Neutral,LTO
@@ -111,5 +111,6 @@ Maraming naiipon na basura dito! Asan na service namin?,Surprise,DENR
 So many trash piling up here,Neutral,DENR
 May mga nagkakalat dito ng basura,Neutral,DENR
 Punong puno ng mga kalat dito!,Neutral,DENR
-Grabe ang galing nung guro teacher!,Joy,DepEd
+Grabe ang galing nung guro teacher!,Joy,DEPED
 Ang hirap ng training sa LTO,Sadness,LTO
+Corruption,Neutral,OMBUDSMAN

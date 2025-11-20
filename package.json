@@ -12,7 +12,8 @@
   "license": "ISC",
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
-    "expo": "^53.0.9",
+    "@react-native-picker/picker": "^2.11.4",
+    "expo": "^53.0.22",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-native-dotenv": "^3.4.11",

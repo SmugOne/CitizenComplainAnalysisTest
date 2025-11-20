@@ -78,30 +78,31 @@ export default function LayoutAdmin({ children, navigation }) {
               <TouchableOpacity onPress={() => nav("ComplaintList")} style={styles.sidebarLink}>
                 <Text style={styles.sidebarLinkText}>Complaints</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => nav("AdminLogin")} style={styles.sidebarLink}>
-                <Text style={styles.sidebarLinkText}>Logout</Text>
+              <TouchableOpacity onPress={() => nav("StatisticsScreen")} style={styles.sidebarLink}>
+                <Text style={styles.sidebarLinkText}>Statistics</Text>
               </TouchableOpacity>
               <View style={styles.divider} />
               <TouchableOpacity onPress={() => nav("CitizenHome")} style={styles.sidebarLink}>
-                <Text style={[styles.sidebarLinkText, { color: "#ffd66b" }]}>Back to Citizen</Text>
+                <Text style={[styles.sidebarLinkText, { color: "#ffd66b" }]}>Log out</Text>
               </TouchableOpacity>
             </ScrollView>
           </Animated.View>
 
-          {/* Backdrop for overlay mode */}
+          {/* Backdrop */}
           {!isWide && sidebarOpen && (
             <TouchableWithoutFeedback onPress={() => setSidebarOpen(false)}>
               <View style={styles.backdrop} />
             </TouchableWithoutFeedback>
           )}
 
-          {/* Main content area: vertical scroll only */}
-          <View style={styles.mainArea}>
+          {/* Main content */}
+            <View style={styles.mainArea}>
             <ScrollView style={{ flex: 1 }}>
               <View style={styles.contentContainer}>
                 {children}
               </View>
-            </ScrollView>
+              </ScrollView>
+
             <View style={styles.footer}>
               <Text style={styles.footerText}>
                 Admin Panel &copy; {new Date().getFullYear()} Citizen Complaint Portal
@@ -177,9 +178,11 @@ const styles = StyleSheet.create({
   mainArea: {
     flex: 1,
     padding: 18,
+    minHeight: 0,
     zIndex: 10,
     flexDirection: "column",
-    minHeight: 0,
+    minHeight: "100%",
+    overflow: "auto",
     justifyContent: "flex-start",
   },
   contentContainer: { flexGrow: 1, paddingBottom: 6 },

@@ -3,15 +3,18 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Image, S
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import Layout from "../../components/Layout";
+import { API_URL } from "@env";
 
 const defaultCategories = [
-  "Infrastructure",
-  "Public Services",
-  "Safety & Security",
-  "Environment",
-  "Administrative Issues",
-  "Community Concerns",
-  "Other",
+  {label: "Select Category", value: ""},
+  {label: "Garbage Collection", value: "DENR"},
+  {label: "Road Damage", value: "DPWH"},
+  {label: "Water Services", value: "DENR"},
+  {label: "Electricity Services", value: "DOE"},
+  {label: "Education Services", value: "DEPED"},
+  {label: "Corruption", value: "OMBUDSMAN"},
+  {label: "Transport Issue", value: "DOTR"},
+  {label: "Others", value: ""},
 ];
 
 export default function SubmitComplaintScreen({ navigation }) {
@@ -19,11 +22,20 @@ export default function SubmitComplaintScreen({ navigation }) {
   const [name, setName] = useState("");
   const [complaint, setComplaint] = useState("");
   const [category, setCategory] = useState(defaultCategories[0]);
-  const [categories, setCategories] = useState(defaultCategories);
   const [location, setLocation] = useState("");
   const [locLoading, setLocLoading] = useState(false);
   const [image, setImage] = useState(null);
   const [imageLoading, setImageLoading] = useState(false);
+
+  //Random 5-letter password generator
+  const generatePassword = () => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let pass = "";
+  for (let i = 0; i < 5; i++) {
+    pass = pass + chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return pass;
+};
 
   const handleGetLocation = async () => {
     setLocLoading(true);
@@ -36,55 +48,114 @@ export default function SubmitComplaintScreen({ navigation }) {
       }
       let loc = await Location.getCurrentPositionAsync({});
       setLocation(`Lat: ${loc.coords.latitude}, Long: ${loc.coords.longitude}`);
-    } catch (e) {
+    } 
+    catch (e) {
       setLocation("Could not get location");
     }
     setLocLoading(false);
   };
 
-  const handleAddCategory = () => {
-    const newCat = prompt("Enter new category:");
-    if (newCat && !categories.includes(newCat)) setCategories([...categories, newCat]);
-  };
-
+//Image picker
   const pickImage = async () => {
-    setImageLoading(true);
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  setImageLoading(true);
+  try {
+    const result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.7,
     });
-
-    // For SDK 49+, result.assets; for older, result.uri
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      setImage(result.assets[0].uri);
-    } else if (!result.canceled && result.uri) {
-      setImage(result.uri);
+    if (!result.canceled) {
+      const uri = result.assets ? result.assets[0].uri : result.uri;
+      setImage(uri);
     }
-    setImageLoading(false);
+  } 
+  catch (error) {
+    console.error("Error picking image:", error);
+  }
+  setImageLoading(false);
   };
 
   const handleRemoveImage = () => setImage(null);
 
+//Form validation (Can only submit if all fields are filled)
   const canSubmit =
     complaint.trim() !== "" &&
-    category.trim() !== "" &&
-    location.trim() !== "" &&
     (anonymous || name.trim() !== "");
 
-  const handleSubmit = () => {
-    if (!canSubmit) return;
-    // Add image logic here (e.g., upload image to server or include in API)
+//Submit complaint & image to backend
+  const handleSubmit = async () => {
+  if (!canSubmit) return;
+  let imageId = null;
+  let imageUrl = null;
+  const generatedPassword = generatePassword();
+
+  //Upload image to backend
+  if (image) {
+    try {
+      const formData = new FormData();
+      formData.append("image", {
+        uri: image,
+        name: "complaint_image.jpg",
+        type: "image/jpeg",
+      });
+
+      const uploadResponse = await fetch(`${API_URL}/api/uploadImage`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        body: formData,
+      });
+
+      const uploadData = await uploadResponse.json();
+      imageId = uploadData.imageId;
+      imageUrl = uploadData.imageUrl;
+    } 
+    catch (err) {
+      console.error("Error uploading image:", err);
+      alert("Failed to upload image. Please try again.");
+      return;
+    }
+  }
+
+  //Submit complaint data to backend
+  try {
+    const response = await fetch(`${API_URL}/api/complaints`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: anonymous ? "Anonymous" : name,
+        complaint: complaint,
+        category: category.value,
+        location: location,
+        imageID: imageId,
+        imageUrl: imageUrl,
+        status: "UNSOLVED",
+        password: generatedPassword,
+      }),
+    });
+
+    //alerts user after submitting complaint
+    const data = await response.json();
     alert(
-      `Complaint submitted!\nName: ${anonymous ? "Anonymous" : name}\nComplaint: ${complaint}\nCategory: ${category}\nLocation: ${location}\nImage: ${image ? image : "No image"}`
+      `Complaint submitted! Please take a screenshot or picture of the COMPLAINT ID and PASSWORD to track its status.\n\n` +
+      `  \n` +
+      `COMPLAINT ID: ${data.ID}\n` +
+      `PASSWORD: ${generatedPassword}`
     );
+
+    //Reset form after success(?)
     setName("");
     setComplaint("");
-    setCategory(categories[0]);
+    setCategory(defaultCategories[0]);
     setLocation("");
     setAnonymous(false);
     setImage(null);
+  } 
+  catch (err) {
+    console.error("Error submitting complaint:", err);
+    alert("Failed to submit complaint. Please try again.");
+    }
   };
 
   return (
@@ -120,29 +191,30 @@ export default function SubmitComplaintScreen({ navigation }) {
           {Platform.OS === "web" ? (
             <select
               style={styles.select}
-              value={category}
-              onChange={e => setCategory(e.target.value)}
+              value={category.value}
+              onChange={(e) =>
+                setCategory(defaultCategories.find((cat) => cat.value === e.target.value))
+              }
             >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>
-                  {cat}
+              {defaultCategories.map((cat) => (
+                <option key={cat.value} value={cat.value}>
+                  {cat.label}
                 </option>
               ))}
             </select>
           ) : (
             <Picker
-              selectedValue={category}
+              selectedValue={category.value}
               style={styles.picker}
-              onValueChange={setCategory}
+              onValueChange={(value) =>
+                setCategory(defaultCategories.find((cat) => cat.value === value))
+              }
             >
-              {categories.map(cat => (
-                <Picker.Item label={cat} value={cat} key={cat} />
+              {defaultCategories.map((cat) => (
+                <Picker.Item label={cat.label} value={cat.value} key={cat.value} />
               ))}
             </Picker>
           )}
-          <TouchableOpacity onPress={handleAddCategory} style={styles.addCatBtn}>
-            <Text style={styles.addCatBtnText}>+</Text>
-          </TouchableOpacity>
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>Location:</Text>
@@ -179,8 +251,7 @@ export default function SubmitComplaintScreen({ navigation }) {
       </View>
     </Layout>
   );
-}
-
+};
 const styles = StyleSheet.create({
   card: { backgroundColor: "#fbf3df", padding: 22, borderRadius: 12, marginBottom: 18 },
   title: { fontSize: 28, textAlign: "center", fontWeight: "800", color: "#11493f" },
@@ -213,16 +284,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f7f1de",
     fontSize: 15,
   },
-  picker: { flex: 1, height: 40 },
-  addCatBtn: {
-    marginLeft: 10,
-    backgroundColor: "#197278",
-    borderRadius: 14,
-    width: 30,
-    height: 30,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   addCatBtnText: { color: "#fff", fontWeight: "bold", fontSize: 20 },
   locBtn: {
     backgroundColor: "#197278",
@@ -231,6 +292,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginLeft: 10,
   },
+
   locBtnText: { color: "#fff", fontWeight: "700" },
   btnRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
   submitBtn: {

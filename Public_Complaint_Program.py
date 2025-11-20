@@ -411,9 +411,10 @@ def submit_feedback():
 
 #-------------------------COMPLAINT LIST SCREEN BACKEND-------------------------
 
-@app.route("/api/active_complaints")
+@app.route("/api/complaints")
 def get_active_complaints():
-    path = "CSVFile/ComplaintsData.csv"
+    df = df[df["Status"].isin(["UNSOLVED", "UNDER REVIEW"])]
+    path = "CSVFile/ArrangedData.csv"
     if os.path.exists(path):
         df = pd.read_csv(path, encoding='cp1252').fillna('')
     else:

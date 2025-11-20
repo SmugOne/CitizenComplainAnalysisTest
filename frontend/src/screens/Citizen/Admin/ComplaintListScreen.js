@@ -39,7 +39,7 @@ export default function ComplaintListScreen({ navigation }) {
     const fetchData = async () => {
       try {
         const [activeRes, archiveRes] = await Promise.all([
-          fetch(`${API_URL}/api/active_complaints`),
+          fetch(`${API_URL}/api/complaints`),
           fetch(`${API_URL}/api/archive_complaints`)
         ]);
         const [activeData, archiveData] = await Promise.all([activeRes.json(), archiveRes.json()]);

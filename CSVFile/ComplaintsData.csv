@@ -51,7 +51,7 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remark
 50,Anonymous,Malubak ang kalsada,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,nZ5sE,
 51,Anonymous,Makalat yung lugar,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,H2mQd,
 52,Anonymous,May baha dito sa kalsada. Maputik ang lugar,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,yKJc5,
-53,Anonymous,Kulang ang tubig at mahina,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,kyxGH,
+53,Anonymous,Kulang ang tubig at mahina,"Lat: 14.41792, Long: 120.979456",UNDER REVIEW,DEPED,,kyxGH,We sent inspectors
 54,Anonymous,May kurakot sa police station,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,Z4Qrl,
 55,Anonymous,Sira sira ang daanan,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,Krt07,
 56,Anonymous,Pangit kalsada,,SOLVED,DPWH,,6JAQd,Sent inspectors
@@ -67,3 +67,5 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remark
 66,Anonymous,Sira yung kalsada,"Lat: 14.3312666, Long: 120.9553525",UNSOLVED,DPWH,,T5NpK,
 67,Anonymous,Marumi ang tubig dito sa ilog,"Lat: 14.3312666, Long: 120.9553525",UNSOLVED,DENR,,HGTLn,
 68,JP,Please fixed your statistics please please,,UNSOLVED,DENR,,lLqtf,
+69,Anonymous,May kalat sa kalsada,"Lat: 14.3753216, Long: 120.9761792",UNSOLVED,,,WBjql,
+70,Anonymous,Balakubak,,UNSOLVED,,,wSUn7,

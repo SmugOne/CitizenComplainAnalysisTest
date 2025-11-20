@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Platform,
 } from "react-native";
+import Bootstrap from "react-bootstrap"; // For web-specific styles (if needed)
 
 /**
  * Lightweight "bootstrap-like" utility for React Native / react-native-web.

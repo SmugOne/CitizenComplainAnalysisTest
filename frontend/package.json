@@ -46,6 +46,7 @@
     }
   },
   "devDependencies": {
-    "@expo/cli": "^0.24.21"
+    "@expo/cli": "^0.24.21",
+    "baseline-browser-mapping": "^2.8.30"
   }
 }

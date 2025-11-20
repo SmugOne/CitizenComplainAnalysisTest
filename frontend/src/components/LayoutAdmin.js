@@ -4,7 +4,7 @@ import {
   Text,
   TouchableOpacity,
   Animated,
-  Dimensions,
+  useWindowDimensions,
   StyleSheet,
   Platform,
   ScrollView,
@@ -13,35 +13,34 @@ import {
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
-const SIDEBAR_WIDTH = 220;
+const BASE_SIDEBAR_WIDTH = 240;
 const BREAKPOINT = 900;
+const HEADER_HEIGHT = 62;
 
 export default function LayoutAdmin({ children, navigation }) {
-  const windowWidth = Dimensions.get("window").width;
+  const { width: windowWidth } = useWindowDimensions();
+
+  const computedSidebarWidth =
+    windowWidth > BREAKPOINT ? BASE_SIDEBAR_WIDTH : Math.max(160, Math.floor(windowWidth * 0.68));
+
   const [isWide, setIsWide] = useState(windowWidth > BREAKPOINT);
   const [sidebarOpen, setSidebarOpen] = useState(windowWidth > BREAKPOINT);
-  const slide = useRef(new Animated.Value(windowWidth > BREAKPOINT ? 0 : -SIDEBAR_WIDTH)).current;
+  const slide = useRef(new Animated.Value(sidebarOpen ? 0 : -computedSidebarWidth)).current;
 
   useEffect(() => {
-    const onChange = ({ window }) => {
-      const wide = window.width > BREAKPOINT;
-      setIsWide(wide);
-      setSidebarOpen(wide ? true : false);
-    };
-    const sub = Dimensions.addEventListener("change", onChange);
-    return () => {
-      if (sub && sub.remove) sub.remove();
-      else Dimensions.removeEventListener("change", onChange);
-    };
-  }, []);
+    const wide = windowWidth > BREAKPOINT;
+    setIsWide(wide);
+    setSidebarOpen(wide ? true : false);
+  }, [windowWidth]);
 
   useEffect(() => {
+    slide.setValue(sidebarOpen ? 0 : -computedSidebarWidth);
     Animated.timing(slide, {
-      toValue: sidebarOpen ? 0 : -SIDEBAR_WIDTH,
+      toValue: sidebarOpen ? 0 : -computedSidebarWidth,
       duration: 220,
       useNativeDriver: true,
     }).start();
-  }, [sidebarOpen, slide]);
+  }, [sidebarOpen, computedSidebarWidth, slide]);
 
   const toggleSidebar = () => setSidebarOpen((s) => !s);
 
@@ -55,10 +54,16 @@ export default function LayoutAdmin({ children, navigation }) {
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={toggleSidebar} style={styles.hamburgerTouchable}>
+          <TouchableOpacity
+            onPress={toggleSidebar}
+            style={styles.hamburgerTouchable}
+            accessible
+            accessibilityLabel="Toggle menu"
+          >
             <MaterialIcons name="menu" size={22} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.title}>ADMIN PANEL</Text>
+          <View style={{ width: 44 }} />
         </View>
 
         <View style={styles.bodyWrap}>
@@ -68,15 +73,18 @@ export default function LayoutAdmin({ children, navigation }) {
             style={[
               styles.sidebar,
               isWide ? styles.sidebarInline : styles.sidebarOverlay,
-              { transform: [{ translateX: slide }] },
+              {
+                width: computedSidebarWidth,
+                transform: [{ translateX: slide }],
+              },
             ]}
           >
             <ScrollView contentContainerStyle={styles.sidebarContent}>
               <TouchableOpacity onPress={() => nav("AdminDashboard")} style={styles.sidebarLink}>
                 <Text style={styles.sidebarLinkText}>Dashboard</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => nav("ComplaintList")} style={styles.sidebarLink}>
-                <Text style={styles.sidebarLinkText}>Complaints</Text>
+              <TouchableOpacity onPress={() => nav("ManageAdminUser")} style={styles.sidebarLink}>
+              <Text style={styles.sidebarLinkText}>Manage Admin</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => nav("StatisticsScreen")} style={styles.sidebarLink}>
                 <Text style={styles.sidebarLinkText}>Statistics</Text>
@@ -91,21 +99,23 @@ export default function LayoutAdmin({ children, navigation }) {
           {/* Backdrop */}
           {!isWide && sidebarOpen && (
             <TouchableWithoutFeedback onPress={() => setSidebarOpen(false)}>
-              <View style={styles.backdrop} />
+              <View style={[styles.backdrop, { top: HEADER_HEIGHT }]} />
             </TouchableWithoutFeedback>
           )}
 
-          {/* Main content */}
-            <View style={styles.mainArea}>
-            <ScrollView style={{ flex: 1 }}>
-              <View style={styles.contentContainer}>
-                {children}
-              </View>
-              </ScrollView>
+          {/* Main */}
+          <View style={styles.mainArea}>
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={styles.contentContainer}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.centeredContent}>{children}</View>
+            </ScrollView>
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>
-                Admin Panel &copy; {new Date().getFullYear()} Citizen Complaint Portal
+                Admin Panel © {new Date().getFullYear()} Citizen Complaint Portal
               </Text>
             </View>
           </View>
@@ -123,12 +133,12 @@ const styles = StyleSheet.create({
   },
   container: { flex: 1, backgroundColor: "#f7f1de" },
   header: {
-    height: 62,
+    height: HEADER_HEIGHT,
     backgroundColor: "#11493f",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 14,
-    zIndex: 50,
+    zIndex: 60,
   },
   hamburgerTouchable: {
     width: 44,
@@ -136,7 +146,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
-    zIndex: 60,
+    zIndex: 70,
   },
   title: {
     flex: 1,
@@ -147,19 +157,20 @@ const styles = StyleSheet.create({
   },
   bodyWrap: { flex: 1, flexDirection: "row", position: "relative" },
   sidebar: {
-    width: SIDEBAR_WIDTH,
     backgroundColor: "#11493f",
-    zIndex: 40,
+    zIndex: 50,
     shadowColor: "#000",
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.18,
     shadowOffset: { width: 2, height: 0 },
     shadowRadius: 6,
     elevation: 6,
+    minWidth: 120,
+    maxWidth: 420,
   },
   sidebarInline: { position: "relative" },
   sidebarOverlay: { position: "absolute", left: 0, top: 0, bottom: 0 },
-  sidebarContent: { paddingTop: 20, paddingHorizontal: 12 },
-  sidebarLink: { paddingVertical: 18, paddingHorizontal: 8 },
+  sidebarContent: { paddingTop: 20, paddingHorizontal: 12, paddingBottom: 30 },
+  sidebarLink: { paddingVertical: 16, paddingHorizontal: 8 },
   sidebarLinkText: { color: "#fff", fontSize: 16 },
   divider: {
     height: 1,
@@ -168,24 +179,26 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     position: "absolute",
-    top: 62,
     left: 0,
     right: 0,
     bottom: 0,
     backgroundColor: "rgba(0,0,0,0.25)",
-    zIndex: 30,
+    zIndex: 40,
   },
   mainArea: {
     flex: 1,
-    padding: 18,
-    minHeight: 0,
     zIndex: 10,
     flexDirection: "column",
-    minHeight: "100%",
-    overflow: "auto",
+    minHeight: 0,
     justifyContent: "flex-start",
   },
-  contentContainer: { flexGrow: 1, paddingBottom: 6 },
+  contentContainer: { flexGrow: 1, paddingTop: 12, paddingBottom: 12, minHeight: 0 },
+  centeredContent: {
+    width: "100%",
+    maxWidth: 1200,
+    alignSelf: "center",
+    paddingHorizontal: 20,
+  },
   footer: {
     marginTop: "auto",
     backgroundColor: "#fde2a6",
@@ -196,5 +209,5 @@ const styles = StyleSheet.create({
     alignSelf: "stretch",
     marginBottom: Platform.OS === "web" ? 20 : 0,
   },
-  footerText: { color: "#11493f", fontStyle: "italic" },
+  footerText: { color: "#11493f", fontStyle: "italic", textAlign: "center" },
 });

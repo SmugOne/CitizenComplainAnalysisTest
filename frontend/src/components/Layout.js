@@ -24,7 +24,7 @@ export default function Layout({ children, navigation }) {
   const slide = useRef(new Animated.Value(windowWidth > BREAKPOINT ? 0 : -SIDEBAR_WIDTH)).current;
 
   useEffect(() => {
-    const onChange = ({ window }) => {
+    const onChange = ({ window }) => { //hi 
       const wide = window.width > BREAKPOINT;
       setIsWide(wide);
       setSidebarOpen(wide ? true : false);

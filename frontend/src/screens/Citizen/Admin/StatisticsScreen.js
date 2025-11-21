@@ -1,38 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, Dimensions } from "react-native";
-import { BarChart, PieChart } from "react-native-chart-kit";
 import Layout from "../../../components/LayoutAdmin";
 import { API_URL } from "@env";
-import { Picker } from "@react-native-picker/picker";
-
-const CATEGORY_OPTIONS = [
-  "All",
-  "DPWH",
-  "DOH",
-  "DENR",
-  "OMBUDSMAN",
-  "LTO",
-  "MMDA",
-  "PNP",
-  "DEPED",
-  "BFP",
-  "DOTR",
-];
-const STATUS_OPTIONS = ["Unsolved", "Solved", "Spam",]; 
+import { BarChart, PieChart } from "react-native-chart-kit";
 
 const screenWidth = Dimensions.get("window").width;
 
 export default function StatisticsScreen({ navigation }) {
   const [stats, setStats] = useState(null);
   const [fetchError, setFetchError] = useState(false);
-  const [category, setCategory] = useState("All");
-  const [status, setStatus] = useState("All");
 
-  useEffect(() => {
+  const fetchStats = () => {
+    setFetchError(false);
     fetch(`${API_URL}/api/admin/stats`)
       .then((res) => res.json())
       .then((data) => setStats(data))
       .catch(() => setFetchError(true));
+  };
+
+  useEffect(() => {
+    fetchStats();
   }, []);
 
   if (fetchError) {
@@ -45,16 +32,16 @@ export default function StatisticsScreen({ navigation }) {
     );
   }
 
-  // Build pie data safely
   const pieData =
-    stats?.statusCounts &&
-    Object.entries(stats.statusCounts).map(([label, value], i) => ({
-      name: label,
-      population: value,
-      color: ["#197278", "#f59e0b", "#16a34a", "#ef4444"][i % 4],
-      legendFontColor: "#11493f",
-      legendFontSize: 12,
-    }));
+    stats?.statusCounts
+      ? Object.entries(stats.statusCounts).map(([label, value], i) => ({
+          name: label,
+          population: value,
+          color: ["#197278", "#f59e0b", "#16a34a", "#ef4444"][i % 4],
+          legendFontColor: "#11493f",
+          legendFontSize: 12,
+        }))
+      : [];
 
   return (
     <Layout navigation={navigation}>
@@ -62,28 +49,20 @@ export default function StatisticsScreen({ navigation }) {
         <Text style={styles.title}>Statistics Overview</Text>
 
         {stats ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-            <View
-              style={{
-                flexDirection: "row",
-                gap: 30,
-                minWidth: screenWidth * 1.2,
-              }}
-            >
+          <ScrollView horizontal showsHorizontalScrollIndicator>
+            <View style={styles.chartsRow}>
               {/* Complaints by Category */}
-              <View style={[styles.chartCol, { width: 950 }]}>
+              <View style={[styles.chartCol, { width: Math.min(900, screenWidth * 0.9) }]}>
                 <Text style={styles.graphTitle}>Complaints by Category</Text>
                 <BarChart
+                  key={JSON.stringify(stats.categoryCounts)}
                   data={{
-                    labels: Object.keys(stats.categoryCounts),
-                    datasets: [{ data: Object.values(stats.categoryCounts) }],
+                    labels: Object.keys(stats.categoryCounts || {}),
+                    datasets: [{ data: Object.values(stats.categoryCounts || {}) }],
                   }}
-                  width={900}
+                  width={Math.min(900, screenWidth * 0.9)}
                   height={350}
                   fromZero
-                  showBarTops={false}
-                  withInnerLines
-                  verticalLabelRotation={30}
                   chartConfig={{
                     backgroundColor: "#fff",
                     backgroundGradientFrom: "#fff",
@@ -97,19 +76,17 @@ export default function StatisticsScreen({ navigation }) {
               </View>
 
               {/* Complaints by Status */}
-              <View style={styles.chartCol}>
+              <View style={[styles.chartCol, { width: Math.min(420, screenWidth * 0.5) }]}>
                 <Text style={styles.graphTitle}>Complaints by Status</Text>
                 <BarChart
+                  key={JSON.stringify(stats.statusCounts)}
                   data={{
-                    labels: Object.keys(stats.statusCounts),
-                    datasets: [{ data: Object.values(stats.statusCounts) }],
+                    labels: Object.keys(stats.statusCounts || {}),
+                    datasets: [{ data: Object.values(stats.statusCounts || {}) }],
                   }}
-                  width={420}
+                  width={Math.min(420, screenWidth * 0.5)}
                   height={350}
                   fromZero
-                  showBarTops={false}
-                  withInnerLines
-                  verticalLabelRotation={30}
                   chartConfig={{
                     backgroundColor: "#fff",
                     backgroundGradientFrom: "#fff",
@@ -123,9 +100,9 @@ export default function StatisticsScreen({ navigation }) {
               </View>
 
               {/* Pie Chart */}
-              <View style={styles.chartCol}>
+              <View style={[styles.chartCol, { width: 300 }]}>
                 <Text style={styles.graphTitle}>Status Distribution</Text>
-                {pieData && (
+                {pieData.length > 0 && (
                   <PieChart
                     data={pieData}
                     width={280}
@@ -137,14 +114,12 @@ export default function StatisticsScreen({ navigation }) {
                     accessor="population"
                     backgroundColor="transparent"
                     paddingLeft="8"
-                    center={[10, 0]}
                     absolute
                   />
                 )}
               </View>
             </View>
           </ScrollView>
-          
         ) : (
           <View style={styles.center}>
             <Text>Loading statistics...</Text>
@@ -157,43 +132,35 @@ export default function StatisticsScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    padding: 16,
+    padding: 20,
+    paddingBottom: 40,
   },
   title: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: "bold",
     color: "#11493f",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  chartsGrid: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    flexWrap: "nowrap",
-    gap: 30,
-  },
-  chartCol: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 14,
-    shadowColor: "#000",
-    shadowOpacity: 5,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    minHeight: 350,
-    width: screenWidth * 0.32,
-    alignItems: "center",
-  },
-  graphTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#197278",
-    marginBottom: 8,
+    marginBottom: 20,
   },
   center: {
     flex: 1,
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
+    marginTop: 50,
+  },
+  chartsRow: {
+    flexDirection: "row",
+    gap: 30,
+    minWidth: screenWidth * 1.2,
+  },
+  chartCol: {
+    backgroundColor: "#f9f9f9",
+    borderRadius: 8,
+    padding: 10,
+  },
+  graphTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#11493f",
+    marginBottom: 10,
   },
 });

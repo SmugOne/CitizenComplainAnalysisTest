@@ -150,6 +150,24 @@ export default function ManageAdminUserScreen({ navigation }) {
     }
   }
 
+  @app.route('/api/announcements/<space>', methods=['PUT'])
+  def update_announcement(space):
+      try:
+          df = pd.read_csv("CSVFile/Announcements.csv", encoding="cp1252")
+
+          if space not in df["space"].astype(str).values:
+              return jsonify({"error": "Announcement space not found"}), 404
+
+          data = request.get_json()
+          df.loc[df["space"].astype(str) == space, "title"] = data.get("title", "")
+          df.loc[df["space"].astype(str) == space, "body"] = data.get("body", "")
+
+          df.to_csv("CSVFile/Announcements.csv", index=False, encoding="cp1252")
+
+          return jsonify({"message": "Announcement updated"})
+      except Exception as e:
+          return jsonify({"error": str(e)}), 500
+
   return (
     <LayoutAdmin navigation={navigation}>
       <ScrollView contentContainerStyle={{ padding: 18, flexGrow: 1 }}>

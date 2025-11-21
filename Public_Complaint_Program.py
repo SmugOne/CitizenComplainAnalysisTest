@@ -438,13 +438,42 @@ def get_archive_complaints():
 
 #-------------------------Home Screen Announcement Backend-------------------------
 
-@app.route('/api/announcements', methods=['GET'])
-def get_announcements():
-    try:
-        df = pd.read_csv("CSVFile/Announcements.csv", encoding='cp1252').fillna('')
-        return jsonify(df.to_dict(orient='records'))
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+@app.route('/api/announcements/update', methods=['POST'])
+def update_announcements():
+    data = request.get_json()
+
+    df_path = "CSVFile/Announcements.csv"
+
+    # Load or create CSV
+    if not os.path.exists(df_path):
+        df = pd.DataFrame(columns=["Title", "Body", "Space"])
+    else:
+        df = pd.read_csv(df_path, encoding='cp1252').fillna('')
+
+    space_value = str(data.get("Space"))  # "1", "2", or "3"
+
+    # Check if announcement for this space already exists
+    exists = df["Space"] == space_value
+
+    if exists.any():
+        # Update existing announcement
+        df.loc[exists, ["Title", "Body"]] = [
+            data.get("Title", ""),
+            data.get("Body", "")
+        ]
+    else:
+        # Create new announcement for this space
+        new_row = {
+            "Title": data.get("Title", ""),
+            "Body": data.get("Body", ""),
+            "Space": space_value
+        }
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+
+    # Save file
+    df.to_csv(df_path, index=False, encoding='cp1252')
+
+    return jsonify({"success": True})
     
 #-------------------------END POINT-------------------------
 

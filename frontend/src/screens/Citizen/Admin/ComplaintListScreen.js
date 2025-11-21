@@ -33,6 +33,12 @@ export default function ComplaintListScreen({ navigation }) {
   const [statusFilterArchive, setStatusFilterArchive] = useState("All");
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
+  //Resolver screen states
+  const [screen, setScreen] = useState("table");
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [newStatus, setNewStatus] = useState("UNSOLVED");
+  const [newAgency, setNewAgency] = useState("");
+  const [remark, setRemark] = useState("");
 
   // Load data
   useEffect(() => {
@@ -54,6 +60,37 @@ export default function ComplaintListScreen({ navigation }) {
     fetchData();
   }, []);
 
+  const openResolver = (complaint) => {
+    setSelectedComplaint(complaint);
+    setNewStatus(complaint.Status || "UNSOLVED");
+    setNewAgency(complaint["Predicted Agency"] || complaint["Category"] || "");
+    setRemark(
+      complaint.Status?.toUpperCase() === "UNDER REVIEW" && complaint.Remark
+        ? complaint.Remark
+        : ""
+    );
+    setScreen("resolve");
+  };
+
+  const submitResolution = () => {
+    fetch(`${API_URL}/api/complaints/update`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: selectedComplaint.ID,
+        status: newStatus,
+        agency: newAgency,
+        remark: remark,
+      }),
+    })
+      .then((res) => res.json())
+      .then(() => {
+        alert("Complaint updated.");
+        setScreen("table");
+      })
+      .catch(() => alert("Error updating complaint"));
+  };
+
   // Filter helpers
   const filterComplaints = (data, category, status) => {
     return data.filter(c => {
@@ -70,8 +107,163 @@ export default function ComplaintListScreen({ navigation }) {
     : filterComplaints(archivedComplaints, categoryFilter, statusFilterArchive);
 
   const currentStatusOptions = viewMode === "Active" ? STATUS_OPTIONS_ACTIVE : STATUS_OPTIONS_ARCHIVE;
+  //Main resolver screen:
+    if (screen === "resolve" && selectedComplaint) {
+      return (
+        <Layout navigation={navigation}>
+          <View style={styles.resolveContainer}>
 
-  return (
+            <Text style={styles.resolveTitle}>
+              Resolve Complaint #{selectedComplaint.ID}
+            </Text>
+
+            {/* DETAILS */}
+            <View style={styles.detailsBox}>
+              <Text style={styles.detailLabel}>Name:</Text>
+              <Text style={styles.detailValue}>{selectedComplaint.Name}</Text>
+
+              <Text style={styles.detailLabel}>Location:</Text>
+              <Text style={styles.detailValue}>{selectedComplaint.Location}</Text>
+
+              <Text style={styles.detailLabel}>Complaint:</Text>
+              <Text style={styles.detailValue}>{selectedComplaint.Complaint}</Text>
+
+              <Text style={styles.detailLabel}>Image ID:</Text>
+              <Text style={styles.detailValue}>
+                {selectedComplaint.ImageID || "None"}
+              </Text>
+            </View>
+
+            {/* ACTIONS */}
+            <View style={styles.actionBox}>
+
+              <Text style={styles.resolveLabel}>Change and update status</Text>
+              <Picker
+                selectedValue={newStatus}
+                onValueChange={setNewStatus}
+                style={styles.resolvePicker}
+              >
+                <Picker.Item label="UNSOLVED" value="UNSOLVED" />
+                <Picker.Item label="SOLVED" value="SOLVED" />
+                <Picker.Item label="SPAM" value="SPAM" />
+              </Picker>
+
+              <Text style={styles.resolveLabel}>Change and update agency</Text>
+              <Picker
+                selectedValue={newAgency}
+                onValueChange={setNewAgency}
+                style={styles.resolvePicker}
+              >
+                {CATEGORY_OPTIONS.map(a => (
+                  <Picker.Item key={a} label={a} value={a} />
+                ))}
+              </Picker>
+
+              <Text style={styles.resolveLabel}>Remarks</Text>
+              <TextInput
+                style={styles.resolveInput}
+                multiline
+                value={remark}
+                onChangeText={setRemark}
+              />
+
+              <View style={styles.resolveButtons}>
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => setScreen("table")}
+                >
+                  <Text>Back</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.updateBtn}
+                  disabled={!remark.trim()}
+                  onPress={submitResolution}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                    Update
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+            </View>
+          </View>
+        </Layout>
+      );
+}
+
+            {/* Details */}
+            <View style={styles.detailsBox}>
+              <Text style={styles.detailLabel}>Name:</Text>
+              <Text style={styles.detailValue}>{selectedComplaint.Name}</Text>
+
+              <Text style={styles.detailLabel}>Location:</Text>
+              <Text style={styles.detailValue}>{selectedComplaint.Location}</Text>
+
+              <Text style={styles.detailLabel}>Complaint:</Text>
+              <Text style={styles.detailValue}>{selectedComplaint.Complaint}</Text>
+
+              <Text style={styles.detailLabel}>Image ID:</Text>
+              <Text style={styles.detailValue}>
+                {selectedComplaint.ImageID || "None"}
+              </Text>
+            </View>
+
+            {/* Pickers */}
+            <View style={styles.actionBox}>
+              <Text style={styles.resolveLabel}>Change and update status</Text>
+              <Picker
+                selectedValue={newStatus}
+                onValueChange={setNewStatus}
+                style={styles.resolvePicker}
+              >
+                <Picker.Item label="UNSOLVED" value="UNSOLVED" />
+                <Picker.Item label="SOLVED" value="SOLVED" />
+                <Picker.Item label="SPAM" value="SPAM" />
+              </Picker>
+
+              <Text style={styles.resolveLabel}>Change and update agency</Text>
+              <Picker
+                selectedValue={newAgency}
+                onValueChange={setNewAgency}
+                style={styles.resolvePicker}
+              >
+                {CATEGORY_OPTIONS.map((a) => (
+                  <Picker.Item key={a} label={a} value={a} />
+                ))}
+              </Picker>
+
+              <Text style={styles.resolveLabel}>Remarks</Text>
+              <TextInput
+                style={styles.resolveInput}
+                multiline
+                value={remark}
+                onChangeText={setRemark}
+              />
+
+              <View style={styles.resolveButtons}>
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => setScreen("table")}
+                >
+                  <Text>Back</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.updateBtn}
+                  disabled={!remark.trim()}
+                  onPress={submitResolution}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "bold" }}>Update</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Layout>
+      );
+    }
+    
+    return (
     <Layout navigation={navigation}>
       <View style={{ flex: 1, padding: 16 }}>
         <Text style={styles.title}>
@@ -154,7 +346,7 @@ export default function ComplaintListScreen({ navigation }) {
                       <Text style={[styles.cell, { width: COLUMN_WIDTHS.Location }]}>{c.Location}</Text>
                       <TouchableOpacity
                         style={[styles.actionBtn, { width: COLUMN_WIDTHS.Action }]}
-                        onPress={() => navigation.navigate("ComplaintStatus", { complaintId: c.ID || c.id })}
+                        onPress={() => openResolver(c)}
                       >
                         <Text style={styles.actionBtnText}>Resolve</Text>
                       </TouchableOpacity>
@@ -179,7 +371,7 @@ export default function ComplaintListScreen({ navigation }) {
         </ScrollView>
       </View>
     </Layout>
-  );
+    );
 }
 
 const styles = StyleSheet.create({

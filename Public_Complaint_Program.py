@@ -16,9 +16,7 @@ from collections import Counter
 
 
 #To do:
-# - ComplaintListScreen.js doesnt have resolve function yet
 # - Set dataset to Google Sheets. Get API.
-# - Add search bar and timestamp.
 
 #Connection:
 load_dotenv()

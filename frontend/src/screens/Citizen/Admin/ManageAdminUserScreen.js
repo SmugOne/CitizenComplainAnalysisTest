@@ -229,7 +229,7 @@ export default function ManageAdminUserScreen({ navigation }) {
                   <Text style={[styles.actionBtnText, { color: "#11493f" }]}>Cancel</Text>
                 </TouchableOpacity>
               </View>
-            )}
+            </View>
           </View>
         </View>
       </ScrollView>

@@ -10,6 +10,7 @@ import {
   Alert,
   useWindowDimensions,
 } from "react-native";
+import { Picker } from "@react-native-picker/picker"; 
 import LayoutAdmin from "../../../components/LayoutAdmin";
 import { API_URL } from "@env";
 
@@ -40,6 +41,7 @@ export default function ManageAdminUserScreen({ navigation }) {
   const [newAnnTitle, setNewAnnTitle] = useState("");
   const [newAnnBody, setNewAnnBody] = useState("");
   const [creatingAnn, setCreatingAnn] = useState(false);
+  const [selectedSpaces, setSelectedSpaces] = useState({});
 
   useEffect(() => {
     fetchAdmins();
@@ -196,29 +198,36 @@ export default function ManageAdminUserScreen({ navigation }) {
             </Picker>
 
             {/* Editing form for the selected space */}
-            {editingAnn.id && (
-              <View style={[styles.annCard, { marginTop: 14 }]}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Title"
-                  value={editingAnn.title}
-                  onChangeText={t => setEditingAnn(e => ({ ...e, title: t }))}
-                />
-                <TextInput
-                  style={[styles.input, { minHeight: 60 }]}
-                  placeholder="Body"
-                  multiline
-                  value={editingAnn.body}
-                  onChangeText={t => setEditingAnn(e => ({ ...e, body: t }))}
-                />
-                <View style={styles.actionRow}>
-                  <TouchableOpacity style={[styles.actionBtn, styles.saveBtn]} onPress={saveEdit}>
-                    <Text style={styles.actionBtnText}>Save</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[styles.actionBtn, styles.cancelBtn]} onPress={() => setEditingAnn({})}>
-                    <Text style={[styles.actionBtnText, { color: "#11493f" }]}>Cancel</Text>
-                  </TouchableOpacity>
-                </View>
+            <View style={[styles.annCard, { marginTop: 14 }]}>
+              <TextInput
+                style={styles.input}
+                placeholder="Title"
+                value={editingAnn.title || ""}
+                onChangeText={(t) => setEditingAnn(e => ({ ...e, title: t }))}
+              />
+
+              <TextInput
+                style={[styles.input, { minHeight: 60 }]}
+                placeholder="Body"
+                multiline
+                value={editingAnn.body || ""}
+                onChangeText={(t) => setEditingAnn(e => ({ ...e, body: t }))}
+              />
+
+              <View style={styles.actionRow}>
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.saveBtn]}
+                  onPress={saveEdit}
+                >
+                  <Text style={styles.actionBtnText}>Update</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.cancelBtn]}
+                  onPress={() => setEditingAnn({ title: "", body: "" })}
+                >
+                  <Text style={[styles.actionBtnText, { color: "#11493f" }]}>Cancel</Text>
+                </TouchableOpacity>
               </View>
             )}
           </View>

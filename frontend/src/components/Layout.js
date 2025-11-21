@@ -4,7 +4,7 @@ import {
   Text,
   TouchableOpacity,
   Animated,
-  Dimensions,
+  useWindowDimensions,
   StyleSheet,
   Platform,
   ScrollView,
@@ -13,36 +13,40 @@ import {
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
-const SIDEBAR_WIDTH = 220;
+const BASE_SIDEBAR_WIDTH = 220;
 const BREAKPOINT = 900;
+const HEADER_HEIGHT = 62;
 
 export default function Layout({ children, navigation }) {
-  const windowWidth = Dimensions.get("window").width;
+  const { width: windowWidth } = useWindowDimensions();
+
+  // responsive sidebar width (percent on small screens, fixed on large)
+  const computedSidebarWidth =
+    windowWidth > BREAKPOINT
+      ? BASE_SIDEBAR_WIDTH
+      : Math.max(140, Math.floor(windowWidth * 0.68));
+
   const [isWide, setIsWide] = useState(windowWidth > BREAKPOINT);
   const [sidebarOpen, setSidebarOpen] = useState(windowWidth > BREAKPOINT);
-  const [notificationCount, setNotificationCount] = useState(1); // Example notification count
-  const slide = useRef(new Animated.Value(windowWidth > BREAKPOINT ? 0 : -SIDEBAR_WIDTH)).current;
+  const slide = useRef(new Animated.Value(sidebarOpen ? 0 : -computedSidebarWidth)).current;
 
+  // Respond to window width changes
   useEffect(() => {
-    const onChange = ({ window }) => {
-      const wide = window.width > BREAKPOINT;
-      setIsWide(wide);
-      setSidebarOpen(wide ? true : false);
-    };
-    const sub = Dimensions.addEventListener("change", onChange);
-    return () => {
-      if (sub && sub.remove) sub.remove();
-      else Dimensions.removeEventListener("change", onChange);
-    };
-  }, []);
+    const wide = windowWidth > BREAKPOINT;
+    setIsWide(wide);
+    setSidebarOpen(wide ? true : false);
+  }, [windowWidth]);
 
+  // Animate sidebar when open state or width changes
   useEffect(() => {
+    // ensure slide value matches new width immediately to avoid visual glitches
+    slide.setValue(sidebarOpen ? 0 : -computedSidebarWidth);
     Animated.timing(slide, {
-      toValue: sidebarOpen ? 0 : -SIDEBAR_WIDTH,
+      toValue: sidebarOpen ? 0 : -computedSidebarWidth,
       duration: 220,
       useNativeDriver: true,
     }).start();
-  }, [sidebarOpen, slide]);
+  }, [sidebarOpen, computedSidebarWidth, slide]);
 
   const toggleSidebar = () => setSidebarOpen((s) => !s);
 
@@ -51,19 +55,24 @@ export default function Layout({ children, navigation }) {
     if (navigation && route) navigation.navigate(route);
   };
 
-  // Placeholder login/notification handlers
-  const handleLogin = () => alert("Login button pressed! (User login functionality to be added)");
-  const handleNotification = () => alert("You have notifications! (Notification feature to be implemented)");
-
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={toggleSidebar} style={styles.hamburgerTouchable}>
+          <TouchableOpacity
+            onPress={toggleSidebar}
+            style={styles.hamburgerTouchable}
+            accessible
+            accessibilityLabel="Toggle menu"
+          >
             <MaterialIcons name="menu" size={22} color="#fff" />
           </TouchableOpacity>
+
           <Text style={styles.title}>CITIZEN COMPLAINT PORTAL</Text>
+
+          {/* Right side placeholder - keeps title centered visually */}
+          <View style={{ width: 44 }} />
         </View>
 
         <View style={styles.bodyWrap}>
@@ -73,7 +82,10 @@ export default function Layout({ children, navigation }) {
             style={[
               styles.sidebar,
               isWide ? styles.sidebarInline : styles.sidebarOverlay,
-              { transform: [{ translateX: slide }] },
+              {
+                width: computedSidebarWidth,
+                transform: [{ translateX: slide }],
+              },
             ]}
           >
             <ScrollView contentContainerStyle={styles.sidebarContent}>
@@ -86,9 +98,6 @@ export default function Layout({ children, navigation }) {
               <TouchableOpacity onPress={() => nav("TrackComplaint")} style={styles.sidebarLink}>
                 <Text style={styles.sidebarLinkText}>Track Complaint</Text>
               </TouchableOpacity>
-              {/* <TouchableOpacity onPress={() => nav("ComplaintStatus")} style={styles.sidebarLink}>
-                <Text style={styles.sidebarLinkText}>Complaint Status</Text>
-              </TouchableOpacity> */}
               <TouchableOpacity onPress={() => nav("AboutScreen")} style={styles.sidebarLink}>
                 <Text style={styles.sidebarLinkText}>About / FAQs</Text>
               </TouchableOpacity>
@@ -102,15 +111,29 @@ export default function Layout({ children, navigation }) {
           {/* Backdrop for overlay mode */}
           {!isWide && sidebarOpen && (
             <TouchableWithoutFeedback onPress={() => setSidebarOpen(false)}>
-              <View style={styles.backdrop} />
+              <View style={[styles.backdrop, { top: HEADER_HEIGHT }]} />
             </TouchableWithoutFeedback>
           )}
 
           {/* Main content area */}
           <View style={styles.mainArea}>
-            <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
-              {children}
+            <ScrollView
+              contentContainerStyle={styles.contentContainer}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {/* Center the content and constrain max width to avoid dead space on large screens */}
+              <View
+                style={[
+                  styles.centeredContent,
+                  // dynamic padding so child screens don't need to care about outer padding
+                  { paddingHorizontal: windowWidth < 600 ? 10 : windowWidth < 1050 ? 20 : 40 },
+                ]}
+              >
+                {children}
+              </View>
             </ScrollView>
+
             <View style={styles.footer}>
               <Text style={styles.footerText}>
                 I can do all things through Christ who strengthens me. - Philippians 4:13
@@ -131,12 +154,12 @@ const styles = StyleSheet.create({
   },
   container: { flex: 1, backgroundColor: "#f7f1de" },
   header: {
-    height: 62,
+    height: HEADER_HEIGHT,
     backgroundColor: "#11493f",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 14,
-    zIndex: 50,
+    zIndex: 60,
   },
   hamburgerTouchable: {
     width: 44,
@@ -144,7 +167,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
-    zIndex: 60,
+    zIndex: 70,
   },
   title: {
     flex: 1,
@@ -153,42 +176,25 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 18,
   },
-  headerRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginLeft: 12,
-  },
-  iconButton: {
-    marginLeft: 10,
-    padding: 4,
-    position: "relative",
-  },
-  notifBadge: {
-    position: "absolute",
-    top: -2,
-    right: -2,
-    backgroundColor: "red",
-    borderRadius: 8,
-    paddingHorizontal: 4,
-    minWidth: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  notifBadgeText: { color: "#fff", fontSize: 11, fontWeight: "bold" },
   bodyWrap: { flex: 1, flexDirection: "row", position: "relative" },
   sidebar: {
-    width: SIDEBAR_WIDTH,
     backgroundColor: "#11493f",
-    zIndex: 40,
+    zIndex: 50,
     shadowColor: "#000",
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.18,
     shadowOffset: { width: 2, height: 0 },
     shadowRadius: 6,
     elevation: 6,
+    minWidth: 120,
+    maxWidth: 360,
   },
   sidebarInline: { position: "relative" },
   sidebarOverlay: { position: "absolute", left: 0, top: 0, bottom: 0 },
-  sidebarContent: { paddingTop: 20, paddingHorizontal: 12 },
+  sidebarContent: {
+    paddingTop: 20,
+    paddingHorizontal: 12,
+    paddingBottom: 30,
+  },
   sidebarLink: { paddingVertical: 18, paddingHorizontal: 8 },
   sidebarLinkText: { color: "#fff", fontSize: 16 },
   divider: {
@@ -198,22 +204,25 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     position: "absolute",
-    top: 62,
     left: 0,
     right: 0,
     bottom: 0,
     backgroundColor: "rgba(0,0,0,0.25)",
-    zIndex: 30,
+    zIndex: 40,
   },
   mainArea: {
     flex: 1,
-    padding: 18,
     zIndex: 10,
     flexDirection: "column",
     minHeight: 0,
     justifyContent: "flex-start",
   },
-  contentContainer: { flexGrow: 1, paddingBottom: 6 },
+  contentContainer: { flexGrow: 1, paddingTop: 12, paddingBottom: 12, minHeight: 0 },
+  centeredContent: {
+    width: "100%",
+    maxWidth: 1200,
+    alignSelf: "center",
+  },
   footer: {
     marginTop: "auto",
     backgroundColor: "#fde2a6",
@@ -224,5 +233,5 @@ const styles = StyleSheet.create({
     alignSelf: "stretch",
     marginBottom: Platform.OS === "web" ? 20 : 0,
   },
-  footerText: { color: "#11493f", fontStyle: "italic" },
+  footerText: { color: "#11493f", fontStyle: "italic", textAlign: "center" },
 });

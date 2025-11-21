@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import Layout from "../../components/Layout";
 import { API_URL } from "@env";
+import { Container, Row, Col, useResponsive } from "../../components/Bootstrap";
 
 export default function HomeScreen({ navigation }) {
   const [resolvedCount, setResolvedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const resp = useResponsive();
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -14,8 +16,16 @@ export default function HomeScreen({ navigation }) {
         const data = await response.json();
 
         if (Array.isArray(data)) {
-          const resolved = data.filter(c => c.Status === "SOLVED" || c.Status === "SPAM").length;
-          const total = data.filter(c => c.Status === "UNSOLVED" || c.Status === "SOLVED" || c.Status === "SPAM" || c.Status === "UNDER REVIEW").length;
+          const resolved = data.filter(
+            (c) => c.Status === "SOLVED" || c.Status === "SPAM"
+          ).length;
+          const total = data.filter(
+            (c) =>
+              c.Status === "UNSOLVED" ||
+              c.Status === "SOLVED" ||
+              c.Status === "SPAM" ||
+              c.Status === "UNDER REVIEW"
+          ).length;
 
           setResolvedCount(resolved);
           setTotalCount(total);
@@ -28,78 +38,97 @@ export default function HomeScreen({ navigation }) {
     fetchStats();
   }, []);
 
+  // responsive typography
+  const bannerFont = resp.isXs ? 20 : resp.isSm ? 28 : 36;
+  const statsNumberFont = resp.isXs ? 34 : resp.isSm ? 48 : 64;
+  const announceTitleFont = resp.isXs ? 16 : resp.isSm ? 18 : 20;
+
   return (
     <Layout navigation={navigation}>
-      {/* Top: Banner */}
-      <View style={styles.banner}>
-        <Text style={styles.bannerTitle}>Welcome to Citizen Complaint Analysis System</Text>
-      </View>
-      {/* Middle section */}
-      <View style={styles.middleSection}>
-        {/* Left: How it Works */}
-        <View style={styles.howItWorks}>
-          <Text style={styles.sectionTitle}>How It Works</Text>
-          {/* You can use SVGs or images here for real infographics, here's text for now */}
-          <View style={styles.infographicStep}>
-            <View style={styles.circle}>1</View>
-            <Text style={styles.infoText}>Submit your complaint</Text>
-          </View>
-          <View style={styles.infographicStep}>
-            <View style={styles.circle}>2</View>
-            <Text style={styles.infoText}>We analyze and assign your case</Text>
-          </View>
-          <View style={styles.infographicStep}>
-            <View style={styles.circle}>3</View>
-            <Text style={styles.infoText}>You track progress & status online</Text>
-          </View>
-          <View style={styles.infographicStep}>
-            <View style={styles.circle}>4</View>
-            <Text style={styles.infoText}>Issue resolved, feedback welcomed!</Text>
-          </View>
-        </View>
-        {/* Right: Announcements */}
-        <View style={styles.announcements}>
-          <Text style={styles.sectionTitle}>Announcements</Text>
-          <View style={styles.announceCard}>
-            <Text style={styles.announceTitle}>🚧 Infrastructure upgrades in progress!</Text>
-            <Text style={styles.announceBody}>Expect minor roadwork delays in Barangay Center until 09/30/2025.</Text>
-          </View>
-          <View style={styles.announceCard}>
-            <Text style={styles.announceTitle}>🗑️ New Waste Collection Schedule</Text>
-            <Text style={styles.announceBody}>Garbage collection now every Monday and Thursday, 7AM-10AM.</Text>
-          </View>
-          <View style={styles.announceCard}>
-            <Text style={styles.announceTitle}>🔒 Safety Campaign Launched</Text>
-            <Text style={styles.announceBody}>Our new “Safe Community” campaign empowers you to report safety issues easily.</Text>
-          </View>
-        </View>
-      </View>
-      {/* Lower: Benefits/Transparency */}
-      <View style={styles.lowerSection}>
-        <Text style={styles.sectionTitle}>Benefits & Transparency</Text>
-        <View style={styles.benefitsRow}>
-          <View style={styles.benefitCard}>
-            <Text style={styles.benefitIcon}>⚡</Text>
-            <Text style={styles.benefitText}>Faster Response</Text>
-          </View>
-          <View style={styles.benefitCard}>
-            <Text style={styles.benefitIcon}>👁️</Text>
-            <Text style={styles.benefitText}>Transparent Tracking</Text>
-          </View>
-          <View style={styles.benefitCard}>
-            <Text style={styles.benefitIcon}>🧑‍🤝‍🧑</Text>
-            <Text style={styles.benefitText}>Community Empowerment</Text>
-          </View>
-          <View style={styles.benefitCard}>
-            <Text style={styles.benefitIcon}>📈</Text>
-            <Text style={styles.benefitText}>Open Stats</Text>
-          </View>
-        </View>
-          <Text style={styles.statsText}>
-            Complaints resolved: <Text style={{ fontWeight: "bold" }}>{resolvedCount}</Text> | 
-            Total complaints: <Text style={{ fontWeight: "bold" }}>{totalCount}</Text>
+      <Container>
+        {/* Banner */}
+        <View style={[styles.banner, resp.isXs ? styles.bannerSmall : null]}>
+          <Text style={[styles.bannerTitle, { fontSize: bannerFont }]}>
+            Welcome to Citizen Complaint Analysis System
           </Text>
-      </View>
+        </View>
+
+        {/* Stats + Announcements Row */}
+        <Row style={{ marginBottom: 20 }}>
+          <Col xs={12} md={5}>
+            <View style={[styles.statsFrame, resp.isXs ? styles.statsFrameXs : null]}>
+              <Text style={[styles.statsLabel, resp.isXs ? { fontSize: 15 } : null]}>
+                Complaints Resolved
+              </Text>
+              <Text style={[styles.statsNumber, { fontSize: statsNumberFont }]}>
+                {resolvedCount}
+              </Text>
+              <Text style={[styles.statsLabel, resp.isXs ? { fontSize: 15 } : null]}>
+                Total Complaints
+              </Text>
+              <Text style={[styles.statsNumber, { fontSize: statsNumberFont }]}>
+                {totalCount}
+              </Text>
+            </View>
+          </Col>
+
+          <Col xs={12} md={7}>
+            <View style={styles.announcements}>
+              <Text style={[styles.sectionTitle, { fontSize: announceTitleFont }]}>
+                Announcements
+              </Text>
+
+              <View style={styles.announceCard}>
+                <Text style={styles.announceCardTitle}>
+                  🛠️ Infrastructure upgrades in progress!
+                </Text>
+                <Text style={styles.announceBody}>
+                  Expect minor roadwork delays in Barangay Center until 09/30/2025.
+                </Text>
+              </View>
+
+              <View style={styles.announceCard}>
+                <Text style={styles.announceCardTitle}>🗑️ New Waste Collection Schedule</Text>
+                <Text style={styles.announceBody}>
+                  Garbage collection now every Monday and Thursday, 7AM-10AM.
+                </Text>
+              </View>
+
+              <View style={styles.announceCard}>
+                <Text style={styles.announceCardTitle}>🔒 Safety Campaign Launched</Text>
+                <Text style={styles.announceBody}>
+                  Our new “Safe Community” campaign empowers you to report safety issues easily.
+                </Text>
+              </View>
+            </View>
+          </Col>
+        </Row>
+
+        {/* How It Works (full width block below row) */}
+        <View style={[styles.howItWorks, resp.isXs ? { padding: 14 } : null]}>
+          <Text style={[styles.howTitle, resp.isXs ? { fontSize: 16 } : null]}>How It Works</Text>
+
+          <View style={styles.infographicStep}>
+            <View style={styles.circleSm}><Text style={styles.circleText}>1</Text></View>
+            <Text style={styles.infoTextSm}>Submit your complaint</Text>
+          </View>
+
+          <View style={styles.infographicStep}>
+            <View style={styles.circleSm}><Text style={styles.circleText}>2</Text></View>
+            <Text style={styles.infoTextSm}>We analyze and assign your case</Text>
+          </View>
+
+          <View style={styles.infographicStep}>
+            <View style={styles.circleSm}><Text style={styles.circleText}>3</Text></View>
+            <Text style={styles.infoTextSm}>You track progress & status online</Text>
+          </View>
+
+          <View style={styles.infographicStep}>
+            <View style={styles.circleSm}><Text style={styles.circleText}>4</Text></View>
+            <Text style={styles.infoTextSm}>Issue resolved, feedback welcomed!</Text>
+          </View>
+        </View>
+      </Container>
     </Layout>
   );
 }
@@ -108,37 +137,124 @@ const styles = StyleSheet.create({
   banner: {
     backgroundColor: "#11493f",
     borderRadius: 16,
-    padding: 32,
+    paddingVertical: 28,
+    paddingHorizontal: 18,
     alignItems: "center",
     marginBottom: 18,
   },
-  bannerTitle: { color: "#ffd66b", fontWeight: "800", fontSize: 32, textAlign: "center" },
+  bannerSmall: {
+    paddingVertical: 16,
+  },
+  bannerTitle: {
+    color: "#ffd66b",
+    fontWeight: "800",
+    textAlign: "center",
+  },
+
+  statsFrame: {
+    alignSelf: "center",
+    marginBottom: 18,
+    backgroundColor: "#fffbe8",
+    borderRadius: 18,
+    borderWidth: 3,
+    borderColor: "#ffd66b",
+    paddingHorizontal: 30,
+    paddingVertical: 22,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+    elevation: 3,
+    width: "100%",
+  },
+  statsFrameXs: {
+    paddingHorizontal: 18,
+  },
+  statsLabel: {
+    fontSize: 18,
+    color: "#11493f",
+    fontWeight: "600",
+    marginTop: 7,
+  },
+  statsNumber: {
+    fontSize: 36,
+    color: "#f4aa1c",
+    marginTop: -2,
+    fontWeight: "bold",
+    marginBottom: 5,
+    textAlign: "center",
+  },
+
   middleSection: {
     flexDirection: "row",
     marginBottom: 22,
-    gap: 32,
-    minHeight: 260,
+    gap: 30,
+    minHeight: 200,
   },
-  howItWorks: { flex: 1, backgroundColor: "#e8f0ea", borderRadius: 12, padding: 18, marginRight: 12 },
-  announcements: { flex: 1, backgroundColor: "#fffbe8", borderRadius: 12, padding: 18 },
-  sectionTitle: { fontWeight: "bold", fontSize: 20, marginBottom: 12, color: "#11493f" },
-  infographicStep: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
-  circle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#ffd66b",
+
+  howItWorksSmall: {
+    flex: 0.85,
+    backgroundColor: "#e8f0ea",
+    borderRadius: 12,
+    padding: 12,
+    marginRight: 10,
+    alignItems: "flex-start",
+    maxWidth: 260,
+    minWidth: 165,
+    elevation: 1,
+  },
+
+  howItWorks: {
+    backgroundColor: "#e8f0ea",
+    borderRadius: 12,
+    padding: 20,
+    marginTop: 18,
+  },
+  howTitle: {
+    fontWeight: "bold",
+    fontSize: 15.5,
+    marginBottom: 10,
     color: "#11493f",
+  },
+
+  infographicStep: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  circleSm: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#ffd66b",
     alignItems: "center",
     justifyContent: "center",
-    textAlign: "center",
-    fontWeight: "bold",
     marginRight: 10,
-    fontSize: 18,
-    lineHeight: 28,
-    paddingTop: 1,
   },
-  infoText: { fontSize: 15, color: "#11493f" },
+  circleText: {
+    color: "#11493f",
+    fontWeight: "bold",
+    fontSize: 13,
+  },
+  infoTextSm: {
+    fontSize: 14,
+    color: "#11493f",
+    flexShrink: 1,
+  },
+
+  announcements: {
+    backgroundColor: "#fffbe8",
+    borderRadius: 12,
+    padding: 18,
+    marginLeft: 10,
+    elevation: 2,
+  },
+  sectionTitle: {
+    fontWeight: "bold",
+    fontSize: 20,
+    marginBottom: 12,
+    color: "#11493f",
+  },
   announceCard: {
     backgroundColor: "#fff",
     marginBottom: 12,
@@ -147,12 +263,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ffe8aa",
   },
-  announceTitle: { fontWeight: "bold", color: "#11493f", marginBottom: 2 },
+  announceCardTitle: {
+    fontWeight: "700",
+    color: "#11493f",
+    marginBottom: 6,
+  },
   announceBody: { color: "#444" },
-  lowerSection: { marginTop: 10, marginBottom: 12 },
-  benefitsRow: { flexDirection: "row", justifyContent: "space-around", marginBottom: 8, flexWrap: "wrap" },
-  benefitCard: { alignItems: "center", marginHorizontal: 10, marginVertical: 4 },
-  benefitIcon: { fontSize: 32, marginBottom: 2 },
-  benefitText: { fontWeight: "bold", color: "#197278", fontSize: 15 },
-  statsText: { color: "#11493f", textAlign: "center", fontSize: 15, marginTop: 8 },
 });

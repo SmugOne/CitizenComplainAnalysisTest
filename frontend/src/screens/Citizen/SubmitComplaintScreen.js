@@ -1,9 +1,30 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Image, Switch, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Image, Switch, ActivityIndicator, Modal } from "react-native";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import Layout from "../../components/Layout";
 import { API_URL } from "@env";
+
+// MODAL ALERT
+function ModalAlert({ visible, message, onClose }) {
+  return (
+    <Modal transparent visible={visible} animationType="fade">
+      <View style={{
+        flex: 1, justifyContent: 'center', alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.3)'
+      }}>
+        <View style={{
+          backgroundColor: '#fff', padding: 26, borderRadius: 12, alignItems: 'center', maxWidth: 320
+        }}>
+          <Text style={{ fontSize: 16, color: "#11493f", marginBottom: 18, textAlign: "center" }}>{message}</Text>
+          <TouchableOpacity onPress={onClose} style={{ backgroundColor: "#11493f", borderRadius: 8, paddingHorizontal: 28, paddingVertical: 10 }}>
+            <Text style={{ color: "#ffd66b", fontWeight: "700", fontSize: 17 }}>OK</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+}
 
 const defaultCategories = [
   {label: "Select Category", value: ""},
@@ -27,15 +48,21 @@ export default function SubmitComplaintScreen({ navigation }) {
   const [image, setImage] = useState(null);
   const [imageLoading, setImageLoading] = useState(false);
 
+  // Modal Alert handling
+  const [modal, setModal] = useState({ show: false, message: "" });
+
   //Random 5-letter password generator
   const generatePassword = () => {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let pass = "";
-  for (let i = 0; i < 5; i++) {
-    pass = pass + chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return pass;
-};
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let pass = "";
+    for (let i = 0; i < 5; i++) {
+      pass = pass + chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return pass;
+  };
+
+  const showModal = (message) => setModal({ show: true, message });
+  const closeModal = () => setModal({ show: false, message: "" });
 
   const handleGetLocation = async () => {
     setLocLoading(true);
@@ -44,6 +71,7 @@ export default function SubmitComplaintScreen({ navigation }) {
       if (status !== "granted") {
         setLocation("Permission denied");
         setLocLoading(false);
+        showModal("Location permission denied.");
         return;
       }
       let loc = await Location.getCurrentPositionAsync({});
@@ -51,115 +79,117 @@ export default function SubmitComplaintScreen({ navigation }) {
     } 
     catch (e) {
       setLocation("Could not get location");
+      showModal("Could not get location.");
     }
     setLocLoading(false);
   };
 
-//Image picker
+  //Image picker
   const pickImage = async () => {
-  setImageLoading(true);
-  try {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.7,
-    });
-    if (!result.canceled) {
-      const uri = result.assets ? result.assets[0].uri : result.uri;
-      setImage(uri);
+    setImageLoading(true);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.7,
+      });
+      if (!result.canceled) {
+        const uri = result.assets ? result.assets[0].uri : result.uri;
+        setImage(uri);
+      }
+    } 
+    catch (error) {
+      console.error("Error picking image:", error);
+      showModal("Error picking image. Please try again.");
     }
-  } 
-  catch (error) {
-    console.error("Error picking image:", error);
-  }
-  setImageLoading(false);
+    setImageLoading(false);
   };
 
   const handleRemoveImage = () => setImage(null);
 
-//Form validation (Can only submit if all fields are filled)
+  //Form validation (Can only submit if all fields are filled)
   const canSubmit =
     complaint.trim() !== "" &&
     (anonymous || name.trim() !== "");
 
-//Submit complaint & image to backend
+  //Submit complaint & image to backend
   const handleSubmit = async () => {
-  if (!canSubmit) return;
-  let imageId = null;
-  let imageUrl = null;
-  const generatedPassword = generatePassword();
+    if (!canSubmit) return;
+    let imageId = null;
+    let imageUrl = null;
+    const generatedPassword = generatePassword();
 
-  //Upload image to backend
-  if (image) {
+    //Upload image to backend
+    if (image) {
+      try {
+        const formData = new FormData();
+        formData.append("image", {
+          uri: image,
+          name: "complaint_image.jpg",
+          type: "image/jpeg",
+        });
+
+        const uploadResponse = await fetch(`${API_URL}/api/uploadImage`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          body: formData,
+        });
+
+        const uploadData = await uploadResponse.json();
+        imageId = uploadData.imageId;
+        imageUrl = uploadData.imageUrl;
+      } 
+      catch (err) {
+        console.error("Error uploading image:", err);
+        showModal("Failed to upload image. Please try again.");
+        return;
+      }
+    }
+
+    //Submit complaint data to backend
     try {
-      const formData = new FormData();
-      formData.append("image", {
-        uri: image,
-        name: "complaint_image.jpg",
-        type: "image/jpeg",
-      });
-
-      const uploadResponse = await fetch(`${API_URL}/api/uploadImage`, {
+      const response = await fetch(`${API_URL}/api/complaints`, {
         method: "POST",
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: anonymous ? "Anonymous" : name,
+          complaint: complaint,
+          category: category.value,
+          location: location,
+          imageID: imageId,
+          imageUrl: imageUrl,
+          status: "UNSOLVED",
+          password: generatedPassword,
+        }),
       });
 
-      const uploadData = await uploadResponse.json();
-      imageId = uploadData.imageId;
-      imageUrl = uploadData.imageUrl;
+      //Alerts user after submitting complaint
+      const data = await response.json();
+      showModal(
+        `Complaint submitted!\n\nPlease take a screenshot or picture of the COMPLAINT ID and PASSWORD to track its status.\n\n` +
+        `COMPLAINT ID: ${data.ID}\n` +
+        `PASSWORD: ${generatedPassword}`
+      );
+
+      //Reset form after success(?)
+      setName("");
+      setComplaint("");
+      setCategory(defaultCategories[0]);
+      setLocation("");
+      setAnonymous(false);
+      setImage(null);
     } 
     catch (err) {
-      console.error("Error uploading image:", err);
-      alert("Failed to upload image. Please try again.");
-      return;
-    }
-  }
-
-  //Submit complaint data to backend
-  try {
-    const response = await fetch(`${API_URL}/api/complaints`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: anonymous ? "Anonymous" : name,
-        complaint: complaint,
-        category: category.value,
-        location: location,
-        imageID: imageId,
-        imageUrl: imageUrl,
-        status: "UNSOLVED",
-        password: generatedPassword,
-      }),
-    });
-
-    //alerts user after submitting complaint
-    const data = await response.json();
-    alert(
-      `Complaint submitted! Please take a screenshot or picture of the COMPLAINT ID and PASSWORD to track its status.\n\n` +
-      `  \n` +
-      `COMPLAINT ID: ${data.ID}\n` +
-      `PASSWORD: ${generatedPassword}`
-    );
-
-    //Reset form after success(?)
-    setName("");
-    setComplaint("");
-    setCategory(defaultCategories[0]);
-    setLocation("");
-    setAnonymous(false);
-    setImage(null);
-  } 
-  catch (err) {
-    console.error("Error submitting complaint:", err);
-    alert("Failed to submit complaint. Please try again.");
+      console.error("Error submitting complaint:", err);
+      showModal("Failed to submit complaint. Please try again.");
     }
   };
 
   return (
     <Layout navigation={navigation}>
+      <ModalAlert visible={modal.show} message={modal.message} onClose={closeModal} />
       <View style={styles.card}>
         <Text style={styles.title}>Submit a Complaint</Text>
         <Text style={styles.subtitle}>

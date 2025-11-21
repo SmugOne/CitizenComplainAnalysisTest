@@ -267,10 +267,10 @@ export default function ComplaintListScreen({ navigation }) {
           visible={modalVisible}
           message={modalMessage}
           onClose={() => {
-            setModalVisible(false);   // close modal
+            setModalVisible(false);   
             if (modalMessage === "Complaint updated.") {
-              refetchComplaints();    // refresh table only if update succeeded
-              setScreen("table");     // return to table view
+              refetchComplaints();    
+              setScreen("table");     
             }
           }}
         />

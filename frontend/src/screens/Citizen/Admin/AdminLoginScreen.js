@@ -7,23 +7,28 @@ const HARDCODED_USER = "admin";
 const HARDCODED_PASS = "password123";
 
 // MODAL ALERT
-function ModalAlert({ visible, message, onClose }) {
+function ModalAlert({ visible, message }) {
+  if (!visible) return null;
+
   return (
-    <Modal transparent visible={visible} animationType="fade">
+    <View style={{
+      position: "absolute",
+      top: 0, left: 0, right: 0, bottom: 0,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.3)',
+      zIndex: 999
+    }}>
       <View style={{
-        flex: 1, justifyContent: 'center', alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.3)'
+        backgroundColor: '#fff',
+        padding: 26,
+        borderRadius: 12,
+        alignItems: 'center',
+        maxWidth: 320
       }}>
-        <View style={{
-          backgroundColor: '#fff', padding: 26, borderRadius: 12, alignItems: 'center', maxWidth: 320
-        }}>
-          <Text style={{ fontSize: 16, color: "#11493f", marginBottom: 18, textAlign: "center" }}>{message}</Text>
-          <TouchableOpacity onPress={onClose} style={{ backgroundColor: "#11493f", borderRadius: 8, paddingHorizontal: 28, paddingVertical: 10 }}>
-            <Text style={{ color: "#ffd66b", fontWeight: "700", fontSize: 17 }}>OK</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={{ fontSize: 16, color: "#11493f", textAlign: "center" }}>{message}</Text>
       </View>
-    </Modal>
+    </View>
   );
 }
 

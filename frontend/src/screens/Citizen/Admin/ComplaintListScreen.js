@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-nati
 import { Picker } from "@react-native-picker/picker";
 import Layout from "../../../components/LayoutAdmin";
 import { API_URL } from "@env";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from "react-native";
 
 // Column widths for active complaints
 const COLUMN_WIDTHS = {
@@ -12,10 +13,11 @@ const COLUMN_WIDTHS = {
   Category: 120,
   Status: 120,
   Location: 150,
+  ImageID: 120,
   Action: 100,
 };
 
-// Filter options
+//Filter options
 const CATEGORY_OPTIONS = [
   "All", "DPWH", "DOH", "DENR", "OMBUDSMAN",
   "LTO", "MMDA", "PNP", "DEPED", "BFP", "DOTR", "DITC"
@@ -40,7 +42,7 @@ export default function ComplaintListScreen({ navigation }) {
   const [newAgency, setNewAgency] = useState("");
   const [remark, setRemark] = useState("");
 
-  // Load data
+  //Load data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -91,7 +93,7 @@ export default function ComplaintListScreen({ navigation }) {
       .catch(() => alert("Error updating complaint"));
   };
 
-  // Filter helpers
+  //Filter helpers
   const filterComplaints = (data, category, status) => {
     return data.filter(c => {
       const cat = (c["Predicted Agency"] || c["Category"] || "").toUpperCase();
@@ -102,22 +104,17 @@ export default function ComplaintListScreen({ navigation }) {
     });
   };
 
-  const currentComplaints = viewMode === "Active"
-    ? filterComplaints(activeComplaints, categoryFilter, statusFilterActive)
-    : filterComplaints(archivedComplaints, categoryFilter, statusFilterArchive);
-
-  const currentStatusOptions = viewMode === "Active" ? STATUS_OPTIONS_ACTIVE : STATUS_OPTIONS_ARCHIVE;
   //Main resolver screen:
     if (screen === "resolve" && selectedComplaint) {
       return (
         <Layout navigation={navigation}>
           <View style={styles.resolveContainer}>
-
             <Text style={styles.resolveTitle}>
               Resolve Complaint #{selectedComplaint.ID}
             </Text>
 
-            {/* DETAILS */}
+            {/* Complaint Details */}
+            {resolveTab === "details" && (
             <View style={styles.detailsBox}>
               <Text style={styles.detailLabel}>Name:</Text>
               <Text style={styles.detailValue}>{selectedComplaint.Name}</Text>
@@ -133,64 +130,85 @@ export default function ComplaintListScreen({ navigation }) {
                 {selectedComplaint.ImageID || "None"}
               </Text>
             </View>
+          )}
 
-            {/* ACTIONS */}
+            {/* Status Picker */}
             <View style={styles.actionBox}>
+            <Text style={styles.resolveLabel}>Change and update status</Text>
+            <Picker
+              selectedValue={newStatus}
+              onValueChange={setNewStatus}
+              style={styles.resolvePicker}
+            >
+              <Picker.Item label="UNSOLVED" value="UNSOLVED" />
+              <Picker.Item label="SOLVED" value="SOLVED" />
+              <Picker.Item label="SPAM" value="SPAM" />
+            </Picker>
 
-              <Text style={styles.resolveLabel}>Change and update status</Text>
-              <Picker
-                selectedValue={newStatus}
-                onValueChange={setNewStatus}
-                style={styles.resolvePicker}
+            {/* Agency Picker */}
+            <Text style={styles.resolveLabel}>Change and update agency</Text>
+            <Picker
+              selectedValue={newAgency}
+              onValueChange={setNewAgency}
+              style={styles.resolvePicker}
+            >
+              {AGENCY_OPTIONS.map(a => (
+                <Picker.Item label={a} value={a} key={a} />
+              ))}
+            </Picker>
+
+            {/* Remarks */}
+            <Text style={styles.resolveLabel}>Remarks</Text>
+            <TextInput
+              style={styles.resolveInput}
+              multiline
+              value={remark}
+              onChangeText={setRemark}
+              placeholder="Write remarks..."
+            />
+
+            {/* Buttons */}
+            <View style={styles.resolveButtons}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setScreen("table")}
               >
-                <Picker.Item label="UNSOLVED" value="UNSOLVED" />
-                <Picker.Item label="SOLVED" value="SOLVED" />
-                <Picker.Item label="SPAM" value="SPAM" />
-              </Picker>
+                <Text>Back</Text>
+              </TouchableOpacity>
 
-              <Text style={styles.resolveLabel}>Change and update agency</Text>
-              <Picker
-                selectedValue={newAgency}
-                onValueChange={setNewAgency}
-                style={styles.resolvePicker}
+              <TouchableOpacity
+                style={[
+                  styles.updateBtn,
+                  { opacity: remark.trim() ? 1 : 0.5 }
+                ]}
+                disabled={!remark.trim()}
+                onPress={submitResolution}
               >
-                {CATEGORY_OPTIONS.map(a => (
-                  <Picker.Item key={a} label={a} value={a} />
-                ))}
-              </Picker>
-
-              <Text style={styles.resolveLabel}>Remarks</Text>
-              <TextInput
-                style={styles.resolveInput}
-                multiline
-                value={remark}
-                onChangeText={setRemark}
-              />
-
-              <View style={styles.resolveButtons}>
-                <TouchableOpacity
-                  style={styles.cancelBtn}
-                  onPress={() => setScreen("table")}
-                >
-                  <Text>Back</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.updateBtn}
-                  disabled={!remark.trim()}
-                  onPress={submitResolution}
-                >
-                  <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                    Update
-                  </Text>
-                </TouchableOpacity>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  Update
+                </Text>
+              </TouchableOpacity>
               </View>
-
             </View>
           </View>
         </Layout>
       );
-}
+    }
+
+  const currentComplaints = viewMode === "Active"
+    ? filterComplaints(activeComplaints, categoryFilter, statusFilterActive)
+    : filterComplaints(archivedComplaints, categoryFilter, statusFilterArchive);
+
+  const currentStatusOptions = viewMode === "Active" ? STATUS_OPTIONS_ACTIVE : STATUS_OPTIONS_ARCHIVE;
+  //Main resolver screen:
+    if (screen === "resolve" && selectedComplaint) {
+      return (
+        <Layout navigation={navigation}>
+          <View style={styles.resolveContainer}>
+
+            <Text style={styles.resolveTitle}>
+              Resolve Complaint #{selectedComplaint.ID}
+            </Text>
 
             {/* Details */}
             <View style={styles.detailsBox}>
@@ -310,6 +328,7 @@ export default function ComplaintListScreen({ navigation }) {
                   <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Category }]}>Category</Text>
                   <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Status }]}>Status</Text>
                   <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Location }]}>Location</Text>
+                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.ImageID }]}>Image ID</Text>
                   <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Action }]}>Action</Text>
                 </>
               ) : (
@@ -334,38 +353,54 @@ export default function ComplaintListScreen({ navigation }) {
             ) : currentComplaints.length === 0 ? (
               <Text style={{ margin: 10, color: "#11493f" }}>No {viewMode.toLowerCase()} complaints found.</Text>
             ) : (
-              currentComplaints.map(c => (
-                <View style={styles.tableRow} key={c.ID || c.id}>
-                  {viewMode === "Active" ? (
-                    <>
-                      <Text style={[styles.cell, { width: COLUMN_WIDTHS.ID }]}>{c.ID || c.id}</Text>
-                      <Text style={[styles.cell, { width: COLUMN_WIDTHS.Name }]}>{c.Name}</Text>
-                      <Text style={[styles.cell, { width: COLUMN_WIDTHS.Complaint, textAlign: "left" }]}>{c.Complaint || c["Raw Complaint"]}</Text>
-                      <Text style={[styles.cell, { width: COLUMN_WIDTHS.Category }]}>{c["Predicted Agency"] || c["Category"]}</Text>
-                      <Text style={[styles.cell, { width: COLUMN_WIDTHS.Status }]}>{c.Status}</Text>
-                      <Text style={[styles.cell, { width: COLUMN_WIDTHS.Location }]}>{c.Location}</Text>
-                      <TouchableOpacity
-                        style={[styles.actionBtn, { width: COLUMN_WIDTHS.Action }]}
-                        onPress={() => openResolver(c)}
-                      >
-                        <Text style={styles.actionBtnText}>Resolve</Text>
-                      </TouchableOpacity>
-                    </>
-                  ) : (
-                    <>
-                      <Text style={[styles.cell, { width: 60 }]}>{c.ID || c.id}</Text>
-                      <Text style={[styles.cell, { width: 120 }]}>{c.Name}</Text>
-                      <Text style={[styles.cell, { width: 320, textAlign: "left" }]}>{c.Complaint || c["Raw Complaint"]}</Text>
-                      <Text style={[styles.cell, { width: 150 }]}>{c.Location}</Text>
-                      <Text style={[styles.cell, { width: 120 }]}>{c.Agency || c["Predicted Agency"] || c["Category"]}</Text>
-                      <Text style={[styles.cell, { width: 120 }]}>{c["Image ID"]}</Text>
-                      <Text style={[styles.cell, { width: 100 }]}>{c.Status}</Text>
-                      <Text style={[styles.cell, { width: 150 }]}>{c.Remark || ""}</Text>
-                      <Text style={[styles.cell, { width: 150 }]}>{c.Feedback || ""}</Text>
-                    </>
-                  )}
-                </View>
-              ))
+              currentComplaints.map((c) => {
+                const isFlagged =
+                  c["Flagged Words"] === true || c["Flagged Words"] === "True";
+
+                return (
+                  <View
+                    style={[styles.tableRow, isFlagged && styles.flaggedRow]}
+                    key={c.ID}
+                  >
+                    {viewMode === "Active" ? (
+                      <>
+                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.ID }]}>
+                          {isFlagged ? "🚩 " : ""}
+                          {c.ID}
+                        </Text>
+                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Name }]}>{c.Name}</Text>
+                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Complaint, textAlign: "left" }]}>
+                          {c.Complaint || c["Raw Complaint"]}
+                        </Text>
+                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Category }]}>
+                          {c["Predicted Agency"] || c["Category"]}
+                        </Text>
+                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Status }]}>{c.Status}</Text>
+                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Location }]}>{c.Location}</Text>
+                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.ImageID }]}>{c["Image ID"]}</Text>
+                        <TouchableOpacity
+                          style={[styles.actionBtn, { width: COLUMN_WIDTHS.Action }]}
+                          onPress={() => openResolver(c)}
+                        >
+                          <Text style={styles.actionBtnText}>Resolve</Text>
+                        </TouchableOpacity>
+                      </>
+                    ) : (
+                      <>
+                        <Text style={[styles.cell, { width: 60 }]}>{isFlagged ? "🚩 " : ""}{c.ID}</Text>
+                        <Text style={[styles.cell, { width: 120 }]}>{c.Name}</Text>
+                        <Text style={[styles.cell, { width: 320, textAlign: "left" }]}>{c.Complaint || c["Raw Complaint"]}</Text>
+                        <Text style={[styles.cell, { width: 150 }]}>{c.Location}</Text>
+                        <Text style={[styles.cell, { width: 120 }]}>{c.Agency || c["Predicted Agency"] || c["Category"]}</Text>
+                        <Text style={[styles.cell, { width: 120 }]}>{c["Image ID"]}</Text>
+                        <Text style={[styles.cell, { width: 100 }]}>{c.Status}</Text>
+                        <Text style={[styles.cell, { width: 150 }]}>{c.Remark || ""}</Text>
+                        <Text style={[styles.cell, { width: 150 }]}>{c.Feedback || ""}</Text>
+                      </>
+                    )}
+                  </View>
+                );
+              })
             )}
           </View>
         </ScrollView>
@@ -383,6 +418,7 @@ const styles = StyleSheet.create({
   headerCell: { fontWeight: "bold", color: "#11493f", textAlign: "center", fontSize: 16 },
   tableRow: { flexDirection: "row", borderBottomWidth: 1, borderColor: "#ececec", paddingVertical: 12, backgroundColor: "#fff" },
   cell: { textAlign: "center", color: "#222", fontSize: 15, paddingHorizontal: 4 },
-  actionBtn: { backgroundColor: "#197278", paddingVertical: 6, paddingHorizontal: 10, borderRadius: 6, alignItems: "center" },
-  actionBtnText: { color: "#fff", fontWeight: "700" },
+  actionBtn: {backgroundColor: "#DC2626", paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, alignSelf: "center", },
+  actionBtnText: {color: "#fff", fontWeight: "bold", },
+  flaggedRow: {backgroundColor: "#ffeaea",},
 });

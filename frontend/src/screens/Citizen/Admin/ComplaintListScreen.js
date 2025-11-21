@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import Layout from "../../../components/LayoutAdmin";
 import { API_URL } from "@env";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from "react-native";
 
 // Column widths for active complaints
 const COLUMN_WIDTHS = {
@@ -23,8 +22,19 @@ const CATEGORY_OPTIONS = [
   "LTO", "MMDA", "PNP", "DEPED", "BFP", "DOTR", "DITC"
 ];
 
+//Filter for active complaints
 const STATUS_OPTIONS_ACTIVE = ["All", "UNSOLVED", "UNDER REVIEW"];
+
+//Filter for archived complaints
 const STATUS_OPTIONS_ARCHIVE = ["All", "SOLVED", "SPAM"];
+
+//Agencies for resolver screen
+const AGENCY_OPTIONS = [
+  "DPWH", "DOH", "DENR", "OMBUDSMAN",
+  "LTO", "MMDA", "PNP", "DEPED",
+  "BFP", "DOTR", "DITC"
+];
+
 
 export default function ComplaintListScreen({ navigation }) {
   const [activeComplaints, setActiveComplaints] = useState([]);
@@ -41,6 +51,7 @@ export default function ComplaintListScreen({ navigation }) {
   const [newStatus, setNewStatus] = useState("UNSOLVED");
   const [newAgency, setNewAgency] = useState("");
   const [remark, setRemark] = useState("");
+  const [resolveTab, setResolveTab] = useState("details");
 
   //Load data
   useEffect(() => {
@@ -94,16 +105,26 @@ export default function ComplaintListScreen({ navigation }) {
   };
 
   //Filter helpers
-  const filterComplaints = (data, category, status) => {
+  const filterComplaints = (data, category, status, viewMode) => {
     return data.filter(c => {
-      const cat = (c["Predicted Agency"] || c["Category"] || "").toUpperCase();
+      const agency = (c.Agency || c["Predicted Agency"] || c["Category"] || "").toUpperCase();
       const stat = (c.Status || "").toUpperCase();
-      const categoryMatch = category === "All" || cat === category.toUpperCase();
+      const categoryMatch = category === "All" || agency === category.toUpperCase();
       const statusMatch = status === "All" || stat === status.toUpperCase();
       return categoryMatch && statusMatch;
     });
   };
 
+  const currentComplaints = viewMode === "Active"
+    ? filterComplaints(activeComplaints, categoryFilter, statusFilterActive)
+    : filterComplaints(archivedComplaints, categoryFilter, statusFilterArchive);
+
+  const currentStatusOptions = viewMode === "Active" ? STATUS_OPTIONS_ACTIVE : STATUS_OPTIONS_ARCHIVE;
+
+  const totalFiltered = currentComplaints.length;
+  const flaggedCount = currentComplaints.filter(
+    row => row["Flagged Words"] === true || row["Flagged Words"] === "True"
+  ).length;
   //Main resolver screen:
     if (screen === "resolve" && selectedComplaint) {
       return (
@@ -114,7 +135,6 @@ export default function ComplaintListScreen({ navigation }) {
             </Text>
 
             {/* Complaint Details */}
-            {resolveTab === "details" && (
             <View style={styles.detailsBox}>
               <Text style={styles.detailLabel}>Name:</Text>
               <Text style={styles.detailValue}>{selectedComplaint.Name}</Text>
@@ -123,103 +143,7 @@ export default function ComplaintListScreen({ navigation }) {
               <Text style={styles.detailValue}>{selectedComplaint.Location}</Text>
 
               <Text style={styles.detailLabel}>Complaint:</Text>
-              <Text style={styles.detailValue}>{selectedComplaint.Complaint}</Text>
-
-              <Text style={styles.detailLabel}>Image ID:</Text>
-              <Text style={styles.detailValue}>
-                {selectedComplaint.ImageID || "None"}
-              </Text>
-            </View>
-          )}
-
-            {/* Status Picker */}
-            <View style={styles.actionBox}>
-            <Text style={styles.resolveLabel}>Change and update status</Text>
-            <Picker
-              selectedValue={newStatus}
-              onValueChange={setNewStatus}
-              style={styles.resolvePicker}
-            >
-              <Picker.Item label="UNSOLVED" value="UNSOLVED" />
-              <Picker.Item label="SOLVED" value="SOLVED" />
-              <Picker.Item label="SPAM" value="SPAM" />
-            </Picker>
-
-            {/* Agency Picker */}
-            <Text style={styles.resolveLabel}>Change and update agency</Text>
-            <Picker
-              selectedValue={newAgency}
-              onValueChange={setNewAgency}
-              style={styles.resolvePicker}
-            >
-              {AGENCY_OPTIONS.map(a => (
-                <Picker.Item label={a} value={a} key={a} />
-              ))}
-            </Picker>
-
-            {/* Remarks */}
-            <Text style={styles.resolveLabel}>Remarks</Text>
-            <TextInput
-              style={styles.resolveInput}
-              multiline
-              value={remark}
-              onChangeText={setRemark}
-              placeholder="Write remarks..."
-            />
-
-            {/* Buttons */}
-            <View style={styles.resolveButtons}>
-              <TouchableOpacity
-                style={styles.cancelBtn}
-                onPress={() => setScreen("table")}
-              >
-                <Text>Back</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.updateBtn,
-                  { opacity: remark.trim() ? 1 : 0.5 }
-                ]}
-                disabled={!remark.trim()}
-                onPress={submitResolution}
-              >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                  Update
-                </Text>
-              </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Layout>
-      );
-    }
-
-  const currentComplaints = viewMode === "Active"
-    ? filterComplaints(activeComplaints, categoryFilter, statusFilterActive)
-    : filterComplaints(archivedComplaints, categoryFilter, statusFilterArchive);
-
-  const currentStatusOptions = viewMode === "Active" ? STATUS_OPTIONS_ACTIVE : STATUS_OPTIONS_ARCHIVE;
-  //Main resolver screen:
-    if (screen === "resolve" && selectedComplaint) {
-      return (
-        <Layout navigation={navigation}>
-          <View style={styles.resolveContainer}>
-
-            <Text style={styles.resolveTitle}>
-              Resolve Complaint #{selectedComplaint.ID}
-            </Text>
-
-            {/* Details */}
-            <View style={styles.detailsBox}>
-              <Text style={styles.detailLabel}>Name:</Text>
-              <Text style={styles.detailValue}>{selectedComplaint.Name}</Text>
-
-              <Text style={styles.detailLabel}>Location:</Text>
-              <Text style={styles.detailValue}>{selectedComplaint.Location}</Text>
-
-              <Text style={styles.detailLabel}>Complaint:</Text>
-              <Text style={styles.detailValue}>{selectedComplaint.Complaint}</Text>
+              <Text style={styles.detailValue}>{selectedComplaint.Complaint || selectedComplaint["Raw Complaint"]}</Text>
 
               <Text style={styles.detailLabel}>Image ID:</Text>
               <Text style={styles.detailValue}>
@@ -227,7 +151,7 @@ export default function ComplaintListScreen({ navigation }) {
               </Text>
             </View>
 
-            {/* Pickers */}
+            {/* Status & Agency */}
             <View style={styles.actionBox}>
               <Text style={styles.resolveLabel}>Change and update status</Text>
               <Picker
@@ -246,8 +170,8 @@ export default function ComplaintListScreen({ navigation }) {
                 onValueChange={setNewAgency}
                 style={styles.resolvePicker}
               >
-                {CATEGORY_OPTIONS.map((a) => (
-                  <Picker.Item key={a} label={a} value={a} />
+                {AGENCY_OPTIONS.map(a => (
+                  <Picker.Item label={a} value={a} key={a} />
                 ))}
               </Picker>
 
@@ -257,18 +181,20 @@ export default function ComplaintListScreen({ navigation }) {
                 multiline
                 value={remark}
                 onChangeText={setRemark}
+                placeholder="Write remarks..."
               />
 
+              {/* Buttons */}
               <View style={styles.resolveButtons}>
                 <TouchableOpacity
                   style={styles.cancelBtn}
                   onPress={() => setScreen("table")}
                 >
-                  <Text>Back</Text>
+                  <Text style={{ fontWeight: "bold" }}>Back</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.updateBtn}
+                  style={[styles.updateBtn, { opacity: remark.trim() ? 1 : 0.5 }]}
                   disabled={!remark.trim()}
                   onPress={submitResolution}
                 >
@@ -283,10 +209,22 @@ export default function ComplaintListScreen({ navigation }) {
     
     return (
     <Layout navigation={navigation}>
-      <View style={{ flex: 1, padding: 16 }}>
+      <View style={{ flex: 1, padding: 20, }}>
         <Text style={styles.title}>
           {viewMode === "Active" ? "Active Complaints" : "Archived Complaints"}
         </Text>
+
+        {/* Widgets */}
+        <View style={styles.widgetsRow}>
+          <View style={[styles.widget, { backgroundColor: "#eaf3fc" }]}>
+            <Text style={[styles.widgetTitle, { color: "#11493f" }]}>Total Complaints</Text>
+            <Text style={styles.widgetValue}>{totalFiltered}</Text>
+          </View>
+          <View style={[styles.widget, { backgroundColor: "#fbeaec" }]}>
+            <Text style={[styles.widgetTitle, { color: "#c00" }]}>Flagged Urgent Complaints</Text>
+            <Text style={[styles.widgetValue, { color: "#c00" }]}>{flaggedCount}</Text>
+          </View>
+        </View>
 
         {/* Filters */}
         <View style={styles.filterRow}>
@@ -377,7 +315,7 @@ export default function ComplaintListScreen({ navigation }) {
                         </Text>
                         <Text style={[styles.cell, { width: COLUMN_WIDTHS.Status }]}>{c.Status}</Text>
                         <Text style={[styles.cell, { width: COLUMN_WIDTHS.Location }]}>{c.Location}</Text>
-                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.ImageID }]}>{c["Image ID"]}</Text>
+                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.ImageID }]}>{c.ImageID}</Text>
                         <TouchableOpacity
                           style={[styles.actionBtn, { width: COLUMN_WIDTHS.Action }]}
                           onPress={() => openResolver(c)}
@@ -418,7 +356,24 @@ const styles = StyleSheet.create({
   headerCell: { fontWeight: "bold", color: "#11493f", textAlign: "center", fontSize: 16 },
   tableRow: { flexDirection: "row", borderBottomWidth: 1, borderColor: "#ececec", paddingVertical: 12, backgroundColor: "#fff" },
   cell: { textAlign: "center", color: "#222", fontSize: 15, paddingHorizontal: 4 },
-  actionBtn: {backgroundColor: "#DC2626", paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, alignSelf: "center", },
-  actionBtnText: {color: "#fff", fontWeight: "bold", },
-  flaggedRow: {backgroundColor: "#ffeaea",},
+  actionBtn: { backgroundColor: "#DC2626", paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, alignSelf: "center" },
+  actionBtnText: { color: "#fff", fontWeight: "bold" },
+  detailsBox: { backgroundColor: "#f7f7f7", padding: 15, borderRadius: 10, marginBottom: 20 },
+  flaggedRow: { backgroundColor: "#ffeaea" },
+  actionBox: { backgroundColor: "#ffffff", padding: 18, borderRadius: 12, marginTop: 20, borderWidth: 1, borderColor: "#ddd" },
+  resolveCard: { backgroundColor: "#f9fbfd", width: "95%", borderRadius: 14, padding: 20 },
+  resolveContainer: { flex: 1, padding: 20, backgroundColor: "#f9fbfd" },
+  resolveTitle: { fontSize: 26, fontWeight: "bold", color: "#11493f", marginBottom: 20, textAlign: "center" },
+  detailLabel: { fontWeight: "bold", marginTop: 8 },
+  detailValue: { marginLeft: 10, marginBottom: 4, fontSize: 15 },
+  resolveLabel: { fontSize: 16, fontWeight: "600", marginTop: 10, color: "#11493f" },
+  resolvePicker: { backgroundColor: "#e6f0ff", borderRadius: 10, marginBottom: 12, height: 50 },
+  resolveInput: { borderWidth: 1, borderColor: "#ccc", borderRadius: 10, padding: 10, height: 120, marginTop: 6, textAlignVertical: "top" },
+  resolveButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 20 },
+  cancelBtn: { backgroundColor: "#ccc", padding: 12, borderRadius: 10, width: "45%", alignItems: "center" },
+  updateBtn: { backgroundColor: "#197278", padding: 12, borderRadius: 10, width: "45%", alignItems: "center" },
+  widgetsRow: { flexDirection: "row", gap: 20, marginBottom: 12, justifyContent: "center", width: "100%",},
+  widget: { flex: 1, minWidth: 180, maxWidth: 280, paddingVertical: 20, paddingHorizontal: 20, borderRadius: 12, alignItems: "center",},
+  widgetTitle: {fontWeight: "700", fontSize: 16, marginBottom: 8, textAlign: "center",},
+  widgetValue: {fontSize: 28, fontWeight: "bold", color: "#11493f",},
 });

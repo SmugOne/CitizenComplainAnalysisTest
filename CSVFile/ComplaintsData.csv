@@ -23,7 +23,7 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remark
 22,Anonymous,Inaabuso ang pondo ng bayan,Bacoor,UNSOLVED,BFP,,nF8qD,
 23,Anonymous,corrupt,Dasmari�as,UNSOLVED,,,A5tVg,
 24,Hansel Mark,We have constant blackouts,Dasmari�as,UNSOLVED,,,lC7sZ,
-25,JP,Mababang quality ng education,Dasmari�as,UNSOLVED,,,D9rBw,
+25,JP,Mababang quality ng education,Dasmari�as,UNDER REVIEW,DEPED,,D9rBw,Under review
 26,Ace,Abusong mga officers sa barangay,Dasmari�as,UNSOLVED,,,zM3yL,
 27,JP,Abusive officers,Dasmari�as,UNSOLVED,,,Q2jXp,
 28,ac,smpl,Dasmari�as,UNSOLVED,,,kH6nT,
@@ -54,7 +54,7 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remark
 53,Anonymous,Kulang ang tubig at mahina,"Lat: 14.41792, Long: 120.979456",UNDER REVIEW,DEPED,,kyxGH,We sent inspectors
 54,Anonymous,May kurakot sa police station,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,Z4Qrl,
 55,Anonymous,Sira sira ang daanan,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,Krt07,
-56,Anonymous,Pangit kalsada,,SOLVED,DPWH,,6JAQd,Sent inspectors
+56,Anonymous,Pangit kalsada,,UNDER REVIEW,DPWH,,6JAQd,Under review
 57,Anonymous,Pangit kalsada,,UNSOLVED,,,NnmVc,
 58,Anonymous,Test,,SPAM,NONE,,UtKQm,Marked as spam
 59,Anonymous,Sira yung kalsada,"Lat: 14.2802944, Long: 120.7238656",UNSOLVED,,,mtZfh,

@@ -151,7 +151,7 @@ export default function ManageAdminUserScreen({ navigation }) {
   return (
     <LayoutAdmin navigation={navigation}>
       <ScrollView contentContainerStyle={{ padding: 18, flexGrow: 1 }}>
-        <Text style={styles.title}>Manage Admin Users</Text>
+        <Text style={styles.title}>Management</Text>
         <View style={[styles.sectionRow, { flexDirection: isNarrow ? "column" : "row" }]}>
           {/* LEFT: Admin Form + List */}
           <View style={[styles.col, { flex: 1, marginRight: isNarrow ? 0 : 18 }]}>
@@ -174,56 +174,51 @@ export default function ManageAdminUserScreen({ navigation }) {
 
           {/* RIGHT: Announcements Management */}
           <View style={[styles.col, { flex: 2, marginLeft: isNarrow ? 0 : 18, marginTop: isNarrow ? 26 : 0 }]}>
-            <Text style={styles.subtitle}>Edit Announcements for Home Screen</Text>
-            {/* Add new announcement */}
-            <View style={[styles.annCard, { marginBottom: 14 }]}>
-              <TextInput
-                style={styles.input}
-                placeholder="Title"
-                value={newAnnTitle}
-                onChangeText={setNewAnnTitle}
-              />
-              <TextInput
-                style={[styles.input, { minHeight: 60 }]}
-                placeholder="Body"
-                multiline
-                value={newAnnBody}
-                onChangeText={setNewAnnBody}
-              />
-              <TouchableOpacity style={[styles.button, { marginTop: 8 }, creatingAnn && { opacity: 0.6 }]}
-                onPress={createAnnouncement}
-                disabled={creatingAnn}
-              >
-                {creatingAnn ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Add Announcement</Text>}
-              </TouchableOpacity>
-            </View>
-            {/* List and edit announcements */}
-            {loadingAnns ? <ActivityIndicator /> : announcements.map(ann =>
-              <View style={styles.annCard} key={ann.id ?? ann._id ?? ann.Title}>
-                {editingAnn.id === (ann.id ?? ann._id ?? ann.Title) ? (
-                  <>
-                    <TextInput style={styles.input} value={editingAnn.title} onChangeText={t => setEditingAnn(e => ({ ...e, title: t }))} />
-                    <TextInput style={[styles.input, { minHeight: 60 }]} multiline value={editingAnn.body} onChangeText={t => setEditingAnn(e => ({ ...e, body: t }))} />
-                    <View style={styles.actionRow}>
-                      <TouchableOpacity style={[styles.actionBtn, styles.saveBtn]} onPress={saveEdit}>
-                        <Text style={styles.actionBtnText}>Save</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={[styles.actionBtn, styles.cancelBtn]} onPress={stopEdit}>
-                        <Text style={[styles.actionBtnText, { color: "#11493f" }]}>Cancel</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </>
-                ) : (
-                  <>
-                    <Text style={styles.annTitle}>{ann.title}</Text>
-                    <Text style={styles.annBody}>{ann.body}</Text>
-                    <View style={styles.actionRow}>
-                      <TouchableOpacity style={styles.actionBtn} onPress={() => startEdit(ann.id ?? ann._id ?? ann.Title, ann)}>
-                        <Text style={styles.actionBtnText}>Edit</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </>
-                )}
+            <Text style={styles.subtitle}>Edit Announcements</Text>
+
+            {/* Space selector */}
+            <Text style={{ fontWeight: "bold", marginBottom: 6 }}>Select Space</Text>
+            <Picker
+              selectedValue={selectedSpaces.space || "1"}
+              onValueChange={(val) => {
+                setSelectedSpaces({ ...selectedSpaces, space: val });
+                // Find the announcement for the selected space
+                const ann = announcements.find(a => String(a.space) === val);
+                if (ann) setEditingAnn({ id: ann.id ?? ann._id ?? val, title: ann.title, body: ann.body });
+                else setEditingAnn({ id: val, title: "", body: "" }); // empty if none yet
+              }}
+              style={{height: 60, width: "100%", fontSize: 15, borderWidth: 1, borderColor: "#ccc", borderRadius: 8, backgroundColor: "#fff",}}
+              itemStyle={{ fontSize: 15, height: 60 }}
+            >
+              {["1", "2", "3"].map(s => (
+                <Picker.Item key={s} label={`Space ${s}`} value={s} />
+              ))}
+            </Picker>
+
+            {/* Editing form for the selected space */}
+            {editingAnn.id && (
+              <View style={[styles.annCard, { marginTop: 14 }]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Title"
+                  value={editingAnn.title}
+                  onChangeText={t => setEditingAnn(e => ({ ...e, title: t }))}
+                />
+                <TextInput
+                  style={[styles.input, { minHeight: 60 }]}
+                  placeholder="Body"
+                  multiline
+                  value={editingAnn.body}
+                  onChangeText={t => setEditingAnn(e => ({ ...e, body: t }))}
+                />
+                <View style={styles.actionRow}>
+                  <TouchableOpacity style={[styles.actionBtn, styles.saveBtn]} onPress={saveEdit}>
+                    <Text style={styles.actionBtnText}>Save</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.actionBtn, styles.cancelBtn]} onPress={() => setEditingAnn({})}>
+                    <Text style={[styles.actionBtnText, { color: "#11493f" }]}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
           </View>
@@ -251,5 +246,5 @@ const styles = StyleSheet.create({
   actionBtn: { backgroundColor: "#ffd66b", borderRadius: 8, paddingVertical: 6, paddingHorizontal: 18, marginRight: 8 },
   saveBtn: { backgroundColor: "#197278" },
   cancelBtn: { backgroundColor: "#fde2a6" },
-  actionBtnText: { fontWeight: "bold", color: "#197278", fontSize: 15 },
+  actionBtnText: { fontWeight: "bold", color: "#ffffffff", fontSize: 15 },
 });

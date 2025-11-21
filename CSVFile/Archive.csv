@@ -6,3 +6,5 @@ ID,Name,Complaint,Location,Agency,Image ID,Status,Remark,Feedback
 20,vincent,pogi,Imus,NONE,,SPAM,Marked as spam,
 35,Anonymous,I saw trash in the street!,"Lat: 14.4048128, Long: 120.979456",DENR,,SOLVED,Sent inspectors and cleaners to fix the problem,
 47,Anonymous,Theres trash in my area,"Lat: 14.41792, Long: 120.979456",DENR,,SOLVED,Send in cleaners,They arrived quicker than anticipated
+70,Anonymous,Balakubak,,NONE,,SPAM,Marked as spam,
+71,Anonymous,Test,,NONE,,SPAM,Marked as spam,

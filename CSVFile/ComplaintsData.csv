@@ -44,7 +44,7 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remark
 43,Anonymous,Theres damage on the sidewalk,"Lat: 14.3757583, Long: 120.9788229",UNSOLVED,,,S6pRe,
 44,Anonymous,The sidewalk is destroyed,"Lat: 14.4048128, Long: 120.9827328",UNSOLVED,,,mD4tQ,
 45,Anonymous,Theres corruption within the police,"Lat: 14.4048128, Long: 120.9827328",UNSOLVED,,,P1wNz,
-46,Anonymous,Theres trash in my area,,UNSOLVED,,,cF8kJ,
+46,Anonymous,Theres trash in my area,,SPAM,DENR,,cF8kJ,Already solved
 47,Anonymous,Theres trash in my area,"Lat: 14.41792, Long: 120.979456",SOLVED,DENR,,O7yVa,Send in cleaners
 48,Anonymous,Theres flooding in my area,,UNSOLVED,,,vL3gX,
 49,Anonymous,Theres brownout in my place,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,R9bTp,
@@ -68,4 +68,5 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remark
 67,Anonymous,Marumi ang tubig dito sa ilog,"Lat: 14.3312666, Long: 120.9553525",UNSOLVED,DENR,,HGTLn,
 68,JP,Please fixed your statistics please please,,UNSOLVED,DENR,,lLqtf,
 69,Anonymous,May kalat sa kalsada,"Lat: 14.3753216, Long: 120.9761792",UNSOLVED,,,WBjql,
-70,Anonymous,Balakubak,,UNSOLVED,,,wSUn7,
+70,Anonymous,Balakubak,,SPAM,NONE,,wSUn7,Marked as spam
+71,Anonymous,Test,,SPAM,NONE,,FVB4G,Marked as spam

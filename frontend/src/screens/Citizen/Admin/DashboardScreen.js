@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from "react-native";
+import { Modal, View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import Layout from "../../../components/LayoutAdmin";
 import { API_URL } from "@env";
@@ -32,7 +32,7 @@ const STATUS_OPTIONS_ARCHIVE = ["All", "SOLVED", "SPAM"];
 const AGENCY_OPTIONS = [
   "DPWH", "DOH", "DENR", "OMBUDSMAN",
   "LTO", "MMDA", "PNP", "DEPED",
-  "BFP", "DOTR", "DITC"
+  "BFP", "DOTR", "DITC", "NONE"
 ];
 
 
@@ -52,6 +52,22 @@ export default function ComplaintListScreen({ navigation }) {
   const [newAgency, setNewAgency] = useState("");
   const [remark, setRemark] = useState("");
   const [resolveTab, setResolveTab] = useState("details");
+  //Modal state
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+
+  const MyModal = ({ visible, message, onClose }) => (
+  <Modal visible={visible} transparent animationType="fade">
+    <View style={{ flex:1, justifyContent:"center", alignItems:"center", backgroundColor:"rgba(0,0,0,0.5)" }}>
+      <View style={{ backgroundColor:"#fff", padding:20, borderRadius:10, width:"80%" }}>
+        <Text style={{ fontSize:18, marginBottom:20 }}>{message}</Text>
+        <TouchableOpacity onPress={onClose} style={{ alignSelf:"flex-end" }}>
+          <Text style={{ color:"#197278", fontWeight:"bold" }}>OK</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </Modal>
+);
 
   //Load data
   useEffect(() => {
@@ -96,28 +112,59 @@ export default function ComplaintListScreen({ navigation }) {
         remark: remark,
       }),
     })
-      .then((res) => res.json())
+      .then(res => res.json())
       .then(() => {
-        alert("Complaint updated.");
-        setScreen("table");
+        setModalMessage("Complaint updated.");
+        setModalVisible(true);  
       })
-      .catch(() => alert("Error updating complaint"));
+      .catch(() => {
+        setModalMessage("Error updating complaint.");
+        setModalVisible(true);
+      });
+    };
+
+
+  //Refetch function
+  const refetchComplaints = async () => {
+    setLoading(true);
+    try {
+      const [activeRes, archiveRes] = await Promise.all([
+        fetch(`${API_URL}/api/complaints`),
+        fetch(`${API_URL}/api/archive_complaints`)
+      ]);
+      const [activeData, archiveData] = await Promise.all([activeRes.json(), archiveRes.json()]);
+      setActiveComplaints(activeData);
+      setArchivedComplaints(archiveData);
+    } catch {
+      setFetchError(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   //Filter helpers
-  const filterComplaints = (data, category, status, viewMode) => {
+    const filterComplaints = (data, category, status, viewMode) => {
     return data.filter(c => {
       const agency = (c.Agency || c["Predicted Agency"] || c["Category"] || "").toUpperCase();
       const stat = (c.Status || "").toUpperCase();
+
+      // Status filter logic
+      let statusMatch = true;
+      if (status && status !== "All") {
+        statusMatch = stat === status.toUpperCase();
+      } else if (viewMode === "Active") {
+        statusMatch = stat === "UNSOLVED" || stat === "UNDER REVIEW";
+      }
+
       const categoryMatch = category === "All" || agency === category.toUpperCase();
-      const statusMatch = status === "All" || stat === status.toUpperCase();
+
       return categoryMatch && statusMatch;
     });
   };
 
   const currentComplaints = viewMode === "Active"
-    ? filterComplaints(activeComplaints, categoryFilter, statusFilterActive)
-    : filterComplaints(archivedComplaints, categoryFilter, statusFilterArchive);
+    ? filterComplaints(activeComplaints, categoryFilter, statusFilterActive, "Active")
+    : filterComplaints(archivedComplaints, categoryFilter, statusFilterArchive, "Archive");
 
   const currentStatusOptions = viewMode === "Active" ? STATUS_OPTIONS_ACTIVE : STATUS_OPTIONS_ARCHIVE;
 
@@ -206,13 +253,27 @@ export default function ComplaintListScreen({ navigation }) {
         </Layout>
       );
     }
-    
+
+    //Main Table Screen
     return (
     <Layout navigation={navigation}>
       <View style={{ flex: 1, padding: 20, }}>
         <Text style={styles.title}>
           {viewMode === "Active" ? "Active Complaints" : "Archived Complaints"}
         </Text>
+
+        {/* Modal */}
+        <MyModal
+          visible={modalVisible}
+          message={modalMessage}
+          onClose={() => {
+            setModalVisible(false);   // close modal
+            if (modalMessage === "Complaint updated.") {
+              refetchComplaints();    // refresh table only if update succeeded
+              setScreen("table");     // return to table view
+            }
+          }}
+        />
 
         {/* Widgets */}
         <View style={styles.widgetsRow}>

@@ -5,6 +5,7 @@ import { API_URL } from "@env";
 import { Container, Row, Col, useResponsive } from "../../components/Bootstrap";
 
 export default function HomeScreen({ navigation }) {
+  const [announcements, setAnnouncements] = useState([]);
   const [resolvedCount, setResolvedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const resp = useResponsive();
@@ -36,6 +37,22 @@ export default function HomeScreen({ navigation }) {
     };
 
     fetchStats();
+
+    const fetchAnnouncements = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/announcements`);
+        const data = await res.json();
+
+        if (Array.isArray(data)) {
+          setAnnouncements(data);
+        }
+      } catch (err) {
+        console.error("Error loading announcements:", err);
+      }
+    };
+
+    fetchAnnouncements();
+
   }, []);
 
   // responsive typography
@@ -74,32 +91,12 @@ export default function HomeScreen({ navigation }) {
 
           <Col xs={12} md={7}>
             <View style={styles.announcements}>
-              <Text style={[styles.sectionTitle, { fontSize: announceTitleFont }]}>
-                Announcements
-              </Text>
-
-              <View style={styles.announceCard}>
-                <Text style={styles.announceCardTitle}>
-                  🛠️ Infrastructure upgrades in progress!
-                </Text>
-                <Text style={styles.announceBody}>
-                  Expect minor roadwork delays in Barangay Center until 09/30/2025.
-                </Text>
-              </View>
-
-              <View style={styles.announceCard}>
-                <Text style={styles.announceCardTitle}>🗑️ New Waste Collection Schedule</Text>
-                <Text style={styles.announceBody}>
-                  Garbage collection now every Monday and Thursday, 7AM-10AM.
-                </Text>
-              </View>
-
-              <View style={styles.announceCard}>
-                <Text style={styles.announceCardTitle}>🔒 Safety Campaign Launched</Text>
-                <Text style={styles.announceBody}>
-                  Our new “Safe Community” campaign empowers you to report safety issues easily.
-                </Text>
-              </View>
+              {announcements.map((item, index) => (
+                <View key={index} style={styles.announceCard}>
+                  <Text style={styles.announceCardTitle}>{item.Title}</Text>
+                  <Text style={styles.announceBody}>{item.Body}</Text>
+                </View>
+              ))}
             </View>
           </Col>
         </Row>

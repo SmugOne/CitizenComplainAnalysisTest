@@ -435,6 +435,16 @@ def get_archive_complaints():
         ])
     df = df[df["Status"].isin(["SOLVED", "SPAM"])]
     return jsonify(df.to_dict(orient="records"))
+
+#-------------------------Home Screen Announcement Backend-------------------------
+
+@app.route('/api/announcements', methods=['GET'])
+def get_announcements():
+    try:
+        df = pd.read_csv("CSVFile/Announcements.csv", encoding='cp1252').fillna('')
+        return jsonify(df.to_dict(orient='records'))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
     
 #-------------------------END POINT-------------------------
 

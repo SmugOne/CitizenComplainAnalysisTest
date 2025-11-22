@@ -316,6 +316,9 @@ export default function ComplaintListScreen({ navigation }) {
         </View>
 
         {/* Table */}
+        {viewMode === "Active" ? (
+        <Text style={{ fontWeight: "bold", marginBottom: 6, alignContent: "center", }}>This list is prioritized based on emotional urgency</Text>
+        ) : null}
         <ScrollView style={{ maxHeight: 400 }}>
           <View style={styles.tableContainer}>
             <View style={styles.tableHeader}>

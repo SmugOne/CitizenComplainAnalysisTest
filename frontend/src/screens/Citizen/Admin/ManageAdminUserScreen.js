@@ -45,6 +45,10 @@ export default function ManageAdminUserScreen({ navigation }) {
   const [creatingAnn, setCreatingAnn] = useState(false);
   const [selectedSpaces, setSelectedSpaces] = useState({ space: 1 });
 
+  // Validation modal state
+  const [validationModalVisible, setValidationModalVisible] = useState(false);
+  const [validationMessage, setValidationMessage] = useState("");
+
   useEffect(() => {
     fetchAdmins();
     fetchAnnouncements();
@@ -114,10 +118,11 @@ export default function ManageAdminUserScreen({ navigation }) {
     }
   }
 
-  // Announcement Edit helpers
+  //Announcement Edit 
   async function saveEdit() {
-    if (!editingAnn.title.trim()) {
-      Alert.alert("Validation", "Title is required.");
+    if (!editingAnn.title.trim() || !editingAnn.body.trim()) {
+      setValidationMessage("The title or the body of the announcement is missing!");
+      setValidationModalVisible(true);
       return;
     }
 
@@ -139,39 +144,12 @@ export default function ManageAdminUserScreen({ navigation }) {
 
       await fetchAnnouncements();
 
-      // Show modal instead of Alert
       setModalVisible(true);
-
     } catch (e) {
       Alert.alert("Error", e.message);
     }
   }
 
-  <Modal
-    transparent={true}
-    visible={modalVisible}
-    animationType="fade"
-    onRequestClose={() => setModalVisible(false)}
-  >
-    <View style={{
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0,0,0,0.3)',
-    }}>
-      <View style={{ backgroundColor: '#fff', padding: 24, borderRadius: 12, alignItems: 'center' }}>
-        <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 12 }}>
-          Announcements successfully updated!
-        </Text>
-        <TouchableOpacity 
-          onPress={() => setModalVisible(false)} 
-          style={{ backgroundColor: '#197278', padding: 8, borderRadius: 6 }}
-        >
-          <Text style={{ color: '#fff' }}>OK</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </Modal>
 
   return (
     <LayoutAdmin navigation={navigation}>
@@ -203,7 +181,34 @@ export default function ManageAdminUserScreen({ navigation }) {
                 </View>
               ))
             )}
-          </View> 
+          </View>
+
+          {/* Validation Modal */}
+          <Modal
+            transparent={true}
+            visible={validationModalVisible}
+            animationType="fade"
+            onRequestClose={() => setValidationModalVisible(false)}
+          >
+            <View style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: 'rgba(0,0,0,0.3)',
+            }}>
+              <View style={{ backgroundColor: '#fff', padding: 24, borderRadius: 12, alignItems: 'center', width: '80%' }}>
+                <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 12 }}>
+                  {validationMessage}
+                </Text>
+                <TouchableOpacity 
+                  onPress={() => setValidationModalVisible(false)} 
+                  style={{ backgroundColor: '#197278', padding: 8, borderRadius: 6 }}
+                >
+                  <Text style={{ color: '#fff' }}>OK</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
 
           {/* RIGHT: ANNOUNCEMENTS */}
           <View style={[styles.col, { flex: 2, marginLeft: isNarrow ? 0 : 18, marginTop: isNarrow ? 26 : 0 }]}>
@@ -256,7 +261,7 @@ export default function ManageAdminUserScreen({ navigation }) {
                   style={[styles.actionBtn, styles.cancelBtn]}
                   onPress={() => setEditingAnn({ title: "", body: "" })}
                 >
-                  <Text style={[styles.actionBtnText, { color: "#11493f" }]}>Cancel</Text>
+                  <Text style={[styles.actionBtnText, { color: "#11493f" }]}>Clear</Text>
                 </TouchableOpacity>
               </View>
             </View>

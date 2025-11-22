@@ -137,12 +137,41 @@ export default function ManageAdminUserScreen({ navigation }) {
         throw new Error(errText || "Failed to update announcement.");
       }
 
-      fetchAnnouncements();
-      Alert.alert("Updated", "Announcement updated successfully!");
+      await fetchAnnouncements();
+
+      // Show modal instead of Alert
+      setModalVisible(true);
+
     } catch (e) {
       Alert.alert("Error", e.message);
     }
   }
+
+  <Modal
+    transparent={true}
+    visible={modalVisible}
+    animationType="fade"
+    onRequestClose={() => setModalVisible(false)}
+  >
+    <View style={{
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.3)',
+    }}>
+      <View style={{ backgroundColor: '#fff', padding: 24, borderRadius: 12, alignItems: 'center' }}>
+        <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 12 }}>
+          Announcements successfully updated!
+        </Text>
+        <TouchableOpacity 
+          onPress={() => setModalVisible(false)} 
+          style={{ backgroundColor: '#197278', padding: 8, borderRadius: 6 }}
+        >
+          <Text style={{ color: '#fff' }}>OK</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </Modal>
 
   return (
     <LayoutAdmin navigation={navigation}>
@@ -201,6 +230,7 @@ export default function ManageAdminUserScreen({ navigation }) {
             </Picker>
 
             <View style={[styles.annCard, { marginTop: 14 }]}>
+              <Text style={{ fontWeight: "bold", marginBottom: 6 }}>Title</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Title"
@@ -208,6 +238,7 @@ export default function ManageAdminUserScreen({ navigation }) {
                 onChangeText={(t) => setEditingAnn(e => ({ ...e, title: t }))}
               />
 
+              <Text style={{ fontWeight: "bold", marginBottom: 6 }}>Body</Text>
               <TextInput
                 style={[styles.input, { minHeight: 60 }]}
                 placeholder="Body"

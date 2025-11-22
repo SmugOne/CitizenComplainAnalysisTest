@@ -436,13 +436,14 @@ def get_archive_complaints():
     df = df[df["Status"].isin(["SOLVED", "SPAM"])]
     return jsonify(df.to_dict(orient="records"))
 
-#-------------------------Home Screen Announcement Backend-------------------------
+#-------------------------Announcement Edit Backend-------------------------
 
+#Shows announcements
 @app.route('/api/announcements', methods=['GET'])
 def get_announcements():
     ar = pd.read_csv("CSVFile/Announcements.csv", encoding='cp1252')
 
-    # Clean and convert types
+    #Clean and convert types
     ar['Space'] = pd.to_numeric(ar['Space'], errors='coerce').fillna(0).astype(int)
 
     ar = ar.sort_values(by='Space')
@@ -456,36 +457,32 @@ def get_announcements():
         for _, row in ar.iterrows()
     ])
 
-
+#Updates announcements
 @app.route('/api/announcements', methods=['POST'])
 def update_announcement():
     data = request.get_json()
-    space = int(data.get("Space"))  # convert to int
+    space = int(data.get("Space"))  
     title = data.get("Title") or ""
     body = data.get("Body") or ""
 
-    # Load CSV
     ar = pd.read_csv("CSVFile/Announcements.csv", encoding='cp1252')
 
-    # Normalize Space column to int
     ar['Space'] = pd.to_numeric(ar['Space'], errors='coerce').fillna(0).astype(int)
 
     if space in ar['Space'].values:
-        # Update existing row
         ar.loc[ar['Space'] == space, ['Title', 'Body']] = [title, body]
     else:
-        # Add new row if Space not found
         new_row = {"Space": space, "Title": title, "Body": body}
         ar = pd.concat([ar, pd.DataFrame([new_row])], ignore_index=True)
 
-    # Sort by Space
     ar = ar.sort_values(by='Space').reset_index(drop=True)
-
-    # Save CSV
     ar.to_csv("CSVFile/Announcements.csv", index=False, encoding='cp1252')
 
     return jsonify({"message": "Announcement updated"}), 200
-    
+
+#-------------------------NEW ACCOUNT BACKEND-------------------------
+
+
 #-------------------------END POINT-------------------------
 
 #Back and Front end connection:

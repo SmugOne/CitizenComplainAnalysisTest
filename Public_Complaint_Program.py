@@ -438,42 +438,50 @@ def get_archive_complaints():
 
 #-------------------------Home Screen Announcement Backend-------------------------
 
-@app.route('/api/announcements/update', methods=['POST'])
-def update_announcements():
-    data = request.get_json()
-
+@app.route('/api/announcements', methods=['GET'])
+def get_announcements():
     df_path = "CSVFile/Announcements.csv"
-
-    # Load or create CSV
-    if not os.path.exists(df_path):
-        df = pd.DataFrame(columns=["Title", "Body", "Space"])
-    else:
+    if os.path.exists(df_path):
         df = pd.read_csv(df_path, encoding='cp1252').fillna('')
-
-    space_value = str(data.get("Space"))  # "1", "2", or "3"
-
-    # Check if announcement for this space already exists
-    exists = df["Space"] == space_value
-
-    if exists.any():
-        # Update existing announcement
-        df.loc[exists, ["Title", "Body"]] = [
-            data.get("Title", ""),
-            data.get("Body", "")
-        ]
     else:
-        # Create new announcement for this space
-        new_row = {
-            "Title": data.get("Title", ""),
-            "Body": data.get("Body", ""),
-            "Space": space_value
-        }
-        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        df = pd.DataFrame(columns=["Title", "Body", "Space"])
 
-    # Save file
-    df.to_csv(df_path, index=False, encoding='cp1252')
+    # Optional: sort by Space
+    df = df.sort_values(by='Space')
 
-    return jsonify({"success": True})
+    return jsonify(df.to_dict(orient='records'))
+
+@app.route('/api/announcements', methods=['POST'])
+def update_announcements():
+    try:
+        data = request.json
+        space = str(data.get("Space"))  # Make sure it's string
+
+        # Load existing file
+        df = pd.read_csv('announcement.csv')
+
+        # If Space already exists → update the row
+        if space in df['Space'].astype(str).values:
+            df.loc[df['Space'].astype(str) == space, ['Title', 'Body']] = [
+                data.get("Title"),
+                data.get("Body")
+            ]
+        else:
+            # Otherwise, append as new
+            new_row = pd.DataFrame([{
+                "Space": space,
+                "Title": data.get("Title"),
+                "Body": data.get("Body"),
+            }])
+            df = pd.concat([df, new_row], ignore_index=True)
+
+        # Save back
+        df.to_csv('announcement.csv', index=False)
+
+        return jsonify({"message": "Announcement saved successfully."})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
     
 #-------------------------END POINT-------------------------
 

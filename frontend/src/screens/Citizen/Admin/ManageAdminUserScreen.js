@@ -68,7 +68,8 @@ export default function ManageAdminUserScreen({ navigation }) {
       const res = await fetch(`${API_URL}/api/announcements`);
       const data = await res.json();
       setAnnouncements(Array.isArray(data) ? data : []);
-    } catch {
+    } catch (err) {
+      console.error(err);
       setAnnouncements([]);
       Alert.alert("Error", "Failed to load announcements.");
     } finally {
@@ -111,18 +112,30 @@ export default function ManageAdminUserScreen({ navigation }) {
     setEditingAnn({});
   }
   async function saveEdit() {
+    if (!editingAnn.title.trim()) {
+      Alert.alert("Validation", "Title is required.");
+      return;
+    }
+
     try {
-      const res = await fetch(`${API_URL}/api/announcements/${editingAnn.id}`, {
-        method: "PUT",
+      const res = await fetch(`${API_URL}/api/announcements`, {
+        method: "POST", // Use POST, not PUT
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: editingAnn.title, body: editingAnn.body }),
+        body: JSON.stringify({
+          Space: selectedSpaces.space, // "1", "2", "3"
+          Title: editingAnn.title,
+          Body: editingAnn.body,
+        }),
       });
+
       if (!res.ok) {
-        throw new Error("Failed to update announcement.");
+        const errText = await res.text();
+        throw new Error(errText || "Failed to update announcement.");
       }
+
       stopEdit();
       fetchAnnouncements();
-      Alert.alert("Updated", "Announcement updated!");
+      Alert.alert("Updated", "Announcement updated successfully!");
     } catch (e) {
       Alert.alert("Error", e.message);
     }
@@ -149,24 +162,6 @@ export default function ManageAdminUserScreen({ navigation }) {
       setCreatingAnn(false);
     }
   }
-
-  @app.route('/api/announcements/<space>', methods=['PUT'])
-  def update_announcement(space):
-      try:
-          df = pd.read_csv("CSVFile/Announcements.csv", encoding="cp1252")
-
-          if space not in df["space"].astype(str).values:
-              return jsonify({"error": "Announcement space not found"}), 404
-
-          data = request.get_json()
-          df.loc[df["space"].astype(str) == space, "title"] = data.get("title", "")
-          df.loc[df["space"].astype(str) == space, "body"] = data.get("body", "")
-
-          df.to_csv("CSVFile/Announcements.csv", index=False, encoding="cp1252")
-
-          return jsonify({"message": "Announcement updated"})
-      except Exception as e:
-          return jsonify({"error": str(e)}), 500
 
   return (
     <LayoutAdmin navigation={navigation}>

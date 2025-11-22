@@ -440,48 +440,51 @@ def get_archive_complaints():
 
 @app.route('/api/announcements', methods=['GET'])
 def get_announcements():
-    df_path = "CSVFile/Announcements.csv"
-    if os.path.exists(df_path):
-        df = pd.read_csv(df_path, encoding='cp1252').fillna('')
-    else:
-        df = pd.DataFrame(columns=["Title", "Body", "Space"])
+    ar = pd.read_csv("CSVFile/Announcements.csv", encoding='cp1252')
 
-    # Optional: sort by Space
-    df = df.sort_values(by='Space')
+    # Clean and convert types
+    ar['Space'] = pd.to_numeric(ar['Space'], errors='coerce').fillna(0).astype(int)
 
-    return jsonify(df.to_dict(orient='records'))
+    ar = ar.sort_values(by='Space')
+
+    return jsonify([
+        {
+            "space": int(row["Space"]),
+            "title": row["Title"],
+            "body": row["Body"],
+        }
+        for _, row in ar.iterrows()
+    ])
+
 
 @app.route('/api/announcements', methods=['POST'])
-def update_announcements():
-    try:
-        data = request.json
-        space = str(data.get("Space"))  # Make sure it's string
+def update_announcement():
+    data = request.get_json()
+    space = int(data.get("Space"))  # convert to int
+    title = data.get("Title") or ""
+    body = data.get("Body") or ""
 
-        # Load existing file
-        df = pd.read_csv('announcement.csv')
+    # Load CSV
+    ar = pd.read_csv("CSVFile/Announcements.csv", encoding='cp1252')
 
-        # If Space already exists → update the row
-        if space in df['Space'].astype(str).values:
-            df.loc[df['Space'].astype(str) == space, ['Title', 'Body']] = [
-                data.get("Title"),
-                data.get("Body")
-            ]
-        else:
-            # Otherwise, append as new
-            new_row = pd.DataFrame([{
-                "Space": space,
-                "Title": data.get("Title"),
-                "Body": data.get("Body"),
-            }])
-            df = pd.concat([df, new_row], ignore_index=True)
+    # Normalize Space column to int
+    ar['Space'] = pd.to_numeric(ar['Space'], errors='coerce').fillna(0).astype(int)
 
-        # Save back
-        df.to_csv('announcement.csv', index=False)
+    if space in ar['Space'].values:
+        # Update existing row
+        ar.loc[ar['Space'] == space, ['Title', 'Body']] = [title, body]
+    else:
+        # Add new row if Space not found
+        new_row = {"Space": space, "Title": title, "Body": body}
+        ar = pd.concat([ar, pd.DataFrame([new_row])], ignore_index=True)
 
-        return jsonify({"message": "Announcement saved successfully."})
+    # Sort by Space
+    ar = ar.sort_values(by='Space').reset_index(drop=True)
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    # Save CSV
+    ar.to_csv("CSVFile/Announcements.csv", index=False, encoding='cp1252')
+
+    return jsonify({"message": "Announcement updated"}), 200
     
 #-------------------------END POINT-------------------------
 

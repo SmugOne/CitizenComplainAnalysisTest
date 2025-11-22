@@ -480,9 +480,77 @@ def update_announcement():
 
     return jsonify({"message": "Announcement updated"}), 200
 
+#-------------------------ACCOUNT LOGIN BACKEND-------------------------
+Accounts = "CSVFile/Accounts.csv"
+#Optional for the future: hashlib for password hashing
+@app.route('/api/admin/login', methods=['POST'])
+def admin_login():
+    data = request.get_json()
+    username = str(data.get("username", "")).strip()
+    password = str(data.get("password", "")).strip()
+
+    if not username or not password:
+        return jsonify({"success": False, "message": "Username and password required"}), 400
+
+    if not os.path.exists(Accounts):
+        return jsonify({"success": False, "message": "Accounts database not found"}), 500
+
+    accounts_df = pd.read_csv(Accounts, encoding='cp1252').fillna('')
+
+    matched = accounts_df[
+        (accounts_df['Username'].astype(str).str.strip() == username) &
+        (accounts_df['Password'].astype(str).str.strip() == password)  
+    ]
+
+    if not matched.empty:
+        return jsonify({"success": True, "message": "Login successful"})
+    else:
+        return jsonify({"success": False, "message": "Incorrect username or password"}), 401
+    
 #-------------------------NEW ACCOUNT BACKEND-------------------------
 
+Accounts = "CSVFile/Accounts.csv"
 
+@app.route('/api/admin/create_account', methods=['POST'])
+def get_admins():
+    #Return all admin users
+    if os.path.exists(Accounts):
+        df = pd.read_csv(Accounts, encoding='cp1252').fillna('')
+    else:
+        df = pd.DataFrame(columns=["Username", "Password", "Full Name", "Email",])
+
+@app.route('/api/admins', methods=['POST'])
+def create_admin():
+    data = request.get_json()
+    username = str(data.get("username", "")).strip()
+    password = str(data.get("password", "")).strip()
+    name = str(data.get("name", "")).strip()
+    email = str(data.get("email", "")).strip()
+
+    # Validation
+    if not username or not password or not name:
+        return jsonify({"success": False, "message": "Username, password, and name are required"}), 400
+
+    #Load or create Accounts.csv
+    if os.path.exists(Accounts):
+        df = pd.read_csv(Accounts, encoding='cp1252').fillna('')
+    else:
+        df = pd.DataFrame(columns=["Username", "Password", "Full Name", "Email",])
+
+    #Check for duplicate username
+    if username in df['Username'].astype(str).str.strip().values:
+        return jsonify({"success": False, "message": "Username already exists"}), 400
+
+    #Add new admin
+    new_row = {
+        "Username": username,
+        "Password": password,  
+        "Email": email,
+    }
+    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+    df.to_csv(Accounts, index=False, encoding='cp1252')
+
+    return jsonify({"success": True, "message": "Admin created successfully"})
 #-------------------------END POINT-------------------------
 
 #Back and Front end connection:

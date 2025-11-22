@@ -56,6 +56,7 @@ export default function AdminLoginScreen({ navigation }) {
       setError("Incorrect username or password.");
     }
   };
+
   return (
     <Layout navigation={navigation}>
       <ModalAlert visible={modal.show} message={modal.message} onClose={closeModal} />
@@ -68,15 +69,24 @@ export default function AdminLoginScreen({ navigation }) {
           value={username}
           onChangeText={setUsername}
           autoCapitalize="none"
+          onSubmitEditing={() => {
+            // Focus on password field when Enter is pressed
+            this.passwordInput?.focus();
+          }}
+          returnKeyType="next"
+          blurOnSubmit={false}
         />
         <View style={styles.pwRow}>
           <TextInput
+            ref={(ref) => { this.passwordInput = ref; }}
             style={[styles.input, { flex: 1, marginBottom: 0 }]}
             placeholder="Password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPW}
             autoCapitalize="none"
+            onSubmitEditing={handleLogin}
+            returnKeyType="go"
           />
           <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPW((s) => !s)}>
             <MaterialIcons name={showPW ? "visibility" : "visibility-off"} size={24} color="#197278" />
@@ -93,6 +103,7 @@ export default function AdminLoginScreen({ navigation }) {
     </Layout>
   );
 }
+
 const styles = StyleSheet.create({
   card: { backgroundColor: "#fff", borderRadius: 12, padding: 24, alignItems: "center" },
   title: { fontSize: 26, fontWeight: "800", color: "#11493f", marginBottom: 10 },

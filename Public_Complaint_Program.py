@@ -257,35 +257,50 @@ def get_complaints():
 @app.route('/api/admin/stats', methods=['GET'])
 def get_admin_stats():
     try:
-        df = pd.read_csv('CSVFile/ArrangedData.csv')
+        df = pd.read_csv('CSVFile/ArrangedData.csv', encoding='cp1252')
     except FileNotFoundError:
         df = Main()
-    category_labels = [
-        "All",
-        "DPWH",
-        "DOH",
-        "DENR",
-        "OMBUDSMAN",
-        "LTO",
-        "MMDA",
-        "PNP",
-        "DEPED",
-        "BFP",
-        "DOTR",
-        "DITC",
+    
+    # Normalize column names
+    df.columns = df.columns.str.strip()
+    
+    # Fill NaN values
+    df = df.fillna('')
+    
+    # Define expected categories and statuses
+    valid_agencies = [
+        "DPWH", "DOH", "DENR", "OMBUDSMAN",
+        "LTO", "MMDA", "PNP", "DEPED",
+        "BFP", "DOTR", "DITC", "NONE"
     ]
+    
+    valid_statuses = ["SOLVED", "SPAM", "UNDER REVIEW", "UNSOLVED"]
+    
+    # Get the category column (Predicted Agency or Category)
     category_col = "Predicted Agency" if "Predicted Agency" in df.columns else "Category"
     status_col = "Status" if "Status" in df.columns else None
-
-    #Count categories
-    category_counts = Counter(df[category_col].dropna()) if category_col in df else Counter()
-
-    #Count statuses exactly from the CSV (case-insensitive optional)
-    status_counts = Counter(df[status_col].dropna()) if status_col and status_col in df else Counter()
-
+    
+    # Count categories with normalization
+    category_counts = {}
+    if category_col in df.columns:
+        # Normalize to uppercase and strip whitespace
+        normalized_categories = df[category_col].astype(str).str.strip().str.upper()
+        for agency in valid_agencies:
+            count = (normalized_categories == agency).sum()
+            category_counts[agency] = int(count)
+    
+    # Count statuses with normalization
+    status_counts = {}
+    if status_col and status_col in df.columns:
+        # Normalize to uppercase and strip whitespace
+        normalized_statuses = df[status_col].astype(str).str.strip().str.upper()
+        for status in valid_statuses:
+            count = (normalized_statuses == status).sum()
+            status_counts[status] = int(count)
+    
     return jsonify({
-        "categoryCounts": dict(category_counts),
-        "statusCounts": dict(status_counts)
+        "categoryCounts": category_counts,
+        "statusCounts": status_counts
     })
 
 #Update ComplaintList and ArrangedComplaint for Admin Dashboard:

@@ -11,7 +11,7 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remark
 10,Anonymous,There's corruption going on at the school branch with a principal,,UNSOLVED,,,bK2sZ,
 11,Mark Mike,There's lack of water in my area,"{'accuracy': 100, 'longitude': 120.9788143, 'altitude': 101.80000305175781, 'heading': 0, 'latitude': 14.3756576, 'altitudeAccuracy': 100, 'speed': 0}",UNSOLVED,,,xD4tN,
 12,Anonymous,Slow wifi,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}",UNDER REVIEW,DITC,,C1yLp,Under investigation with the related company
-13,Anonymous,My area lacked water supplies! ,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}",UNSOLVED,,,gR8eB,
+13,Anonymous,My area lacked water supplies! ,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}",UNDER REVIEW,DENR,,gR8eB,Under Review
 14,Anonymous,Water supplies are low here! Where is government intervention?? ,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}",SOLVED,DOH,,T2qVf,done
 15,Ace,Too many corrupt officers in our school,"{'accuracy': 20, 'longitude': 120.9268819, 'altitude': 60.89999771118164, 'heading': 0, 'latitude': 14.4055953, 'altitudeAccuracy': 2.5460093021392822, 'speed': 0}",UNSOLVED,,,uH7kJ,
 16,Anonymous,education quality is low,"{'accuracy': 17.464000701904297, 'longitude': 120.9268788, 'altitude': 60.89999771118164, 'heading': 0, 'latitude': 14.4055957, 'altitudeAccuracy': 1.9850099086761475, 'speed': 0}",UNDER REVIEW,DEPED,,wZ5cR,Reviewing classes
@@ -49,7 +49,7 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remark
 48,Anonymous,Theres flooding in my area,,UNSOLVED,,,vL3gX,
 49,Anonymous,Theres brownout in my place,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,R9bTp,
 50,Anonymous,Malubak ang kalsada,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,nZ5sE,
-51,Anonymous,Makalat yung lugar,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,H2mQd,
+51,Anonymous,Makalat yung lugar,"Lat: 14.41792, Long: 120.979456",UNDER REVIEW,DENR,,H2mQd,Under review
 52,Anonymous,May baha dito sa kalsada. Maputik ang lugar,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,yKJc5,
 53,Anonymous,Kulang ang tubig at mahina,"Lat: 14.41792, Long: 120.979456",UNDER REVIEW,DEPED,,kyxGH,We sent inspectors
 54,Anonymous,May kurakot sa police station,"Lat: 14.41792, Long: 120.979456",UNSOLVED,,,Z4Qrl,

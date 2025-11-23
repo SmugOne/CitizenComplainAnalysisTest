@@ -7,28 +7,45 @@ const HARDCODED_USER = "admin";
 const HARDCODED_PASS = "password123";
 
 // MODAL ALERT
-function ModalAlert({ visible, message }) {
-  if (!visible) return null;
-
+function ModalAlert({ visible, message, onClose }) {
   return (
-    <View style={{
-      position: "absolute",
-      top: 0, left: 0, right: 0, bottom: 0,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0,0,0,0.3)',
-      zIndex: 999
-    }}>
+    <Modal
+      transparent={true}
+      visible={visible}
+      animationType="fade"
+      onRequestClose={onClose}
+    >
       <View style={{
-        backgroundColor: '#fff',
-        padding: 26,
-        borderRadius: 12,
+        flex: 1,
+        justifyContent: 'center',
         alignItems: 'center',
-        maxWidth: 320
+        backgroundColor: 'rgba(0,0,0,0.4)',
       }}>
-        <Text style={{ fontSize: 16, color: "#11493f", textAlign: "center" }}>{message}</Text>
+        <View style={{
+          backgroundColor: '#fff',
+          padding: 28,
+          borderRadius: 12,
+          alignItems: 'center',
+          maxWidth: 320,
+          minWidth: 280,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 4,
+          elevation: 5,
+        }}>
+          <MaterialIcons name="check-circle" size={48} color="#11493f" style={{ marginBottom: 12 }} />
+          <Text style={{ 
+            fontSize: 16, 
+            color: "#11493f", 
+            textAlign: "center",
+            fontWeight: "600"
+          }}>
+            {message}
+          </Text>
+        </View>
       </View>
-    </View>
+    </Modal>
   );
 }
 
@@ -51,7 +68,7 @@ export default function AdminLoginScreen({ navigation }) {
       setTimeout(() => {
         closeModal();
         navigation.navigate("AdminDashboard");
-      }, 1000);
+      }, 1500);
     } else {
       setError("Incorrect username or password.");
     }

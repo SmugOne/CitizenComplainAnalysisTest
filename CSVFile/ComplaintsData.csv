@@ -6,7 +6,7 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remark
 5,Sterner Marina,May nagkakalat,,UNSOLVED,,,J8qR1,
 6,Mikko Samis,Maraming naipon na basura dito,,UNSOLVED,,,pL6dM,
 7,Daniel Maki,Mabagal traffic dito,,UNSOLVED,,,Yv3Kc,
-8,Powell Corana,Grabe! Ang bagal dito ng usad ng trapiko dito sa amin!,,UNSOLVED,,,fW9hE,
+8,Powell Corana,Grabe! Ang bagal dito ng usad ng trapiko dito sa amin!,,UNDER REVIEW,DPWH,,fW9hE,waiting
 9,Anonymous,Theres garbage on the street,,UNSOLVED,,,N5jUa,
 10,Anonymous,There's corruption going on at the school branch with a principal,,UNSOLVED,,,bK2sZ,
 11,Mark Mike,There's lack of water in my area,"{'accuracy': 100, 'longitude': 120.9788143, 'altitude': 101.80000305175781, 'heading': 0, 'latitude': 14.3756576, 'altitudeAccuracy': 100, 'speed': 0}",UNSOLVED,,,xD4tN,
@@ -35,7 +35,7 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remark
 34,Anonymous,I saw trash in the street!,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,,hS9uR,
 35,Anonymous,I saw trash in the street!,"Lat: 14.4048128, Long: 120.979456",SOLVED,DENR,,B2gLz,Sent inspectors and cleaners to fix the problem
 36,Anonymous,I think there's corruption within the police,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,,eY6vD,
-37,Anonymous,I think the bridge is about to break!,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,,U3nPa,
+37,Anonymous,I think the bridge is about to break!,"Lat: 14.4048128, Long: 120.979456",SOLVED,DPWH,,U3nPa,done
 38,Testerman,I think may nangaabuso ng flood control projects,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,,tQ8rJ,
 39,Anonymous,My neighbor is noisy!,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,,L5yXc,
 40,Anonymous,Theres flood,"Lat: 14.3415351, Long: 120.9560698",UNSOLVED,,,iK7dW,

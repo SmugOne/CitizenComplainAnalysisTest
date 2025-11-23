@@ -16,9 +16,10 @@ import { MaterialIcons } from "@expo/vector-icons";
 const BASE_SIDEBAR_WIDTH = 240;
 const BREAKPOINT = 900;
 const HEADER_HEIGHT = 62;
+const FOOTER_HEIGHT = 50;
 
-export default function LayoutAdmin({ children, navigation }) {
-  const { width: windowWidth } = useWindowDimensions();
+export default function LayoutAdmin({ children, navigation, noScroll = false }) {
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
   const computedSidebarWidth =
     windowWidth > BREAKPOINT ? BASE_SIDEBAR_WIDTH : Math.max(160, Math.floor(windowWidth * 0.68));
@@ -30,17 +31,16 @@ export default function LayoutAdmin({ children, navigation }) {
   useEffect(() => {
     const wide = windowWidth > BREAKPOINT;
     setIsWide(wide);
-    setSidebarOpen(wide ? true : false);
+    setSidebarOpen(wide);
   }, [windowWidth]);
 
   useEffect(() => {
-    slide.setValue(sidebarOpen ? 0 : -computedSidebarWidth);
     Animated.timing(slide, {
       toValue: sidebarOpen ? 0 : -computedSidebarWidth,
       duration: 220,
       useNativeDriver: true,
     }).start();
-  }, [sidebarOpen, computedSidebarWidth, slide]);
+  }, [sidebarOpen, computedSidebarWidth]);
 
   const toggleSidebar = () => setSidebarOpen((s) => !s);
 
@@ -79,7 +79,10 @@ export default function LayoutAdmin({ children, navigation }) {
               },
             ]}
           >
-            <ScrollView contentContainerStyle={styles.sidebarContent}>
+            <ScrollView 
+              contentContainerStyle={styles.sidebarContent}
+              showsVerticalScrollIndicator={false}
+            >
               <TouchableOpacity onPress={() => nav("AdminDashboard")} style={styles.sidebarLink}>
                 <Text style={styles.sidebarLinkText}>Dashboard</Text>
               </TouchableOpacity>
@@ -99,20 +102,30 @@ export default function LayoutAdmin({ children, navigation }) {
           {/* Backdrop */}
           {!isWide && sidebarOpen && (
             <TouchableWithoutFeedback onPress={() => setSidebarOpen(false)}>
-              <View style={[styles.backdrop, { top: HEADER_HEIGHT }]} />
+              <View style={styles.backdrop} />
             </TouchableWithoutFeedback>
           )}
 
-          {/* Main */}
+          {/* Main Content Area */}
           <View style={styles.mainArea}>
-            <ScrollView
-              style={{ flex: 1 }}
-              contentContainerStyle={styles.contentContainer}
-              showsVerticalScrollIndicator={false}
-            >
-              <View style={styles.centeredContent}>{children}</View>
-            </ScrollView>
+            {noScroll ? (
+              // For screens that manage their own scrolling (like Statistics with charts)
+              <View style={styles.noScrollWrapper}>
+                {children}
+              </View>
+            ) : (
+              // Default: Layout handles scrolling for most screens
+              <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={true}
+                bounces={true}
+              >
+                {children}
+              </ScrollView>
+            )}
 
+            {/* Footer */}
             <View style={styles.footer}>
               <Text style={styles.footerText}>
                 Admin Panel © {new Date().getFullYear()} Citizen Complaint Portal
@@ -128,10 +141,13 @@ export default function LayoutAdmin({ children, navigation }) {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
+    backgroundColor: "#f7f1de",
     ...(Platform.OS === "web" ? { minHeight: "100vh" } : {}),
+  },
+  container: {
+    flex: 1,
     backgroundColor: "#f7f1de",
   },
-  container: { flex: 1, backgroundColor: "#f7f1de" },
   header: {
     height: HEADER_HEIGHT,
     backgroundColor: "#11493f",
@@ -139,6 +155,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 14,
     zIndex: 60,
+    ...Platform.select({
+      web: {
+        position: 'sticky',
+        top: 0,
+      },
+    }),
   },
   hamburgerTouchable: {
     width: 44,
@@ -146,7 +168,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
-    zIndex: 70,
   },
   title: {
     flex: 1,
@@ -155,7 +176,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 18,
   },
-  bodyWrap: { flex: 1, flexDirection: "row", position: "relative" },
+  bodyWrap: {
+    flex: 1,
+    flexDirection: "row",
+    position: "relative",
+    overflow: "hidden",
+  },
   sidebar: {
     backgroundColor: "#11493f",
     zIndex: 50,
@@ -167,11 +193,28 @@ const styles = StyleSheet.create({
     minWidth: 120,
     maxWidth: 420,
   },
-  sidebarInline: { position: "relative" },
-  sidebarOverlay: { position: "absolute", left: 0, top: 0, bottom: 0 },
-  sidebarContent: { paddingTop: 20, paddingHorizontal: 12, paddingBottom: 30 },
-  sidebarLink: { paddingVertical: 16, paddingHorizontal: 8 },
-  sidebarLinkText: { color: "#fff", fontSize: 16 },
+  sidebarInline: {
+    position: "relative",
+  },
+  sidebarOverlay: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+  },
+  sidebarContent: {
+    paddingTop: 20,
+    paddingHorizontal: 12,
+    paddingBottom: 30,
+  },
+  sidebarLink: {
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+  },
+  sidebarLinkText: {
+    color: "#fff",
+    fontSize: 16,
+  },
   divider: {
     height: 1,
     backgroundColor: "#ffd66b44",
@@ -181,33 +224,45 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
+    top: 0,
     bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.25)",
+    backgroundColor: "rgba(0,0,0,0.4)",
     zIndex: 40,
   },
   mainArea: {
     flex: 1,
     zIndex: 10,
-    flexDirection: "column",
-    minHeight: 0,
-    justifyContent: "flex-start",
+    position: "relative",
   },
-  contentContainer: { flexGrow: 1, paddingTop: 12, paddingBottom: 12, minHeight: 0 },
-  centeredContent: {
-    width: "100%",
-    maxWidth: 1200,
-    alignSelf: "center",
-    paddingHorizontal: 20,
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 15,
+    paddingTop: 20,
+    paddingBottom: FOOTER_HEIGHT + 30,
+  },
+  noScrollWrapper: {
+    flex: 1,
   },
   footer: {
-    marginTop: "auto",
     backgroundColor: "#fde2a6",
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 12,
-    borderRadius: 8,
     alignItems: "center",
-    alignSelf: "stretch",
-    marginBottom: Platform.OS === "web" ? 20 : 0,
+    minHeight: FOOTER_HEIGHT,
+    ...Platform.select({
+      web: {
+        position: 'sticky',
+        bottom: 0,
+      },
+    }),
   },
-  footerText: { color: "#11493f", fontStyle: "italic", textAlign: "center" },
+  footerText: {
+    color: "#11493f",
+    fontStyle: "italic",
+    textAlign: "center",
+    fontSize: 13,
+  },
 });

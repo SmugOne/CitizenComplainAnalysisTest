@@ -86,16 +86,25 @@ export default function AdminLoginScreen({ navigation }) {
           value={username}
           onChangeText={setUsername}
           autoCapitalize="none"
+          onSubmitEditing={() => {
+            // Focus on password field when Enter is pressed
+            this.passwordInput?.focus();
+          }}
+          returnKeyType="next"
+          blurOnSubmit={false}
         />
 
         <View style={styles.pwRow}>
           <TextInput
+            ref={(ref) => { this.passwordInput = ref; }}
             style={[styles.input, { flex: 1, marginBottom: 0 }]}
             placeholder="Password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPW}
             autoCapitalize="none"
+            onSubmitEditing={handleLogin}
+            returnKeyType="go"
           />
           <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPW((s) => !s)}>
             <MaterialIcons name={showPW ? "visibility" : "visibility-off"} size={24} color="#197278" />

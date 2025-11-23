@@ -5,6 +5,8 @@ import os
 import pandas as pd
 import joblib
 import uuid
+import gspread
+
 from oauth2client.service_account import ServiceAccountCredentials
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.feature_extraction.text import CountVectorizer
@@ -18,6 +20,28 @@ from collections import Counter
 #To do:
 # - Set dataset to Google Sheets. Get API.
 
+#-------------------------GOOGLE SHEETS API-------------------------
+# Define scope
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+
+# Load service account credentials
+creds = ServiceAccountCredentials.from_json_keyfile_name("keys/service_account.json", scope)
+client = gspread.authorize(creds)
+
+# Open your spreadsheet
+spreadsheet = client.open("PublicComplaintDatabase")
+
+# Access a sheet
+complaints_sheet = spreadsheet.worksheet("ComplaintsData")
+
+# Read all rows
+all_data = complaints_sheet.get_all_records()
+print(all_data)
+
+# Example: append a new row
+new_row = ["ID", "Name", "Complaint", "Location", "Status"]
+complaints_sheet.append_row(new_row)
+
 #Connection:
 load_dotenv()
 app = Flask(__name__)
@@ -25,6 +49,8 @@ CORS(app)  # Enable CORS for all routes
 
 # Ensure CSVFile directory exists
 os.makedirs("CSVFile", exist_ok=True)
+
+data = pd.DataFrame(complaints_sheet.get_all_records())
 
 #BACKEND DEVELOPMENT ----------------------------------
 

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Modal } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import Layout from "../../../components/Layout";
 import { API_URL } from "@env";
@@ -57,18 +57,36 @@ export default function AdminLoginScreen({ navigation }) {
   const showModal = (message) => setModal({ show: true, message });
   const closeModal = () => setModal({ show: false, message: "" });
 
-  const handleLogin = () => {
-    if (username === HARDCODED_USER && password === HARDCODED_PASS) {
-      showModal("Login successful!");
-      setUsername("");
-      setPassword("");
-      setError("");
-      setTimeout(() => {
-        closeModal();
-        navigation.navigate("AdminDashboard");
-      }, 1500);
-    } else {
-      setError("Incorrect username or password.");
+  const handleLogin = async () => {
+    if (!username || !password) {
+      setError("Please enter username and password.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        showModal("Login successful!");
+        setUsername("");
+        setPassword("");
+        setError("");
+        setTimeout(() => {
+          closeModal();
+          navigation.navigate("AdminDashboard");
+        }, 1500);
+      } else {
+        setError(result.message || "Login failed.");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("Cannot connect to server.");
     }
   };
 

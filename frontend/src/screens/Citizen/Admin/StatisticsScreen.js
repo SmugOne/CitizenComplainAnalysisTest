@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity } from "react-native";
 import { Svg, Path, Circle, G, Text as SvgText, Rect, Line } from "react-native-svg";
+import { MaterialIcons } from "@expo/vector-icons";
 import Layout from "../../../components/LayoutAdmin";
 import { Container, Row, Col, Card, useResponsive } from "../../../components/Bootstrap";
 import { API_URL } from "@env";
@@ -17,10 +18,12 @@ export default function StatisticsScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     statusData: [],
-    complaintsByStatus: [],
-    departmentData: []
+    departmentData: [],
+    allComplaints: []
   });
   const [error, setError] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -53,15 +56,13 @@ export default function StatisticsScreen({ navigation }) {
           value: data.categoryCounts?.[agency] || 0
         }));
 
-        const complaintsByStatus = STATUS_OPTIONS.map(status => ({
-          label: status,
-          value: data.statusCounts?.[status] || 0
-        }));
+        // Store all complaints data for filtering
+        const allComplaints = data.complaints || [];
 
         setStats({
           statusData: statusData.length > 0 ? statusData : [{ label: "No Data", value: 1, color: "#ddd" }],
-          complaintsByStatus,
-          departmentData
+          departmentData,
+          allComplaints
         });
         setLoading(false);
       } catch (err) {
@@ -72,6 +73,30 @@ export default function StatisticsScreen({ navigation }) {
     };
     fetchStats();
   }, []);
+
+  // Filter department data based on status filter
+  const getFilteredDepartmentData = () => {
+    if (statusFilter === "ALL") {
+      return stats.departmentData;
+    }
+    
+    // Filter complaints by status and recalculate department counts
+    const filteredComplaints = stats.allComplaints.filter(
+      complaint => complaint.status === statusFilter
+    );
+    
+    return AGENCY_OPTIONS.map(agency => ({
+      label: agency,
+      value: filteredComplaints.filter(c => c.category === agency).length
+    }));
+  };
+
+  const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
+
+  const selectFilter = (filter) => {
+    setStatusFilter(filter);
+    setDropdownOpen(false);
+  };
 
   if (loading) {
     return (
@@ -102,39 +127,73 @@ export default function StatisticsScreen({ navigation }) {
         
         {/* Responsive Grid Layout */}
         <Row gutter={20}>
-          {/* Pie Chart - Full width on mobile, 5/12 on desktop */}
+          {/* Pie Chart with Filter - Full width on mobile, 5/12 on desktop */}
           <Col xs={12} lg={5}>
             <Card style={styles.chartCard}>
-              <Text style={styles.chartTitle}>Status Distribution</Text>
+              <View style={styles.chartHeader}>
+                <Text style={styles.chartTitle}>Status Distribution</Text>
+                
+                {/* Filter Dropdown */}
+                <View style={styles.filterContainer}>
+                  <TouchableOpacity 
+                    style={styles.filterButton}
+                    onPress={toggleDropdown}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.filterButtonText}>
+                      {statusFilter === "ALL" ? "All Status" : statusFilter}
+                    </Text>
+                    <MaterialIcons 
+                      name={dropdownOpen ? "arrow-drop-up" : "arrow-drop-down"} 
+                      size={20} 
+                      color="#11493f" 
+                    />
+                  </TouchableOpacity>
+                  
+                  {dropdownOpen && (
+                    <View style={styles.dropdown}>
+                      <TouchableOpacity 
+                        style={[styles.dropdownItem, statusFilter === "ALL" && styles.dropdownItemActive]}
+                        onPress={() => selectFilter("ALL")}
+                      >
+                        <Text style={[styles.dropdownItemText, statusFilter === "ALL" && styles.dropdownItemTextActive]}>
+                          All Status
+                        </Text>
+                      </TouchableOpacity>
+                      {STATUS_OPTIONS.map((status) => (
+                        <TouchableOpacity 
+                          key={status}
+                          style={[styles.dropdownItem, statusFilter === status && styles.dropdownItemActive]}
+                          onPress={() => selectFilter(status)}
+                        >
+                          <Text style={[styles.dropdownItemText, statusFilter === status && styles.dropdownItemTextActive]}>
+                            {status}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              </View>
+              
               <PieChart data={stats.statusData} />
             </Card>
           </Col>
 
-          {/* Bar Charts Column - Full width on mobile, 7/12 on desktop */}
+          {/* Department Distribution - Full width on mobile, 7/12 on desktop */}
           <Col xs={12} lg={7}>
-            <Row gutter={20}>
-              {/* Complaints by Status */}
-              <Col xs={12}>
-                <Card style={styles.chartCard}>
-                  <Text style={styles.chartTitle}>Complaints by Status</Text>
-                  <BarChart 
-                    data={stats.complaintsByStatus} 
-                    isCompact={true}
-                  />
-                </Card>
-              </Col>
-
-              {/* Department Distribution */}
-              <Col xs={12}>
-                <Card style={styles.chartCard}>
-                  <Text style={styles.chartTitle}>Department Distribution</Text>
-                  <BarChart 
-                    data={stats.departmentData} 
-                    isCompact={false}
-                  />
-                </Card>
-              </Col>
-            </Row>
+            <Card style={styles.chartCard}>
+              <Text style={styles.chartTitle}>
+                Department Distribution
+                {statusFilter !== "ALL" && (
+                  <Text style={styles.filterLabel}> (Filtered: {statusFilter})</Text>
+                )}
+              </Text>
+              <BarChart 
+                data={getFilteredDepartmentData()} 
+                isCompact={false}
+              />
+            </Card>
           </Col>
         </Row>
       </Container>
@@ -145,23 +204,23 @@ export default function StatisticsScreen({ navigation }) {
 function PieChart({ data }) {
   const { width, isXs, isSm, isMd, isLg, isXl } = useResponsive();
   
-  // Responsive sizing - fits within container
+  // Responsive sizing - BIGGER pie chart
   let size;
   if (isXl) {
-    size = 360;
+    size = 440;
   } else if (isLg) {
-    size = 320;
+    size = 400;
   } else if (isMd) {
-    size = 300;
+    size = 380;
   } else if (isSm) {
-    size = Math.min(width * 0.6, 280);
+    size = Math.min(width * 0.7, 360);
   } else {
-    size = Math.min(width - 120, 260);
+    size = Math.min(width - 100, 320);
   }
   
-  const radius = size / 3;
+  const radius = size / 2.8;
   const cx = size / 2;
-  const cy = size / 2.8;
+  const cy = size / 2.5; // Lowered from size / 3
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
   
@@ -202,13 +261,13 @@ function PieChart({ data }) {
   });
 
   // Responsive legend layout
-  const legendY = cy + radius + 50;
-  const itemWidth = isXl || isLg ? 140 : isMd || isSm ? 120 : 100;
+  const legendY = cy + radius + 60;
+  const itemWidth = isXl || isLg ? 150 : isMd || isSm ? 130 : 110;
   const legendItemsPerRow = (isXl || isLg || isMd || isSm) ? 2 : 1;
   
   return (
     <View style={styles.pieChartContainer}>
-      <Svg width={size} height={size + 100}>
+      <Svg width={size} height={size + 140}>
         {slices.map((slice, i) => (
           <Path key={i} d={slice.pathData} fill={slice.color} stroke="#fff" strokeWidth={2} />
         ))}
@@ -218,12 +277,12 @@ function PieChart({ data }) {
             const row = Math.floor(i / legendItemsPerRow);
             const col = i % legendItemsPerRow;
             const x = (size / 2) - (legendItemsPerRow * itemWidth / 2) + (col * itemWidth);
-            const y = legendY + (row * 28);
+            const y = legendY + (row * 30);
             
             return (
               <G key={i}>
-                <Circle cx={x} cy={y} r={7} fill={item.color} />
-                <SvgText x={x + 15} y={y + 5} fontSize={12} fill="#333" fontWeight="500">
+                <Circle cx={x} cy={y} r={8} fill={item.color} />
+                <SvgText x={x + 16} y={y + 5} fontSize={14} fill="#333" fontWeight="500" fontFamily="Poppins">
                   {item.value} {item.label}
                 </SvgText>
               </G>
@@ -313,7 +372,7 @@ function BarChart({ data, isCompact = false }) {
                   strokeWidth={1} 
                   strokeDasharray="3,3" 
                 />
-                <SvgText x={leftMargin - 10} y={y + 4} fontSize={11} fill="#666" textAnchor="end" fontWeight="500">
+                <SvgText x={leftMargin - 10} y={y + 4} fontSize={11} fill="#666" textAnchor="end" fontWeight="500" fontFamily="Poppins">
                   {value}
                 </SvgText>
               </G>
@@ -344,6 +403,7 @@ function BarChart({ data, isCompact = false }) {
                     fontWeight="700" 
                     fill="#11493f" 
                     textAnchor="middle"
+                    fontFamily="Poppins"
                   >
                     {item.value}
                   </SvgText>
@@ -355,6 +415,7 @@ function BarChart({ data, isCompact = false }) {
                   fill="#666" 
                   textAnchor="middle" 
                   fontWeight="500"
+                  fontFamily="Poppins"
                 >
                   {item.label}
                 </SvgText>
@@ -382,17 +443,20 @@ const styles = StyleSheet.create({
     marginTop: 15,
     fontSize: 16,
     color: '#11493f',
+    fontFamily: 'Poppins',
   },
   errorText: {
     fontSize: 18,
     fontWeight: '600',
     color: '#e74c3c',
     marginBottom: 8,
+    fontFamily: 'Poppins',
   },
   errorSubtext: {
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
+    fontFamily: 'Poppins',
   },
   pageTitle: {
     fontSize: 26,
@@ -400,26 +464,102 @@ const styles = StyleSheet.create({
     color: '#11493f',
     marginBottom: 25,
     textAlign: 'center',
+    fontFamily: 'Poppins',
   },
   chartCard: {
     minHeight: 200,
+    position: 'relative',
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+    flexWrap: 'wrap',
+    gap: 10,
   },
   chartTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#11493f',
-    marginBottom: 16,
+    fontFamily: 'Poppins',
+  },
+  filterLabel: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#f39c12',
+    fontStyle: 'italic',
+    fontFamily: 'Poppins',
+  },
+  filterContainer: {
+    position: 'relative',
+    zIndex: 10,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d0d0d0',
+    minWidth: 140,
+  },
+  filterButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#11493f',
+    marginRight: 4,
+    fontFamily: 'Poppins',
+  },
+  dropdown: {
+    position: 'absolute',
+    top: 42,
+    right: 0,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d0d0d0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 5,
+    minWidth: 160,
+    zIndex: 100,
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  dropdownItemActive: {
+    backgroundColor: '#e8f5e9',
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: '#333',
+    fontFamily: 'Poppins',
+  },
+  dropdownItemTextActive: {
+    fontWeight: '600',
+    color: '#27ae60',
+    fontFamily: 'Poppins',
   },
   pieChartContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingVertical: 20,
+    paddingTop: 30,
     width: '100%',
   },
   noDataText: {
     fontSize: 14,
     color: '#999',
     fontStyle: 'italic',
+    fontFamily: 'Poppins',
   },
   barChartContainer: {
     width: '100%',

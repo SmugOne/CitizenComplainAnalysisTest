@@ -114,14 +114,18 @@ export default function ComplaintListScreen({ navigation }) {
     })
       .then(res => res.json())
       .then(() => {
+
         setModalMessage("Complaint updated.");
-        setModalVisible(true);  
+        setModalVisible(true);
+
+        refetchComplaints();
+        setScreen("table");
       })
       .catch(() => {
         setModalMessage("Error updating complaint.");
         setModalVisible(true);
       });
-    };
+  };
 
 
   //Refetch function
@@ -148,7 +152,7 @@ export default function ComplaintListScreen({ navigation }) {
       const agency = (c.Agency || c["Predicted Agency"] || c["Category"] || "").toUpperCase();
       const stat = (c.Status || "").toUpperCase();
 
-      // Status filter logic
+      //Status filter logic
       let statusMatch = true;
       if (status && status !== "All") {
         statusMatch = stat === status.toUpperCase();
@@ -266,13 +270,7 @@ export default function ComplaintListScreen({ navigation }) {
         <MyModal
           visible={modalVisible}
           message={modalMessage}
-          onClose={() => {
-            setModalVisible(false);   
-            if (modalMessage === "Complaint updated.") {
-              refetchComplaints();    
-              setScreen("table");     
-            }
-          }}
+          onClose={() => setModalVisible(false)}
         />
 
         {/* Widgets */}

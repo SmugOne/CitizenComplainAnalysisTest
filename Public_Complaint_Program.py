@@ -259,7 +259,15 @@ def get_admin_stats():
     try:
         df = pd.read_csv('CSVFile/ArrangedData.csv', encoding='cp1252')
     except FileNotFoundError:
-        df = Main()
+        try:
+            df = Main()
+        except Exception as e:
+            print(f"ERROR - Could not load or generate data: {e}")
+            return jsonify({
+                "categoryCounts": {},
+                "statusCounts": {},
+                "complaints": []
+            }), 200
     
     # Normalize column names
     df.columns = df.columns.str.strip()
@@ -280,28 +288,56 @@ def get_admin_stats():
     category_col = "Predicted Agency" if "Predicted Agency" in df.columns else "Category"
     status_col = "Status" if "Status" in df.columns else None
     
-    # Count categories with normalization
-    category_counts = {}
-    if category_col in df.columns:
-        # Normalize to uppercase and strip whitespace
-        normalized_categories = df[category_col].astype(str).str.strip().str.upper()
-        for agency in valid_agencies:
-            count = (normalized_categories == agency).sum()
-            category_counts[agency] = int(count)
+    # Initialize counts
+    category_counts = {agency: 0 for agency in valid_agencies}
+    status_counts = {status: 0 for status in valid_statuses}
+    complaints = []
     
-    # Count statuses with normalization
-    status_counts = {}
-    if status_col and status_col in df.columns:
-        # Normalize to uppercase and strip whitespace
-        normalized_statuses = df[status_col].astype(str).str.strip().str.upper()
-        for status in valid_statuses:
-            count = (normalized_statuses == status).sum()
-            status_counts[status] = int(count)
+    try:
+        # Count categories with normalization
+        if category_col in df.columns:
+            normalized_categories = df[category_col].astype(str).str.strip().str.upper()
+            for agency in valid_agencies:
+                count = (normalized_categories == agency).sum()
+                category_counts[agency] = int(count)
+        
+        # Count statuses with normalization
+        if status_col and status_col in df.columns:
+            normalized_statuses = df[status_col].astype(str).str.strip().str.upper()
+            for status in valid_statuses:
+                count = (normalized_statuses == status).sum()
+                status_counts[status] = int(count)
+        
+        # Prepare complaints array for filtering
+        if category_col in df.columns and status_col and status_col in df.columns:
+            for _, row in df.iterrows():
+                status = str(row[status_col]).strip().upper()
+                category = str(row[category_col]).strip().upper()
+                
+                # Only include valid entries
+                if status in valid_statuses and category in valid_agencies:
+                    complaints.append({
+                        'status': status,
+                        'category': category
+                    })
+        
+        print(f"✓ API /api/admin/stats called successfully")
+        print(f"  - Total complaints: {len(complaints)}")
+        print(f"  - Status counts: {status_counts}")
+        print(f"  - First 3 complaints: {complaints[:3]}")
+        
+    except Exception as e:
+        print(f"ERROR in stats processing: {e}")
+        import traceback
+        traceback.print_exc()
     
-    return jsonify({
+    response_data = {
         "categoryCounts": category_counts,
-        "statusCounts": status_counts
-    })
+        "statusCounts": status_counts,
+        "complaints": complaints
+    }
+    
+    return jsonify(response_data)
 
 #Update ComplaintList and ArrangedComplaint for Admin Dashboard:
 @app.route('/api/complaints/update', methods=['POST'])

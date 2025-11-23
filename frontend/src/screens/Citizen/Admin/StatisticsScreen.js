@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity, Platform } from "react-native";
 import { Svg, Path, Circle, G, Text as SvgText, Rect, Line } from "react-native-svg";
 import { MaterialIcons } from "@expo/vector-icons";
 import Layout from "../../../components/LayoutAdmin";
@@ -25,6 +25,11 @@ export default function StatisticsScreen({ navigation }) {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  // Log every time statusFilter changes
+  useEffect(() => {
+    console.log("🔄 STATUS FILTER CHANGED TO:", statusFilter);
+  }, [statusFilter]);
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -35,12 +40,13 @@ export default function StatisticsScreen({ navigation }) {
         }
         
         const data = await response.json();
+        console.log("Fetched data:", data);
         
         const statusColors = {
           'SOLVED': '#27ae60',
           'SPAM': '#e74c3c',
           'UNDER REVIEW': '#f39c12',
-          'UNSOLVED': '#95a5a6'
+          'UNSOLVED': '#2c3e50'
         };
 
         const statusData = STATUS_OPTIONS
@@ -58,6 +64,7 @@ export default function StatisticsScreen({ navigation }) {
 
         // Store all complaints data for filtering
         const allComplaints = data.complaints || [];
+        console.log("All complaints:", allComplaints.length);
 
         setStats({
           statusData: statusData.length > 0 ? statusData : [{ label: "No Data", value: 1, color: "#ddd" }],
@@ -74,8 +81,44 @@ export default function StatisticsScreen({ navigation }) {
     fetchStats();
   }, []);
 
+  // Get filtered pie chart data - keep all statuses but gray out non-selected
+  const getFilteredStatusData = () => {
+    const statusColors = {
+      'SOLVED': '#27ae60',
+      'SPAM': '#e74c3c',
+      'UNDER REVIEW': '#f39c12',
+      'UNSOLVED': '#2c3e50'
+    };
+
+    console.log("Getting pie chart data for filter:", statusFilter);
+    console.log("Original status data:", stats.statusData);
+
+    if (statusFilter === "ALL") {
+      return stats.statusData;
+    }
+    
+    // Return all statuses but change colors based on filter
+    const filteredData = STATUS_OPTIONS.map(status => {
+      const originalData = stats.statusData.find(s => s.label === status);
+      const value = originalData ? originalData.value : 0;
+      const color = status === statusFilter ? statusColors[status] : '#d3d3d3'; // Gray out non-selected
+      
+      return {
+        label: status,
+        value: value,
+        color: color
+      };
+    }).filter(item => item.value > 0);
+
+    console.log("Filtered pie chart data:", filteredData);
+    return filteredData.length > 0 ? filteredData : [{ label: "No Data", value: 1, color: "#ddd" }];
+  };
+
   // Filter department data based on status filter
   const getFilteredDepartmentData = () => {
+    console.log("Filtering with status:", statusFilter);
+    console.log("Total complaints:", stats.allComplaints.length);
+    
     if (statusFilter === "ALL") {
       return stats.departmentData;
     }
@@ -85,17 +128,26 @@ export default function StatisticsScreen({ navigation }) {
       complaint => complaint.status === statusFilter
     );
     
+    console.log("Filtered complaints:", filteredComplaints.length);
+    
     return AGENCY_OPTIONS.map(agency => ({
       label: agency,
       value: filteredComplaints.filter(c => c.category === agency).length
     }));
   };
 
-  const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
+  const toggleDropdown = () => {
+    console.log("🟢 Toggle dropdown clicked, current state:", dropdownOpen);
+    setDropdownOpen(!dropdownOpen);
+    console.log("🟢 Dropdown will be:", !dropdownOpen);
+  };
 
   const selectFilter = (filter) => {
+    console.log("🟡 selectFilter called with:", filter);
+    console.log("🟡 Current statusFilter:", statusFilter);
     setStatusFilter(filter);
     setDropdownOpen(false);
+    console.log("🟡 State update commands sent");
   };
 
   if (loading) {
@@ -131,7 +183,9 @@ export default function StatisticsScreen({ navigation }) {
           <Col xs={12} lg={5}>
             <Card style={styles.chartCard}>
               <View style={styles.chartHeader}>
-                <Text style={styles.chartTitle}>Status Distribution</Text>
+                <Text style={styles.chartTitle}>
+                  {statusFilter === "ALL" ? "Status Distribution" : `Status Distribution (Filtered: ${statusFilter})`}
+                </Text>
                 
                 {/* Filter Dropdown */}
                 <View style={styles.filterContainer}>
@@ -149,34 +203,47 @@ export default function StatisticsScreen({ navigation }) {
                       color="#11493f" 
                     />
                   </TouchableOpacity>
-                  
-                  {dropdownOpen && (
-                    <View style={styles.dropdown}>
-                      <TouchableOpacity 
-                        style={[styles.dropdownItem, statusFilter === "ALL" && styles.dropdownItemActive]}
-                        onPress={() => selectFilter("ALL")}
-                      >
-                        <Text style={[styles.dropdownItemText, statusFilter === "ALL" && styles.dropdownItemTextActive]}>
-                          All Status
-                        </Text>
-                      </TouchableOpacity>
-                      {STATUS_OPTIONS.map((status) => (
-                        <TouchableOpacity 
-                          key={status}
-                          style={[styles.dropdownItem, statusFilter === status && styles.dropdownItemActive]}
-                          onPress={() => selectFilter(status)}
-                        >
-                          <Text style={[styles.dropdownItemText, statusFilter === status && styles.dropdownItemTextActive]}>
-                            {status}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
                 </View>
               </View>
+
+              {/* Dropdown - render at card level with higher z-index */}
+              {dropdownOpen && (
+                <View style={styles.dropdownContainer}>
+                  <View style={styles.dropdown}>
+                    <TouchableOpacity 
+                      style={[styles.dropdownItem, statusFilter === "ALL" && styles.dropdownItemActive]}
+                      onPress={() => {
+                        console.log("🔴 ALL STATUS BUTTON PRESSED");
+                        console.log("Current filter before change:", statusFilter);
+                        selectFilter("ALL");
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.dropdownItemText, statusFilter === "ALL" && styles.dropdownItemTextActive]}>
+                        All Status
+                      </Text>
+                    </TouchableOpacity>
+                    {STATUS_OPTIONS.map((status) => (
+                      <TouchableOpacity 
+                        key={status}
+                        style={[styles.dropdownItem, statusFilter === status && styles.dropdownItemActive]}
+                        onPress={() => {
+                          console.log(`🔴 ${status} BUTTON PRESSED`);
+                          console.log("Current filter before change:", statusFilter);
+                          selectFilter(status);
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[styles.dropdownItemText, statusFilter === status && styles.dropdownItemTextActive]}>
+                          {status}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
               
-              <PieChart data={stats.statusData} />
+              <PieChart data={getFilteredStatusData()} statusFilter={statusFilter} />
             </Card>
           </Col>
 
@@ -197,11 +264,23 @@ export default function StatisticsScreen({ navigation }) {
           </Col>
         </Row>
       </Container>
+
+      {/* Backdrop overlay when dropdown is open */}
+      {dropdownOpen && (
+        <TouchableOpacity 
+          style={styles.dropdownBackdrop} 
+          activeOpacity={1}
+          onPress={() => {
+            console.log("⚫ Backdrop clicked - closing dropdown");
+            setDropdownOpen(false);
+          }}
+        />
+      )}
     </Layout>
   );
 }
 
-function PieChart({ data }) {
+function PieChart({ data, statusFilter }) {
   const { width, isXs, isSm, isMd, isLg, isXl } = useResponsive();
   
   // Responsive sizing - BIGGER pie chart
@@ -220,7 +299,7 @@ function PieChart({ data }) {
   
   const radius = size / 2.8;
   const cx = size / 2;
-  const cy = size / 2.5; // Lowered from size / 3
+  const cy = size / 2.5;
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
   
@@ -298,33 +377,26 @@ function BarChart({ data, isCompact = false }) {
   const { width, isXs, isSm, isMd, isLg, isXl } = useResponsive();
   
   // Calculate available width based on container and sidebar
-  // Account for: sidebar width, Container padding, Card padding, Col padding
   let availableWidth;
   
   if (isXl) {
-    // Ultra-wide screens
     availableWidth = Math.min(width * 0.5, 800);
   } else if (isLg) {
-    // Desktop with sidebar
     availableWidth = Math.min((width - 240) * 0.55, 700);
   } else if (isMd) {
-    // Tablet
     availableWidth = Math.min(width - 150, 600);
   } else if (isSm) {
-    // Small tablet
     availableWidth = Math.min(width - 120, 500);
   } else {
-    // Mobile
     availableWidth = width - 90;
   }
   
   const chartHeight = isCompact ? 260 : 300;
-  const chartWidth = Math.max(availableWidth, 300); // Minimum width
+  const chartWidth = Math.max(availableWidth, 300);
   
   const maxValue = Math.max(...data.map(d => d.value), 1);
   const numBars = data.length;
   
-  // Calculate bar layout to fit within available width
   const leftMargin = 50;
   const rightMargin = 20;
   const usableWidth = chartWidth - leftMargin - rightMargin;
@@ -334,20 +406,17 @@ function BarChart({ data, isCompact = false }) {
   const minSpacing = 6;
   const maxSpacing = 18;
   
-  // Calculate optimal bar width and spacing
   let barWidth = (usableWidth - (minSpacing * (numBars - 1))) / numBars;
   barWidth = Math.max(minBarWidth, Math.min(maxBarWidth, barWidth));
   
   let barSpacing = (usableWidth - (barWidth * numBars)) / Math.max(numBars - 1, 1);
   barSpacing = Math.max(minSpacing, Math.min(maxSpacing, barSpacing));
   
-  // Recalculate if bars are too wide
   if (barWidth * numBars + barSpacing * (numBars - 1) > usableWidth) {
     barWidth = (usableWidth - (minSpacing * (numBars - 1))) / numBars;
     barSpacing = minSpacing;
   }
 
-  // Y-axis values: 0, 10, 30, 50, 100
   const yAxisValues = [0, 10, 30, 50, 100];
 
   return (
@@ -358,7 +427,6 @@ function BarChart({ data, isCompact = false }) {
         contentContainerStyle={styles.barChartScrollContent}
       >
         <Svg width={Math.max(chartWidth, numBars * (barWidth + barSpacing) + leftMargin + rightMargin)} height={chartHeight}>
-          {/* Grid lines and Y-axis labels */}
           {yAxisValues.map((value, i) => {
             const y = chartHeight - 52 - (value / 100) * (chartHeight - 75);
             return (
@@ -379,7 +447,6 @@ function BarChart({ data, isCompact = false }) {
             );
           })}
 
-          {/* Bars */}
           {data.map((item, i) => {
             const barHeight = maxValue > 0 ? (item.value / maxValue) * (chartHeight - 75) : 0;
             const x = leftMargin + i * (barWidth + barSpacing);
@@ -493,7 +560,7 @@ const styles = StyleSheet.create({
   },
   filterContainer: {
     position: 'relative',
-    zIndex: 10,
+    zIndex: 1000,
   },
   filterButton: {
     flexDirection: 'row',
@@ -513,25 +580,32 @@ const styles = StyleSheet.create({
     marginRight: 4,
     fontFamily: 'Poppins',
   },
-  dropdown: {
+  dropdownContainer: {
     position: 'absolute',
-    top: 42,
-    right: 0,
+    top: 50,
+    right: 20,
+    zIndex: 10000,
+  },
+  dropdown: {
     backgroundColor: '#fff',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#d0d0d0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 5,
-    minWidth: 160,
-    zIndex: 100,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 15,
+    minWidth: 180,
+  },
+  dropdownBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    zIndex: 9999,
   },
   dropdownItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },

@@ -5,28 +5,45 @@ import Layout from "../../../components/Layout";
 import { API_URL } from "@env";
 
 // MODAL ALERT
-function ModalAlert({ visible, message }) {
-  if (!visible) return null;
-
+function ModalAlert({ visible, message, onClose }) {
   return (
-    <View style={{
-      position: "absolute",
-      top: 0, left: 0, right: 0, bottom: 0,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0,0,0,0.3)',
-      zIndex: 999
-    }}>
+    <Modal
+      transparent={true}
+      visible={visible}
+      animationType="fade"
+      onRequestClose={onClose}
+    >
       <View style={{
-        backgroundColor: '#fff',
-        padding: 26,
-        borderRadius: 12,
+        flex: 1,
+        justifyContent: 'center',
         alignItems: 'center',
-        maxWidth: 320
+        backgroundColor: 'rgba(0,0,0,0.4)',
       }}>
-        <Text style={{ fontSize: 16, color: "#11493f", textAlign: "center" }}>{message}</Text>
+        <View style={{
+          backgroundColor: '#fff',
+          padding: 28,
+          borderRadius: 12,
+          alignItems: 'center',
+          maxWidth: 320,
+          minWidth: 280,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 4,
+          elevation: 5,
+        }}>
+          <MaterialIcons name="check-circle" size={48} color="#11493f" style={{ marginBottom: 12 }} />
+          <Text style={{ 
+            fontSize: 16, 
+            color: "#11493f", 
+            textAlign: "center",
+            fontWeight: "600"
+          }}>
+            {message}
+          </Text>
+        </View>
       </View>
-    </View>
+    </Modal>
   );
 }
 
@@ -40,36 +57,18 @@ export default function AdminLoginScreen({ navigation }) {
   const showModal = (message) => setModal({ show: true, message });
   const closeModal = () => setModal({ show: false, message: "" });
 
-  const handleLogin = async () => {
-    if (!username.trim() || !password.trim()) {
-      setError("Please enter username and password.");
-      return;
-    }
-
-    setError("");
-    try {
-      const res = await fetch(`${API_URL}/api/admin/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim(), password: password.trim() }),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        showModal("Login successful!");
-        setUsername("");
-        setPassword("");
-        setTimeout(() => {
-          closeModal();
-          navigation.navigate("AdminDashboard");
-        }, 1000);
-      } else {
-        setError(data.message || "Incorrect username or password.");
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("Unable to connect to server.");
+  const handleLogin = () => {
+    if (username === HARDCODED_USER && password === HARDCODED_PASS) {
+      showModal("Login successful!");
+      setUsername("");
+      setPassword("");
+      setError("");
+      setTimeout(() => {
+        closeModal();
+        navigation.navigate("AdminDashboard");
+      }, 1500);
+    } else {
+      setError("Incorrect username or password.");
     }
   };
 

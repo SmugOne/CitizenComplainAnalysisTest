@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity, Platform } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity } from "react-native";
 import { Svg, Path, Circle, G, Text as SvgText, Rect, Line } from "react-native-svg";
 import { MaterialIcons } from "@expo/vector-icons";
 import Layout from "../../../components/LayoutAdmin";
@@ -23,9 +23,7 @@ export default function StatisticsScreen({ navigation }) {
   });
   const [error, setError] = useState(false);
   const [statusFilter, setStatusFilter] = useState("ALL");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Log every time statusFilter changes
   useEffect(() => {
     console.log("🔄 STATUS FILTER CHANGED TO:", statusFilter);
   }, [statusFilter]);
@@ -62,7 +60,6 @@ export default function StatisticsScreen({ navigation }) {
           value: data.categoryCounts?.[agency] || 0
         }));
 
-        // Store all complaints data for filtering
         const allComplaints = data.complaints || [];
         console.log("All complaints:", allComplaints.length);
 
@@ -81,7 +78,7 @@ export default function StatisticsScreen({ navigation }) {
     fetchStats();
   }, []);
 
-  // Get filtered pie chart data - keep all statuses but gray out non-selected
+  // Get filtered pie chart data ONLY - does NOT affect bar chart
   const getFilteredStatusData = () => {
     const statusColors = {
       'SOLVED': '#27ae60',
@@ -114,42 +111,6 @@ export default function StatisticsScreen({ navigation }) {
     return filteredData.length > 0 ? filteredData : [{ label: "No Data", value: 1, color: "#ddd" }];
   };
 
-  // Filter department data based on status filter
-  const getFilteredDepartmentData = () => {
-    console.log("Filtering with status:", statusFilter);
-    console.log("Total complaints:", stats.allComplaints.length);
-    
-    if (statusFilter === "ALL") {
-      return stats.departmentData;
-    }
-    
-    // Filter complaints by status and recalculate department counts
-    const filteredComplaints = stats.allComplaints.filter(
-      complaint => complaint.status === statusFilter
-    );
-    
-    console.log("Filtered complaints:", filteredComplaints.length);
-    
-    return AGENCY_OPTIONS.map(agency => ({
-      label: agency,
-      value: filteredComplaints.filter(c => c.category === agency).length
-    }));
-  };
-
-  const toggleDropdown = () => {
-    console.log("🟢 Toggle dropdown clicked, current state:", dropdownOpen);
-    setDropdownOpen(!dropdownOpen);
-    console.log("🟢 Dropdown will be:", !dropdownOpen);
-  };
-
-  const selectFilter = (filter) => {
-    console.log("🟡 selectFilter called with:", filter);
-    console.log("🟡 Current statusFilter:", statusFilter);
-    setStatusFilter(filter);
-    setDropdownOpen(false);
-    console.log("🟡 State update commands sent");
-  };
-
   if (loading) {
     return (
       <Layout navigation={navigation}>
@@ -177,105 +138,55 @@ export default function StatisticsScreen({ navigation }) {
       <Container maxWidth={1600} fluid style={styles.container}>
         <Text style={styles.pageTitle}>Statistics Overview</Text>
         
-        {/* Responsive Grid Layout */}
         <Row gutter={20}>
-          {/* Pie Chart with Filter - Full width on mobile, 5/12 on desktop */}
+          {/* Pie Chart with Filter - ONLY THIS CHART GETS FILTERED */}
           <Col xs={12} lg={5}>
             <Card style={styles.chartCard}>
               <View style={styles.chartHeader}>
-                <Text style={styles.chartTitle}>
-                  {statusFilter === "ALL" ? "Status Distribution" : `Status Distribution (Filtered: ${statusFilter})`}
-                </Text>
+                <Text style={styles.chartTitle}>Status Distribution</Text>
                 
-                {/* Filter Dropdown */}
-                <View style={styles.filterContainer}>
-                  <TouchableOpacity 
-                    style={styles.filterButton}
-                    onPress={toggleDropdown}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.filterButtonText}>
-                      {statusFilter === "ALL" ? "All Status" : statusFilter}
-                    </Text>
-                    <MaterialIcons 
-                      name={dropdownOpen ? "arrow-drop-up" : "arrow-drop-down"} 
-                      size={20} 
-                      color="#11493f" 
-                    />
-                  </TouchableOpacity>
-                </View>
+                {/* Simple Select Dropdown */}
+                <select 
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  style={{
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    fontFamily: 'Poppins',
+                    backgroundColor: '#f0f0f0',
+                    border: '1px solid #d0d0d0',
+                    borderRadius: '8px',
+                    color: '#11493f',
+                    cursor: 'pointer',
+                    minWidth: '140px',
+                  }}
+                >
+                  <option value="ALL">All Status</option>
+                  <option value="SOLVED">SOLVED</option>
+                  <option value="SPAM">SPAM</option>
+                  <option value="UNDER REVIEW">UNDER REVIEW</option>
+                  <option value="UNSOLVED">UNSOLVED</option>
+                </select>
               </View>
-
-              {/* Dropdown - render at card level with higher z-index */}
-              {dropdownOpen && (
-                <View style={styles.dropdownContainer}>
-                  <View style={styles.dropdown}>
-                    <TouchableOpacity 
-                      style={[styles.dropdownItem, statusFilter === "ALL" && styles.dropdownItemActive]}
-                      onPress={() => {
-                        console.log("🔴 ALL STATUS BUTTON PRESSED");
-                        console.log("Current filter before change:", statusFilter);
-                        selectFilter("ALL");
-                      }}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={[styles.dropdownItemText, statusFilter === "ALL" && styles.dropdownItemTextActive]}>
-                        All Status
-                      </Text>
-                    </TouchableOpacity>
-                    {STATUS_OPTIONS.map((status) => (
-                      <TouchableOpacity 
-                        key={status}
-                        style={[styles.dropdownItem, statusFilter === status && styles.dropdownItemActive]}
-                        onPress={() => {
-                          console.log(`🔴 ${status} BUTTON PRESSED`);
-                          console.log("Current filter before change:", statusFilter);
-                          selectFilter(status);
-                        }}
-                        activeOpacity={0.8}
-                      >
-                        <Text style={[styles.dropdownItemText, statusFilter === status && styles.dropdownItemTextActive]}>
-                          {status}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              )}
               
+              {/* Pass FILTERED data to pie chart */}
               <PieChart data={getFilteredStatusData()} statusFilter={statusFilter} />
             </Card>
           </Col>
 
-          {/* Department Distribution - Full width on mobile, 7/12 on desktop */}
+          {/* Bar Chart - ALWAYS SHOWS ALL DATA, NO FILTERING */}
           <Col xs={12} lg={7}>
             <Card style={styles.chartCard}>
-              <Text style={styles.chartTitle}>
-                Department Distribution
-                {statusFilter !== "ALL" && (
-                  <Text style={styles.filterLabel}> (Filtered: {statusFilter})</Text>
-                )}
-              </Text>
+              <Text style={styles.chartTitle}>Department Distribution</Text>
+              {/* Pass UNFILTERED stats.departmentData directly */}
               <BarChart 
-                data={getFilteredDepartmentData()} 
+                data={stats.departmentData}
                 isCompact={false}
               />
             </Card>
           </Col>
         </Row>
       </Container>
-
-      {/* Backdrop overlay when dropdown is open */}
-      {dropdownOpen && (
-        <TouchableOpacity 
-          style={styles.dropdownBackdrop} 
-          activeOpacity={1}
-          onPress={() => {
-            console.log("⚫ Backdrop clicked - closing dropdown");
-            setDropdownOpen(false);
-          }}
-        />
-      )}
     </Layout>
   );
 }
@@ -283,7 +194,6 @@ export default function StatisticsScreen({ navigation }) {
 function PieChart({ data, statusFilter }) {
   const { width, isXs, isSm, isMd, isLg, isXl } = useResponsive();
   
-  // Responsive sizing - BIGGER pie chart
   let size;
   if (isXl) {
     size = 440;
@@ -339,7 +249,6 @@ function PieChart({ data, statusFilter }) {
     return { pathData, color: item.color, label: item.label, value: item.value };
   });
 
-  // Responsive legend layout
   const legendY = cy + radius + 60;
   const itemWidth = isXl || isLg ? 150 : isMd || isSm ? 130 : 110;
   const legendItemsPerRow = (isXl || isLg || isMd || isSm) ? 2 : 1;
@@ -350,7 +259,6 @@ function PieChart({ data, statusFilter }) {
         {slices.map((slice, i) => (
           <Path key={i} d={slice.pathData} fill={slice.color} stroke="#fff" strokeWidth={2} />
         ))}
-        {/* Horizontal Legend */}
         <G>
           {data.map((item, i) => {
             const row = Math.floor(i / legendItemsPerRow);
@@ -376,7 +284,6 @@ function PieChart({ data, statusFilter }) {
 function BarChart({ data, isCompact = false }) {
   const { width, isXs, isSm, isMd, isLg, isXl } = useResponsive();
   
-  // Calculate available width based on container and sidebar
   let availableWidth;
   
   if (isXl) {
@@ -535,7 +442,6 @@ const styles = StyleSheet.create({
   },
   chartCard: {
     minHeight: 200,
-    position: 'relative',
   },
   chartHeader: {
     flexDirection: 'row',
@@ -551,16 +457,8 @@ const styles = StyleSheet.create({
     color: '#11493f',
     fontFamily: 'Poppins',
   },
-  filterLabel: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#f39c12',
-    fontStyle: 'italic',
-    fontFamily: 'Poppins',
-  },
-  filterContainer: {
+  filterWrapper: {
     position: 'relative',
-    zIndex: 1000,
   },
   filterButton: {
     flexDirection: 'row',
@@ -580,11 +478,11 @@ const styles = StyleSheet.create({
     marginRight: 4,
     fontFamily: 'Poppins',
   },
-  dropdownContainer: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    zIndex: 10000,
+  dropdownOverlay: {
+    position: 'fixed',
+    top: 220,
+    right: 50,
+    zIndex: 100000,
   },
   dropdown: {
     backgroundColor: '#fff',
@@ -599,9 +497,13 @@ const styles = StyleSheet.create({
     minWidth: 180,
   },
   dropdownBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    zIndex: 9999,
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+    zIndex: 99999,
   },
   dropdownItem: {
     paddingVertical: 14,

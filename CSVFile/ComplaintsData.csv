@@ -6,13 +6,13 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remark
 5,Sterner Marina,May nagkakalat,,UNSOLVED,,,J8qR1,
 6,Mikko Samis,Maraming naipon na basura dito,,UNSOLVED,,,pL6dM,
 7,Daniel Maki,Mabagal traffic dito,,UNSOLVED,,,Yv3Kc,
-8,Powell Corana,Grabe! Ang bagal dito ng usad ng trapiko dito sa amin!,,UNSOLVED,,,fW9hE,
+8,Powell Corana,Grabe! Ang bagal dito ng usad ng trapiko dito sa amin!,,UNDER REVIEW,DPWH,,fW9hE,waiting
 9,Anonymous,Theres garbage on the street,,UNSOLVED,,,N5jUa,
 10,Anonymous,There's corruption going on at the school branch with a principal,,UNSOLVED,,,bK2sZ,
 11,Mark Mike,There's lack of water in my area,"{'accuracy': 100, 'longitude': 120.9788143, 'altitude': 101.80000305175781, 'heading': 0, 'latitude': 14.3756576, 'altitudeAccuracy': 100, 'speed': 0}",UNSOLVED,,,xD4tN,
 12,Anonymous,Slow wifi,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}",UNDER REVIEW,DITC,,C1yLp,Under investigation with the related company
 13,Anonymous,My area lacked water supplies! ,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}",UNSOLVED,,,gR8eB,
-14,Anonymous,Water supplies are low here! Where is government intervention?? ,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}",UNSOLVED,,,T2qVf,
+14,Anonymous,Water supplies are low here! Where is government intervention?? ,"{'accuracy': 100, 'longitude': 120.9629462, 'altitude': 162.40000915527344, 'heading': 0, 'latitude': 14.322348, 'altitudeAccuracy': 100, 'speed': 0}",SOLVED,DOH,,T2qVf,done
 15,Ace,Too many corrupt officers in our school,"{'accuracy': 20, 'longitude': 120.9268819, 'altitude': 60.89999771118164, 'heading': 0, 'latitude': 14.4055953, 'altitudeAccuracy': 2.5460093021392822, 'speed': 0}",UNSOLVED,,,uH7kJ,
 16,Anonymous,education quality is low,"{'accuracy': 17.464000701904297, 'longitude': 120.9268788, 'altitude': 60.89999771118164, 'heading': 0, 'latitude': 14.4055957, 'altitudeAccuracy': 1.9850099086761475, 'speed': 0}",UNDER REVIEW,DEPED,,wZ5cR,Reviewing classes
 17,Anonymous,madaming kurakot,Imus,UNSOLVED,,,E3dXm,
@@ -29,17 +29,17 @@ ID,Name,Raw Complaint,Location,Status,Category,Image ID,Password,Remark
 28,ac,smpl,Dasmari�as,UNSOLVED,,,kH6nT,
 29,Anonymous,Lack of water,Dasmari�as,UNDER REVIEW,DENR,,W8dFe,Sending inspectors
 30,Anonymous,sample,,UNSOLVED,,,rV1qS,
-31,John Test,The road is rough,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,,F7xCb,
+31,John Test,The road is rough,"Lat: 14.4048128, Long: 120.979456",SOLVED,MMDA,,F7xCb,done
 32,Anonymous,I saw trash in the street!,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,,oN5mG,
 33,Anonymous,I saw trash in the street!,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,,V4pKt,
 34,Anonymous,I saw trash in the street!,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,,hS9uR,
 35,Anonymous,I saw trash in the street!,"Lat: 14.4048128, Long: 120.979456",SOLVED,DENR,,B2gLz,Sent inspectors and cleaners to fix the problem
 36,Anonymous,I think there's corruption within the police,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,,eY6vD,
-37,Anonymous,I think the bridge is about to break!,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,,U3nPa,
+37,Anonymous,I think the bridge is about to break!,"Lat: 14.4048128, Long: 120.979456",SOLVED,DPWH,,U3nPa,done
 38,Testerman,I think may nangaabuso ng flood control projects,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,,tQ8rJ,
 39,Anonymous,My neighbor is noisy!,"Lat: 14.4048128, Long: 120.979456",UNSOLVED,,,L5yXc,
 40,Anonymous,Theres flood,"Lat: 14.3415351, Long: 120.9560698",UNSOLVED,,,iK7dW,
-41,Anonymous,There is something bothering me in the road,"Lat: 14.4048128, Long: 120.9827328",UNSOLVED,,,G9sHb,
+41,Anonymous,There is something bothering me in the road,"Lat: 14.4048128, Long: 120.9827328",SOLVED,DENR,,G9sHb,done
 42,Anonymous,Theres garbage on the street,"Lat: 14.4048128, Long: 120.9827328",UNSOLVED,,,yM2fV,
 43,Anonymous,Theres damage on the sidewalk,"Lat: 14.3757583, Long: 120.9788229",UNSOLVED,,,S6pRe,
 44,Anonymous,The sidewalk is destroyed,"Lat: 14.4048128, Long: 120.9827328",UNSOLVED,,,mD4tQ,

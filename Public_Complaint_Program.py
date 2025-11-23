@@ -269,13 +269,13 @@ def get_admin_stats():
                 "complaints": []
             }), 200
     
-    # Normalize column names
+    #Normalize column names
     df.columns = df.columns.str.strip()
     
-    # Fill NaN values
+    #Fill NaN values
     df = df.fillna('')
     
-    # Define expected categories and statuses
+    #Define expected categories and statuses
     valid_agencies = [
         "DPWH", "DOH", "DENR", "OMBUDSMAN",
         "LTO", "MMDA", "PNP", "DEPED",
@@ -284,11 +284,11 @@ def get_admin_stats():
     
     valid_statuses = ["SOLVED", "SPAM", "UNDER REVIEW", "UNSOLVED"]
     
-    # Get the category column (Predicted Agency or Category)
+    #Get the category column (Predicted Agency or Category)
     category_col = "Predicted Agency" if "Predicted Agency" in df.columns else "Category"
     status_col = "Status" if "Status" in df.columns else None
     
-    # Initialize counts
+    #Initialize counts
     category_counts = {agency: 0 for agency in valid_agencies}
     status_counts = {status: 0 for status in valid_statuses}
     complaints = []

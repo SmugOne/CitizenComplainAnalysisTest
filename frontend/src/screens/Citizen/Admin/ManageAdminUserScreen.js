@@ -15,7 +15,7 @@ import { Picker } from "@react-native-picker/picker";
 import LayoutAdmin from "../../../components/LayoutAdmin";
 import { API_URL } from "@env";
 
-// Responsive helper
+//Responsive helper
 function useIsNarrowScreen() {
   const { width } = useWindowDimensions();
   return width < 900;
@@ -24,28 +24,28 @@ function useIsNarrowScreen() {
 export default function ManageAdminUserScreen({ navigation }) {
   const isNarrow = useIsNarrowScreen();
 
-  // Admin form state
+  //Admin form state
   const [modalVisible, setModalVisible] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
-  // Data
+  //Data state
   const [admins, setAdmins] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [loadingAdmins, setLoadingAdmins] = useState(false);
   const [loadingAnns, setLoadingAnns] = useState(false);
   const [creating, setCreating] = useState(false);
 
-  // Announcement edit state
+  //Announcement edit state
   const [editingAnn, setEditingAnn] = useState({});
   const [newAnnTitle, setNewAnnTitle] = useState("");
   const [newAnnBody, setNewAnnBody] = useState("");
   const [creatingAnn, setCreatingAnn] = useState(false);
   const [selectedSpaces, setSelectedSpaces] = useState({ space: 1 });
 
-  // Validation modal state
+  //Validation modal state
   const [validationModalVisible, setValidationModalVisible] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
 
@@ -91,7 +91,7 @@ export default function ManageAdminUserScreen({ navigation }) {
     }
   }
 
-  // Create new admin
+  //Create new admin
   async function createAdmin() {
     if (!username.trim() || !password.trim() || !name.trim()) {
       Alert.alert("Validation", "Username, password and name are required.");
@@ -169,19 +169,41 @@ export default function ManageAdminUserScreen({ navigation }) {
 
             {/* Admin List */}
             <Text style={[styles.subtitle, { marginTop: 28, marginBottom: 8 }]}>Admin List</Text>
+
             {loadingAdmins ? (
               <ActivityIndicator />
             ) : (
-              admins.map(a => (
-                <View key={a.id ?? a._id ?? a.username} style={styles.userRow}>
-                  <Text style={styles.userName}>
-                    {a.name} <Text style={styles.userMeta}>({a.username})</Text>
-                  </Text>
-                  <Text style={styles.userMeta}>{a.email}</Text>
+              <ScrollView horizontal style={{ marginBottom: 12 }}>
+                <View>
+                  {/* HEADER ROW */}
+                  <View style={styles.headerRow}>
+                    <Text style={[styles.headerCell, { width: 150 }]}>Name</Text>
+                    <Text style={[styles.headerCell, { width: 140 }]}>Username</Text>
+                    <Text style={[styles.headerCell, { width: 200 }]}>Email</Text>
+                  </View>
+
+                  {/* DATA ROWS */}
+                  {admins.length === 0 ? (
+                    <Text style={{ marginTop: 10, fontStyle: "italic" }}>No admins found.</Text>
+                  ) : (
+                    admins.map((a, index) => (
+                      <View
+                        key={index}
+                        style={[
+                          styles.dataRow,
+                          { backgroundColor: index % 2 === 0 ? "#fff" : "#f8f8f8" }
+                        ]}
+                      >
+                        <Text style={[styles.dataCell, { width: 150 }]}>{a["Full Name"]}</Text>
+                        <Text style={[styles.dataCell, { width: 140 }]}>{a["Username"]}</Text>
+                        <Text style={[styles.dataCell, { width: 200 }]}>{a["Email"]}</Text>
+                      </View>
+                    ))
+                  )}
                 </View>
-              ))
+              </ScrollView>
             )}
-          </View>
+            </View>
 
           {/* Validation Modal */}
           <Modal
@@ -209,6 +231,7 @@ export default function ManageAdminUserScreen({ navigation }) {
               </View>
             </View>
           </Modal>
+        
 
           {/* RIGHT: ANNOUNCEMENTS */}
           <View style={[styles.col, { flex: 2, marginLeft: isNarrow ? 0 : 18, marginTop: isNarrow ? 26 : 0 }]}>
@@ -314,4 +337,12 @@ const styles = StyleSheet.create({
   saveBtn: { backgroundColor: "#197278" },
   cancelBtn: { backgroundColor: "#fde2a6" },
   actionBtnText: { fontWeight: "bold", color: "#ffffffff", fontSize: 15 },
+  headerRow: {flexDirection: "row", backgroundColor: "#197278", paddingVertical: 10, borderTopLeftRadius: 8, borderTopRightRadius: 8,},
+  headerCell: {color: "#ffd66b", fontWeight: "bold", paddingHorizontal: 8,},
+  dataRow: {flexDirection: "row", paddingVertical: 10,},
+  dataCell: {paddingHorizontal: 8, color: "#11493f", fontSize: 14,},
+  headerRow: {flexDirection: "row", backgroundColor: "#197278", paddingVertical: 10, borderTopLeftRadius: 8, borderTopRightRadius: 8,},
+  headerCell: {color: "#ffd66b", fontWeight: "bold", paddingHorizontal: 8,},
+  dataRow: {flexDirection: "row", paddingVertical: 10,},
+  dataCell: {paddingHorizontal: 8, color: "#11493f", fontSize: 14,},
 });

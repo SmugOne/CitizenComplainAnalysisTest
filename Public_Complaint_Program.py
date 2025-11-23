@@ -372,11 +372,11 @@ def submit_feedback():
     arranged_path = "CSVFile/ArrangedData.csv"
     arranged = pd.read_csv(arranged_path, encoding='cp1252').fillna('')
 
-    # Check if complaint exists in ArrangedData
+    #Check if complaint exists in ArrangedData
     if complaint_id not in arranged['ID'].astype(str).values:
         return jsonify({"success": False, "message": "Complaint ID not found"})
 
-    # Load Archive
+    #Load Archive
     archive_path = "CSVFile/Archive.csv"
     archive = pd.read_csv(archive_path, encoding='cp1252').fillna('') if os.path.exists(archive_path) else pd.DataFrame(columns=[
         "ID", "Name", "Complaint", "Location", "Agency", "Image ID", "Status", "Remark", "Feedback"
@@ -409,6 +409,7 @@ def submit_feedback():
 
 #-------------------------COMPLAINT LIST SCREEN BACKEND-------------------------
 
+#Active Complaints
 @app.route("/api/complaints")
 def get_active_complaints():
     df = df[df["Status"].isin(["UNSOLVED", "UNDER REVIEW"])]
@@ -423,6 +424,7 @@ def get_active_complaints():
     df = df[df["Status"].isin(["UNSOLVED", "UNDER REVIEW"])]
     return jsonify(df.to_dict(orient="records"))
 
+#Archive Complaints
 @app.route("/api/archive_complaints")
 def get_archive_complaints():
     path = "CSVFile/Archive.csv"
@@ -436,7 +438,7 @@ def get_archive_complaints():
     df = df[df["Status"].isin(["SOLVED", "SPAM"])]
     return jsonify(df.to_dict(orient="records"))
 
-#-------------------------Announcement Edit Backend-------------------------
+#-------------------------ANNOUNCEMENT EDIT BACKEND-------------------------
 
 #Shows announcements
 @app.route('/api/announcements', methods=['GET'])
@@ -482,7 +484,6 @@ def update_announcement():
 
 #-------------------------ACCOUNT LOGIN BACKEND-------------------------
 Accounts = "CSVFile/Accounts.csv"
-#Optional for the future: hashlib for password hashing
 @app.route('/api/admin/login', methods=['POST'])
 def admin_login():
     data = request.get_json()
@@ -508,49 +509,49 @@ def admin_login():
         return jsonify({"success": False, "message": "Incorrect username or password"}), 401
     
 #-------------------------NEW ACCOUNT BACKEND-------------------------
+#For future: add hashlib for password hashing
+@app.route("/api/admins", methods=["POST"])
+def NewAdmins():
+    #Load CSV
+    Accounts = "CSVFile/Accounts.csv"
 
-Accounts = "CSVFile/Accounts.csv"
-
-@app.route('/api/admin/create_account', methods=['POST'])
-def get_admins():
-    #Return all admin users
-    if os.path.exists(Accounts):
-        df = pd.read_csv(Accounts, encoding='cp1252').fillna('')
-    else:
-        df = pd.DataFrame(columns=["Username", "Password", "Full Name", "Email",])
-
-@app.route('/api/admins', methods=['POST'])
-def create_admin():
     data = request.get_json()
     username = str(data.get("username", "")).strip()
     password = str(data.get("password", "")).strip()
-    name = str(data.get("name", "")).strip()
+    full_name = str(data.get("name", "")).strip()
     email = str(data.get("email", "")).strip()
 
-    # Validation
-    if not username or not password or not name:
+    #Check required fields before passing
+    if not username or not password:
         return jsonify({"success": False, "message": "Username, password, and name are required"}), 400
 
-    #Load or create Accounts.csv
     if os.path.exists(Accounts):
         df = pd.read_csv(Accounts, encoding='cp1252').fillna('')
     else:
-        df = pd.DataFrame(columns=["Username", "Password", "Full Name", "Email",])
+        df = pd.DataFrame(columns=["Username", "Password", "Full Name", "Email"])
 
-    #Check for duplicate username
-    if username in df['Username'].astype(str).str.strip().values:
+    #Check if username already exists
+    if username in df["Username"].astype(str).tolist():
         return jsonify({"success": False, "message": "Username already exists"}), 400
 
-    #Add new admin
     new_row = {
         "Username": username,
-        "Password": password,  
-        "Email": email,
+        "Password": password,
+        "Full Name": full_name,
+        "Email": email
     }
+
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     df.to_csv(Accounts, index=False, encoding='cp1252')
 
-    return jsonify({"success": True, "message": "Admin created successfully"})
+    return jsonify({"success": True, "message": "Admin account created"})
+
+@app.route('/api/admins', methods=['GET'])
+def get_admin_list():
+    df = pd.read_csv(Accounts, encoding='cp1252').fillna('')
+    return jsonify(df.to_dict(orient="records"))
+
+
 #-------------------------END POINT-------------------------
 
 #Back and Front end connection:

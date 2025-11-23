@@ -58,36 +58,26 @@ export default function AdminLoginScreen({ navigation }) {
   const closeModal = () => setModal({ show: false, message: "" });
 
   const handleLogin = async () => {
-    if (!username || !password) {
-      setError("Please enter username and password.");
-      return;
-    }
+    const response = await fetch(`${API_URL}/api/admin/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
 
-    try {
-      const response = await fetch(`${API_URL}/api/admin/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+    const result = await response.json();
 
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        showModal("Login successful!");
-        setUsername("");
-        setPassword("");
-        setError("");
-        setTimeout(() => {
-          closeModal();
-          navigation.navigate("AdminDashboard");
-        }, 1500);
-      } else {
-        setError(result.message || "Login failed.");
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("Cannot connect to server.");
-    }
+    if (response.ok && result.success) {
+      showModal("Login successful!");
+      setUsername("");
+      setPassword("");
+      setError("");
+      setTimeout(() => {
+        closeModal();
+        navigation.navigate("AdminDashboard");
+      }, 1500);
+    } else {
+      setError(result.message || "Login failed.");
+    } 
   };
 
   return (

@@ -2,9 +2,7 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Modal } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import Layout from "../../../components/Layout";
-
-const HARDCODED_USER = "admin";
-const HARDCODED_PASS = "password123";
+import { API_URL } from "@env";
 
 // MODAL ALERT
 function ModalAlert({ visible, message, onClose }) {
@@ -54,13 +52,21 @@ export default function AdminLoginScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [showPW, setShowPW] = useState(false);
   const [error, setError] = useState("");
-  // modal
   const [modal, setModal] = useState({ show: false, message: "" });
+
   const showModal = (message) => setModal({ show: true, message });
   const closeModal = () => setModal({ show: false, message: "" });
 
-  const handleLogin = () => {
-    if (username === HARDCODED_USER && password === HARDCODED_PASS) {
+  const handleLogin = async () => {
+    const response = await fetch(`${API_URL}/api/admin/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
       showModal("Login successful!");
       setUsername("");
       setPassword("");
@@ -70,16 +76,17 @@ export default function AdminLoginScreen({ navigation }) {
         navigation.navigate("AdminDashboard");
       }, 1500);
     } else {
-      setError("Incorrect username or password.");
-    }
+      setError(result.message || "Login failed.");
+    } 
   };
 
   return (
     <Layout navigation={navigation}>
-      <ModalAlert visible={modal.show} message={modal.message} onClose={closeModal} />
+      <ModalAlert visible={modal.show} message={modal.message} />
       <View style={styles.card}>
         <Text style={styles.title}>Admin Login</Text>
         <Text style={styles.subtitle}>Enter your credentials to access the admin panel.</Text>
+
         <TextInput
           style={styles.input}
           placeholder="Username"
@@ -93,6 +100,7 @@ export default function AdminLoginScreen({ navigation }) {
           returnKeyType="next"
           blurOnSubmit={false}
         />
+
         <View style={styles.pwRow}>
           <TextInput
             ref={(ref) => { this.passwordInput = ref; }}
@@ -109,12 +117,15 @@ export default function AdminLoginScreen({ navigation }) {
             <MaterialIcons name={showPW ? "visibility" : "visibility-off"} size={24} color="#197278" />
           </TouchableOpacity>
         </View>
+
         {error ? <Text style={{ color: "red", marginTop: 4 }}>{error}</Text> : null}
+
         <TouchableOpacity style={styles.loginBtn} onPress={handleLogin}>
           <Text style={styles.loginBtnText}>Login</Text>
         </TouchableOpacity>
-        <Text style={{marginTop:10,color:"#888",fontSize:12}}>
-          Demo login: admin / password123
+
+        <Text style={{ marginTop: 10, color: "#888", fontSize: 12 }}>
+          Demo login (optional if backend empty): admin / password123
         </Text>
       </View>
     </Layout>

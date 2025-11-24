@@ -269,13 +269,13 @@ def get_admin_stats():
                 "complaints": []
             }), 200
     
-    # Normalize column names
+    #Normalize column names
     df.columns = df.columns.str.strip()
     
-    # Fill NaN values
+    #Fill NaN values
     df = df.fillna('')
     
-    # Define expected categories and statuses
+    #Define expected categories and statuses
     valid_agencies = [
         "DPWH", "DOH", "DENR", "OMBUDSMAN",
         "LTO", "MMDA", "PNP", "DEPED",
@@ -284,11 +284,11 @@ def get_admin_stats():
     
     valid_statuses = ["SOLVED", "SPAM", "UNDER REVIEW", "UNSOLVED"]
     
-    # Get the category column (Predicted Agency or Category)
+    #Get the category column (Predicted Agency or Category)
     category_col = "Predicted Agency" if "Predicted Agency" in df.columns else "Category"
     status_col = "Status" if "Status" in df.columns else None
     
-    # Initialize counts
+    #Initialize counts
     category_counts = {agency: 0 for agency in valid_agencies}
     status_counts = {status: 0 for status in valid_statuses}
     complaints = []
@@ -423,11 +423,11 @@ def submit_feedback():
     arranged_path = "CSVFile/ArrangedData.csv"
     arranged = pd.read_csv(arranged_path, encoding='cp1252').fillna('')
 
-    # Check if complaint exists in ArrangedData
+    #Check if complaint exists in ArrangedData
     if complaint_id not in arranged['ID'].astype(str).values:
         return jsonify({"success": False, "message": "Complaint ID not found"})
 
-    # Load Archive
+    #Load Archive
     archive_path = "CSVFile/Archive.csv"
     archive = pd.read_csv(archive_path, encoding='cp1252').fillna('') if os.path.exists(archive_path) else pd.DataFrame(columns=[
         "ID", "Name", "Complaint", "Location", "Agency", "Image ID", "Status", "Remark", "Feedback"
@@ -460,6 +460,7 @@ def submit_feedback():
 
 #-------------------------COMPLAINT LIST SCREEN BACKEND-------------------------
 
+#Active Complaints
 @app.route("/api/complaints")
 def get_active_complaints():
     df = df[df["Status"].isin(["UNSOLVED", "UNDER REVIEW"])]
@@ -474,6 +475,7 @@ def get_active_complaints():
     df = df[df["Status"].isin(["UNSOLVED", "UNDER REVIEW"])]
     return jsonify(df.to_dict(orient="records"))
 
+#Archive Complaints
 @app.route("/api/archive_complaints")
 def get_archive_complaints():
     path = "CSVFile/Archive.csv"
@@ -487,16 +489,120 @@ def get_archive_complaints():
     df = df[df["Status"].isin(["SOLVED", "SPAM"])]
     return jsonify(df.to_dict(orient="records"))
 
-#-------------------------Home Screen Announcement Backend-------------------------
+#-------------------------ANNOUNCEMENT EDIT BACKEND-------------------------
 
+#Shows announcements
 @app.route('/api/announcements', methods=['GET'])
 def get_announcements():
-    try:
-        df = pd.read_csv("CSVFile/Announcements.csv", encoding='cp1252').fillna('')
-        return jsonify(df.to_dict(orient='records'))
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    ar = pd.read_csv("CSVFile/Announcements.csv", encoding='cp1252')
+
+    #Clean and convert types
+    ar['Space'] = pd.to_numeric(ar['Space'], errors='coerce').fillna(0).astype(int)
+
+    ar = ar.sort_values(by='Space')
+
+    return jsonify([
+        {
+            "space": int(row["Space"]),
+            "title": row["Title"],
+            "body": row["Body"],
+        }
+        for _, row in ar.iterrows()
+    ])
+
+#Updates announcements
+@app.route('/api/announcements', methods=['POST'])
+def update_announcement():
+    data = request.get_json()
+    space = int(data.get("Space"))  
+    title = data.get("Title") or ""
+    body = data.get("Body") or ""
+
+    ar = pd.read_csv("CSVFile/Announcements.csv", encoding='cp1252')
+
+    ar['Space'] = pd.to_numeric(ar['Space'], errors='coerce').fillna(0).astype(int)
+
+    if space in ar['Space'].values:
+        ar.loc[ar['Space'] == space, ['Title', 'Body']] = [title, body]
+    else:
+        new_row = {"Space": space, "Title": title, "Body": body}
+        ar = pd.concat([ar, pd.DataFrame([new_row])], ignore_index=True)
+
+    ar = ar.sort_values(by='Space').reset_index(drop=True)
+    ar.to_csv("CSVFile/Announcements.csv", index=False, encoding='cp1252')
+
+    return jsonify({"message": "Announcement updated"}), 200
+
+#-------------------------ACCOUNT LOGIN BACKEND-------------------------
+Accounts = "CSVFile/Accounts.csv"
+@app.route('/api/admin/login', methods=['POST'])
+def admin_login():
+    data = request.get_json()
+    username = str(data.get("username", "")).strip()
+    password = str(data.get("password", "")).strip()
+
+    if not username or not password:
+        return jsonify({"success": False, "message": "Username and password required"}), 400
+
+    if not os.path.exists(Accounts):
+        return jsonify({"success": False, "message": "Accounts database not found"}), 500
+
+    accounts_df = pd.read_csv(Accounts, encoding='cp1252').fillna('')
+
+    matched = accounts_df[
+        (accounts_df['Username'].astype(str).str.strip() == username) &
+        (accounts_df['Password'].astype(str).str.strip() == password)  
+    ]
+
+    if not matched.empty:
+        return jsonify({"success": True, "message": "Login successful"})
+    else:
+        return jsonify({"success": False, "message": "Incorrect username or password"}), 401
     
+#-------------------------NEW ACCOUNT BACKEND-------------------------
+#For future: add hashlib for password hashing
+@app.route("/api/admins", methods=["POST"])
+def NewAdmins():
+    #Load CSV
+    Accounts = "CSVFile/Accounts.csv"
+
+    data = request.get_json()
+    username = str(data.get("username", "")).strip()
+    password = str(data.get("password", "")).strip()
+    full_name = str(data.get("name", "")).strip()
+    email = str(data.get("email", "")).strip()
+
+    #Check required fields before passing
+    if not username or not password:
+        return jsonify({"success": False, "message": "Username, password, and name are required"}), 400
+
+    if os.path.exists(Accounts):
+        df = pd.read_csv(Accounts, encoding='cp1252').fillna('')
+    else:
+        df = pd.DataFrame(columns=["Username", "Password", "Full Name", "Email"])
+
+    #Check if username already exists
+    if username in df["Username"].astype(str).tolist():
+        return jsonify({"success": False, "message": "Username already exists"}), 400
+
+    new_row = {
+        "Username": username,
+        "Password": password,
+        "Full Name": full_name,
+        "Email": email
+    }
+
+    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+    df.to_csv(Accounts, index=False, encoding='cp1252')
+
+    return jsonify({"success": True, "message": "Admin account created"})
+
+@app.route('/api/admins', methods=['GET'])
+def get_admin_list():
+    df = pd.read_csv(Accounts, encoding='cp1252').fillna('')
+    return jsonify(df.to_dict(orient="records"))
+
+
 #-------------------------END POINT-------------------------
 
 #Back and Front end connection:

@@ -93,8 +93,8 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.announcements}>
               {announcements.map((item, index) => (
                 <View key={index} style={styles.announceCard}>
-                  <Text style={styles.announceCardTitle}>{item.Title}</Text>
-                  <Text style={styles.announceBody}>{item.Body}</Text>
+                  <Text style={styles.announceCardTitle}>{item.title}</Text>
+                  <Text style={styles.announceBody}>{item.body}</Text>
                 </View>
               ))}
             </View>

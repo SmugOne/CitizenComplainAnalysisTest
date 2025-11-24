@@ -9,12 +9,13 @@ import {
   ActivityIndicator,
   Alert,
   useWindowDimensions,
+  Modal,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker"; 
 import LayoutAdmin from "../../../components/LayoutAdmin";
 import { API_URL } from "@env";
 
-// Responsive helper
+//Responsive helper
 function useIsNarrowScreen() {
   const { width } = useWindowDimensions();
   return width < 900;
@@ -23,30 +24,43 @@ function useIsNarrowScreen() {
 export default function ManageAdminUserScreen({ navigation }) {
   const isNarrow = useIsNarrowScreen();
 
-  // Admin form state
+  //Admin form state
+  const [modalVisible, setModalVisible] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
-  // Data
+  //Data state
   const [admins, setAdmins] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [loadingAdmins, setLoadingAdmins] = useState(false);
   const [loadingAnns, setLoadingAnns] = useState(false);
   const [creating, setCreating] = useState(false);
 
-  // Announcement edit state
+  //Announcement edit state
   const [editingAnn, setEditingAnn] = useState({});
   const [newAnnTitle, setNewAnnTitle] = useState("");
   const [newAnnBody, setNewAnnBody] = useState("");
   const [creatingAnn, setCreatingAnn] = useState(false);
-  const [selectedSpaces, setSelectedSpaces] = useState({});
+  const [selectedSpaces, setSelectedSpaces] = useState({ space: 1 });
+
+  //Validation modal state
+  const [validationModalVisible, setValidationModalVisible] = useState(false);
+  const [validationMessage, setValidationMessage] = useState("");
 
   useEffect(() => {
     fetchAdmins();
     fetchAnnouncements();
   }, []);
+
+  useEffect(() => {
+    if (announcements.length > 0 && selectedSpaces.space === null) {
+      const firstSpace = announcements[0].space;
+      setSelectedSpaces({ space: firstSpace });
+      setEditingAnn({ title: announcements[0].title, body: announcements[0].body });
+    }
+  }, [announcements]);
 
   async function fetchAdmins() {
     setLoadingAdmins(true);
@@ -68,7 +82,8 @@ export default function ManageAdminUserScreen({ navigation }) {
       const res = await fetch(`${API_URL}/api/announcements`);
       const data = await res.json();
       setAnnouncements(Array.isArray(data) ? data : []);
-    } catch {
+    } catch (err) {
+      console.error(err);
       setAnnouncements([]);
       Alert.alert("Error", "Failed to load announcements.");
     } finally {
@@ -76,7 +91,7 @@ export default function ManageAdminUserScreen({ navigation }) {
     }
   }
 
-  // Create new admin
+  //Create new admin
   async function createAdmin() {
     if (!username.trim() || !password.trim() || !name.trim()) {
       Alert.alert("Validation", "Username, password and name are required.");
@@ -103,52 +118,38 @@ export default function ManageAdminUserScreen({ navigation }) {
     }
   }
 
-  // Announcement Edit helpers
-  function startEdit(id, ann) {
-    setEditingAnn({ id, title: ann.title, body: ann.body });
-  }
-  function stopEdit() {
-    setEditingAnn({});
-  }
+  //Announcement Edit 
   async function saveEdit() {
-    try {
-      const res = await fetch(`${API_URL}/api/announcements/${editingAnn.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: editingAnn.title, body: editingAnn.body }),
-      });
-      if (!res.ok) {
-        throw new Error("Failed to update announcement.");
-      }
-      stopEdit();
-      fetchAnnouncements();
-      Alert.alert("Updated", "Announcement updated!");
-    } catch (e) {
-      Alert.alert("Error", e.message);
+    if (!editingAnn.title.trim() || !editingAnn.body.trim()) {
+      setValidationMessage("The title or the body of the announcement is missing!");
+      setValidationModalVisible(true);
+      return;
     }
-  }
-  // Create new announcement
-  async function createAnnouncement() {
-    if (!newAnnTitle.trim()) { Alert.alert("Validation", "Title required."); return; }
-    setCreatingAnn(true);
+
     try {
       const res = await fetch(`${API_URL}/api/announcements`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newAnnTitle, body: newAnnBody }),
+        body: JSON.stringify({
+          Space: selectedSpaces.space, 
+          Title: editingAnn.title,
+          Body: editingAnn.body,
+        }),
       });
+
       if (!res.ok) {
-        throw new Error("Failed to create announcement.");
+        const errText = await res.text();
+        throw new Error(errText || "Failed to update announcement.");
       }
-      setNewAnnTitle(""); setNewAnnBody("");
-      fetchAnnouncements();
-      Alert.alert("Added", "Announcement created.");
+
+      await fetchAnnouncements();
+
+      setModalVisible(true);
     } catch (e) {
       Alert.alert("Error", e.message);
-    } finally {
-      setCreatingAnn(false);
     }
   }
+
 
   return (
     <LayoutAdmin navigation={navigation}>
@@ -165,60 +166,117 @@ export default function ManageAdminUserScreen({ navigation }) {
             <TouchableOpacity onPress={createAdmin} style={[styles.button, creating && { opacity: 0.6 }]} disabled={creating}>
               {creating ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Create Admin</Text>}
             </TouchableOpacity>
-            <Text style={[styles.subtitle, { marginTop: 28, marginBottom: 8 }]}>Admin List</Text>
-            {loadingAdmins ? <ActivityIndicator /> : admins.map(a =>
-              <View key={a.id ?? a._id ?? a.username} style={styles.userRow}>
-                <Text style={styles.userName}>{a.name} <Text style={styles.userMeta}>({a.username})</Text></Text>
-                <Text style={styles.userMeta}>{a.email}</Text>
-              </View>
-            )}
-          </View>
 
-          {/* RIGHT: Announcements Management */}
+            {/* Admin List */}
+            <Text style={[styles.subtitle, { marginTop: 28, marginBottom: 8 }]}>Admin List</Text>
+
+            {loadingAdmins ? (
+              <ActivityIndicator />
+            ) : (
+              <ScrollView horizontal style={{ marginBottom: 12 }}>
+                <View>
+                  {/* HEADER ROW */}
+                  <View style={styles.headerRow}>
+                    <Text style={[styles.headerCell, { width: 150 }]}>Name</Text>
+                    <Text style={[styles.headerCell, { width: 140 }]}>Username</Text>
+                    <Text style={[styles.headerCell, { width: 200 }]}>Email</Text>
+                  </View>
+
+                  {/* DATA ROWS */}
+                  {admins.length === 0 ? (
+                    <Text style={{ marginTop: 10, fontStyle: "italic" }}>No admins found.</Text>
+                  ) : (
+                    admins.map((a, index) => (
+                      <View
+                        key={index}
+                        style={[
+                          styles.dataRow,
+                          { backgroundColor: index % 2 === 0 ? "#fff" : "#f8f8f8" }
+                        ]}
+                      >
+                        <Text style={[styles.dataCell, { width: 150 }]}>{a["Full Name"]}</Text>
+                        <Text style={[styles.dataCell, { width: 140 }]}>{a["Username"]}</Text>
+                        <Text style={[styles.dataCell, { width: 200 }]}>{a["Email"]}</Text>
+                      </View>
+                    ))
+                  )}
+                </View>
+              </ScrollView>
+            )}
+            </View>
+
+          {/* Validation Modal */}
+          <Modal
+            transparent={true}
+            visible={validationModalVisible}
+            animationType="fade"
+            onRequestClose={() => setValidationModalVisible(false)}
+          >
+            <View style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: 'rgba(0,0,0,0.3)',
+            }}>
+              <View style={{ backgroundColor: '#fff', padding: 24, borderRadius: 12, alignItems: 'center', width: '80%' }}>
+                <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 12 }}>
+                  {validationMessage}
+                </Text>
+                <TouchableOpacity 
+                  onPress={() => setValidationModalVisible(false)} 
+                  style={{ backgroundColor: '#197278', padding: 8, borderRadius: 6 }}
+                >
+                  <Text style={{ color: '#fff' }}>OK</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        
+
+          {/* RIGHT: ANNOUNCEMENTS */}
           <View style={[styles.col, { flex: 2, marginLeft: isNarrow ? 0 : 18, marginTop: isNarrow ? 26 : 0 }]}>
             <Text style={styles.subtitle}>Edit Announcements</Text>
 
-            {/* Space selector */}
             <Text style={{ fontWeight: "bold", marginBottom: 6 }}>Select Space</Text>
+
             <Picker
-              selectedValue={selectedSpaces.space || "1"}
+              selectedValue={selectedSpaces.space}
               onValueChange={(val) => {
-                setSelectedSpaces({ ...selectedSpaces, space: val });
-                // Find the announcement for the selected space
-                const ann = announcements.find(a => String(a.space) === val);
-                if (ann) setEditingAnn({ id: ann.id ?? ann._id ?? val, title: ann.title, body: ann.body });
-                else setEditingAnn({ id: val, title: "", body: "" }); // empty if none yet
+                const intVal = parseInt(val, 10);
+                setSelectedSpaces({ space: intVal });
+                const ann = announcements.find(a => a.space === intVal);
+                if (ann) {
+                  setEditingAnn({ title: ann.title, body: ann.body });
+                } else {
+                  setEditingAnn({ title: "", body: "" });
+                }
               }}
-              style={{height: 60, width: "100%", fontSize: 15, borderWidth: 1, borderColor: "#ccc", borderRadius: 8, backgroundColor: "#fff",}}
-              itemStyle={{ fontSize: 15, height: 60 }}
             >
-              {["1", "2", "3"].map(s => (
-                <Picker.Item key={s} label={`Space ${s}`} value={s} />
+              {announcements.map(a => (
+                <Picker.Item key={a.space} label={`Space ${a.space}`} value={a.space} />
               ))}
             </Picker>
 
-            {/* Editing form for the selected space */}
             <View style={[styles.annCard, { marginTop: 14 }]}>
+              <Text style={{ fontWeight: "bold", marginBottom: 6 }}>Title</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Title"
-                value={editingAnn.title || ""}
+                value={editingAnn.title}
                 onChangeText={(t) => setEditingAnn(e => ({ ...e, title: t }))}
               />
 
+              <Text style={{ fontWeight: "bold", marginBottom: 6 }}>Body</Text>
               <TextInput
                 style={[styles.input, { minHeight: 60 }]}
                 placeholder="Body"
                 multiline
-                value={editingAnn.body || ""}
+                value={editingAnn.body}
                 onChangeText={(t) => setEditingAnn(e => ({ ...e, body: t }))}
               />
 
               <View style={styles.actionRow}>
-                <TouchableOpacity
-                  style={[styles.actionBtn, styles.saveBtn]}
-                  onPress={saveEdit}
-                >
+                <TouchableOpacity style={[styles.actionBtn, styles.saveBtn]} onPress={saveEdit}>
                   <Text style={styles.actionBtnText}>Update</Text>
                 </TouchableOpacity>
 
@@ -226,12 +284,35 @@ export default function ManageAdminUserScreen({ navigation }) {
                   style={[styles.actionBtn, styles.cancelBtn]}
                   onPress={() => setEditingAnn({ title: "", body: "" })}
                 >
-                  <Text style={[styles.actionBtnText, { color: "#11493f" }]}>Cancel</Text>
+                  <Text style={[styles.actionBtnText, { color: "#11493f" }]}>Clear</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </View>
+
+        {/* Modal for announcement update */}
+        <Modal
+          transparent={true}
+          visible={modalVisible}
+          animationType="fade"
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0,0,0,0.3)',
+          }}>
+            <View style={{ backgroundColor: '#fff', padding: 24, borderRadius: 12, alignItems: 'center' }}>
+              <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 12 }}>Announcement Updated</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)} style={{ backgroundColor: '#197278', padding: 8, borderRadius: 6 }}>
+                <Text style={{ color: '#fff' }}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
       </ScrollView>
     </LayoutAdmin>
   );
@@ -256,4 +337,12 @@ const styles = StyleSheet.create({
   saveBtn: { backgroundColor: "#197278" },
   cancelBtn: { backgroundColor: "#fde2a6" },
   actionBtnText: { fontWeight: "bold", color: "#ffffffff", fontSize: 15 },
+  headerRow: {flexDirection: "row", backgroundColor: "#197278", paddingVertical: 10, borderTopLeftRadius: 8, borderTopRightRadius: 8,},
+  headerCell: {color: "#ffd66b", fontWeight: "bold", paddingHorizontal: 8,},
+  dataRow: {flexDirection: "row", paddingVertical: 10,},
+  dataCell: {paddingHorizontal: 8, color: "#11493f", fontSize: 14,},
+  headerRow: {flexDirection: "row", backgroundColor: "#197278", paddingVertical: 10, borderTopLeftRadius: 8, borderTopRightRadius: 8,},
+  headerCell: {color: "#ffd66b", fontWeight: "bold", paddingHorizontal: 8,},
+  dataRow: {flexDirection: "row", paddingVertical: 10,},
+  dataCell: {paddingHorizontal: 8, color: "#11493f", fontSize: 14,},
 });

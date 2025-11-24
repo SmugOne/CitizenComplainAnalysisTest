@@ -114,14 +114,18 @@ export default function ComplaintListScreen({ navigation }) {
     })
       .then(res => res.json())
       .then(() => {
+
         setModalMessage("Complaint updated.");
-        setModalVisible(true);  
+        setModalVisible(true);
+
+        refetchComplaints();
+        setScreen("table");
       })
       .catch(() => {
         setModalMessage("Error updating complaint.");
         setModalVisible(true);
       });
-    };
+  };
 
 
   //Refetch function
@@ -148,7 +152,7 @@ export default function ComplaintListScreen({ navigation }) {
       const agency = (c.Agency || c["Predicted Agency"] || c["Category"] || "").toUpperCase();
       const stat = (c.Status || "").toUpperCase();
 
-      // Status filter logic
+      //Status filter logic
       let statusMatch = true;
       if (status && status !== "All") {
         statusMatch = stat === status.toUpperCase();
@@ -266,13 +270,7 @@ export default function ComplaintListScreen({ navigation }) {
         <MyModal
           visible={modalVisible}
           message={modalMessage}
-          onClose={() => {
-            setModalVisible(false);   
-            if (modalMessage === "Complaint updated.") {
-              refetchComplaints();    
-              setScreen("table");     
-            }
-          }}
+          onClose={() => setModalVisible(false)}
         />
 
         {/* Widgets */}
@@ -316,6 +314,9 @@ export default function ComplaintListScreen({ navigation }) {
         </View>
 
         {/* Table */}
+        {viewMode === "Active" ? (
+        <Text style={{ fontWeight: "bold", marginBottom: 6, alignContent: "center", }}>The Active Complaint list is an organized ranking of the top priority complaints based on emotional urgency.</Text>
+        ) : null}
         <ScrollView style={{ maxHeight: 400 }}>
           <View style={styles.tableContainer}>
             <View style={styles.tableHeader}>

@@ -6,6 +6,7 @@ import pandas as pd
 import joblib
 import uuid
 import gspread
+import json
 
 from oauth2client.service_account import ServiceAccountCredentials
 from sklearn.preprocessing import PolynomialFeatures
@@ -15,42 +16,38 @@ from sklearn.pipeline import make_pipeline
 from werkzeug.utils import secure_filename
 from transformers import pipeline
 from collections import Counter
-
-
-#To do:
-# - Set dataset to Google Sheets. Get API.
-
-#-------------------------GOOGLE SHEETS API-------------------------
-# Define scope
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-
-# Load service account credentials
-creds = ServiceAccountCredentials.from_json_keyfile_name("keys/service_account.json", scope)
-client = gspread.authorize(creds)
-
-# Open your spreadsheet
-spreadsheet = client.open("PublicComplaintDatabase")
-
-# Access a sheet
-complaints_sheet = spreadsheet.worksheet("ComplaintsData")
-
-# Read all rows
-all_data = complaints_sheet.get_all_records()
-print(all_data)
-
-# Example: append a new row
-new_row = ["ID", "Name", "Complaint", "Location", "Status"]
-complaints_sheet.append_row(new_row)
+from sklearn.pipeline import make_pipeline
 
 #Connection:
 load_dotenv()
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
 
-# Ensure CSVFile directory exists
-os.makedirs("CSVFile", exist_ok=True)
+#-------------------------GOOGLE SHEETS API-------------------------
+#Define scope
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
-data = pd.DataFrame(complaints_sheet.get_all_records())
+#Load service account credentials
+creds = ServiceAccountCredentials.from_json_keyfile_name("JSON Key\CredentialsKey.json", scope)
+client = gspread.authorize(creds)
+spreadsheet = client.open("Main Database")
+
+#Load worksheets
+training_sheet = spreadsheet.worksheet("TrainingDataset")
+complaints_sheet = spreadsheet.worksheet("ComplaintsData")
+arranged_sheet = spreadsheet.worksheet("ArrangedData")
+archive_sheet = spreadsheet.worksheet("Archive")
+announcements_sheet = spreadsheet.worksheet("Announcements")
+accounts_sheet = spreadsheet.worksheet("Accounts")
+
+#Convert sheets to pandas DataFrame
+TrainingData = pd.DataFrame(training_sheet.get_all_records())
+ComplaintsData = pd.DataFrame(complaints_sheet.get_all_records())
+ArrangedData = pd.DataFrame(arranged_sheet.get_all_records())
+Archive = pd.DataFrame(archive_sheet.get_all_records())
+Announcements = pd.DataFrame(announcements_sheet.get_all_records())
+Accounts = pd.DataFrame(accounts_sheet.get_all_records())
+
 
 #BACKEND DEVELOPMENT ----------------------------------
 
@@ -103,43 +100,49 @@ def run_arrangement():
     password = data.get('password') or ''
 
     #Datasets:
-    Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
+    try:
+        existing_records = complaints_sheet.get_all_records()
+        df_db = pd.DataFrame(existing_records)
+    except:
+        df_db = pd.DataFrame()
 
-    #Assign new ID based on the last one
-    if Database.empty:
+    #Assign new ID based on last one
+    if df_db.empty or 'ID' not in df_db.columns:
         ID = 1
     else:
-        ID = Database['ID'].max() + 1
+        ID = int(df_db['ID'].max()) + 1
 
     #Add new entry to the database
-    new_row = {
-        'ID': ID,
-        'Name': name,
-        'Raw Complaint': complaint,
-        'Location': str(location),
-        'Category': str(category),
-        'Image ID': str(imageID),
-        'Status': str(status),
-        'Password': str(password),
-    }
-    Database = pd.concat([Database, pd.DataFrame([new_row])], ignore_index=True)
-    Database = Database.fillna('')
+    new_row = [
+        ID,
+        name,
+        complaint,
+        str(location),
+        str(category),
+        str(imageID),
+        str(status),
+        str(password),
+        ""  # Remark field
+    ]
 
     #Save updated database and returns it
-    Database.to_csv("CSVFile/ComplaintsData.csv", index=False, encoding='cp1252')
+    complaints_sheet.append_row(new_row)
+
     Main()
 
     #Return ID to frontend. Do not remove
-    return jsonify({"message": "Complaint submitted successfully", "ID": str(int(ID))})
+    return jsonify({
+        "message": "Complaint submitted successfully",
+        "ID": str(new_row)
+    })
 
 #-------------------------MAIN ALGORITHM LIST BACKEND-------------------------
 
 #Training Model and Classification Algorithms:
 def Main():
     #Datasets:
-    Database = pd.read_csv("CSVFile/ComplaintsData.csv", encoding='cp1252')
-    Database = Database.fillna('')
-    Training_Data = pd.read_csv("CSVFile/TrainingDataset.csv", encoding='cp1252')
+    Database = pd.DataFrame(complaints_sheet.get_all_records())
+    Training_Data = pd.DataFrame(training_sheet.get_all_records())
 
     #Set Status if empty
     Database['Status'] = Database['Status'].replace('', 'UNSOLVED')
@@ -223,8 +226,9 @@ def Main():
         'Predicted Agency', 'Flagged Words', 'Image ID', 'Status', 'Password', 'Remark',
     ]]
 
-    #Save and return file
-    output.to_csv("CSVFile/ArrangedData.csv", index=False)
+    #Save and return to GSheets
+    arranged_sheet.clear()
+    arranged_sheet.update([output.columns.values.tolist()] + output.values.tolist())
     return output
 
 #-------------------------TRACK COMPLAINT BACKEND-------------------------
@@ -234,26 +238,22 @@ def Main():
 def track_complaint(complaint_id):
     complaint_id = str(complaint_id).strip()
     
-    #Load live complaints
-    ArrangedData = pd.read_csv('CSVFile/ArrangedData.csv', encoding='cp1252').fillna('')
+    # Load live complaints from Google Sheets
+    ArrangedData = pd.DataFrame(arranged_sheet.get_all_records())
+    ArchiveData = pd.DataFrame(archive_sheet.get_all_records())
+
     found_live = ArrangedData[ArrangedData['ID'].astype(str) == complaint_id]
 
     if not found_live.empty:
         complaint_data = found_live.iloc[0].to_dict()
         status = complaint_data['Status'].upper()
         
-        if status in ['UNSOLVED']:
-            complaint_data['Remarks'] = ""
-            return jsonify({"found": True, "complaint": complaint_data})
-        
-        #If SOLVED or SPAM, fetch archive for Remarks
-        df_archive = pd.read_csv('CSVFile/Archive.csv', encoding='cp1252').fillna('')
-        found_archive = df_archive[df_archive['ID'].astype(str) == complaint_id]
-        
-        if not found_archive.empty:
-            complaint_data['Remarks'] = found_archive.iloc[0].get('Remark', '')
+        if status == 'UNSOLVED':
+            complaint_data['Remark'] = ""
         else:
-            complaint_data['Remarks'] = ""
+            #If SOLVED or SPAM, fetch archive for Remark
+            found_archive = ArchiveData[ArchiveData['ID'].astype(str) == complaint_id]
+            complaint_data['Remark'] = found_archive.iloc[0].get('Remark', '') if not found_archive.empty else ""
         
         return jsonify({"found": True, "complaint": complaint_data})
 
@@ -398,27 +398,30 @@ def update_complaint():
         status = "UNDER REVIEW"
 
     #Update ArrangedData.csv
-    arranged_path = "CSVFile/ArrangedData.csv"
-    arranged = pd.read_csv(arranged_path, encoding='cp1252')
-    arranged.loc[arranged['ID'].astype(str) == complaint_id, ['Status', 'Predicted Agency']] = [status, agency]
-    arranged.to_csv(arranged_path, index=False, encoding='cp1252')
+    arranged_df = pd.DataFrame(arranged_sheet.get_all_records())
+    mask = arranged_df['ID'].astype(str) == complaint_id
+    if mask.any():
+        arranged_df.loc[mask, ['Status', 'Predicted Agency']] = [status, agency]
+        # Push back to Google Sheets
+        arranged_sheet.clear()
+        arranged_sheet.update([arranged_df.columns.values.tolist()] + arranged_df.values.tolist())
 
     #Update ComplaintsData.csv (add Remark column if not exists)
-    list_path = "CSVFile/ComplaintsData.csv"
-    comp_list = pd.read_csv(list_path, encoding='cp1252')
-    if "Remark" not in comp_list.columns:
-        comp_list["Remark"] = ""
-    comp_list.loc[comp_list['ID'].astype(str) == complaint_id, ['Status', 'Category', 'Remark']] = [status, agency, remark]
-    comp_list.to_csv(list_path, index=False, encoding='cp1252')
+    complaints_df = pd.DataFrame(complaints_sheet.get_all_records())
+    if "Remark" not in complaints_df.columns:
+        complaints_df["Remark"] = ""
+    mask = complaints_df['ID'].astype(str) == complaint_id
+    if mask.any():
+        complaints_df.loc[mask, ['Status', 'Category', 'Remark']] = [status, agency, remark]
+        complaints_sheet.clear()
+        complaints_sheet.update([complaints_df.columns.values.tolist()] + complaints_df.values.tolist())
+
 
     #Update Archive.csv
-    archive_path = "CSVFile/Archive.csv"
     if status.upper() in ["SOLVED", "SPAM"]:
-        archive = pd.read_csv(archive_path, encoding='cp1252') if os.path.exists(archive_path) else pd.DataFrame(columns=[ 
-            "ID", "Name", "Complaint", "Location", "Agency", "Image ID", "Status", "Remark"
-        ]) #If status is Solved or Spam, data is appended.
-
-        row_to_archive = comp_list.loc[comp_list['ID'].astype(str) == complaint_id, [
+        archive_df = pd.DataFrame(archive_sheet.get_all_records())
+        
+        row_to_archive = complaints_df.loc[complaints_df['ID'].astype(str) == complaint_id, [
             "ID", "Name", "Raw Complaint", "Location", "Category", "Image ID", "Status", "Remark"
         ]].copy()
 
@@ -426,12 +429,13 @@ def update_complaint():
         row_to_archive = row_to_archive.rename(columns={
             "Raw Complaint": "Complaint",
             "Category": "Agency",
-            "Remark": "Remark",
+            "Remark": "Remark"
         })
 
         #Append
-        archive = pd.concat([archive, row_to_archive], ignore_index=True)
-        archive.to_csv(archive_path, index=False, encoding='cp1252')
+        archive_df = pd.concat([archive_df, row_to_archive], ignore_index=True)
+        archive_sheet.clear()
+        archive_sheet.update([archive_df.columns.values.tolist()] + archive_df.values.tolist())
 
     return jsonify({"success": True})
 
@@ -446,18 +450,13 @@ def submit_feedback():
     if not complaint_id or not feedback:
         return jsonify({"success": False, "message": "Missing ID or feedback"})
 
-    arranged_path = "CSVFile/ArrangedData.csv"
-    arranged = pd.read_csv(arranged_path, encoding='cp1252').fillna('')
+    #Load Archive and ArrangedData
+    arranged_path = pd.DataFrame(arranged_sheet.get_all_records())
+    archive = pd.DataFrame(archive_sheet.get_all_records())
 
     #Check if complaint exists in ArrangedData
-    if complaint_id not in arranged['ID'].astype(str).values:
+    if complaint_id not in archive['ID'].astype(str).values:
         return jsonify({"success": False, "message": "Complaint ID not found"})
-
-    #Load Archive
-    archive_path = "CSVFile/Archive.csv"
-    archive = pd.read_csv(archive_path, encoding='cp1252').fillna('') if os.path.exists(archive_path) else pd.DataFrame(columns=[
-        "ID", "Name", "Complaint", "Location", "Agency", "Image ID", "Status", "Remark", "Feedback"
-    ])
 
     #Check if feedback already submitted
     if complaint_id in archive['ID'].astype(str).values:
@@ -470,7 +469,7 @@ def submit_feedback():
         archive.loc[archive['ID'].astype(str) == complaint_id, "Feedback"] = feedback
     else:
         #If complaint is not yet in Archive copy it from ArrangedData
-        row_to_archive = arranged.loc[arranged['ID'].astype(str) == complaint_id].copy()
+        row_to_archive = archive.loc[archive['ID'].astype(str) == complaint_id].copy()
         row_to_archive = row_to_archive.rename(columns={
             "Complaint": "Complaint",
             "Predicted Agency": "Agency",
@@ -480,7 +479,11 @@ def submit_feedback():
         row_to_archive["Feedback"] = feedback
         archive = pd.concat([archive, row_to_archive], ignore_index=True)
 
-    archive.to_csv(archive_path, index=False, encoding='cp1252')
+    archive_sheet.clear()
+
+    archive_sheet.update(
+        [archive.columns.values.tolist()] + archive.values.tolist()
+    )
 
     return jsonify({"success": True, "message": "Feedback submitted"})
 
@@ -489,42 +492,32 @@ def submit_feedback():
 #Active Complaints
 @app.route("/api/complaints")
 def get_active_complaints():
-    df = df[df["Status"].isin(["UNSOLVED", "UNDER REVIEW"])]
-    path = "CSVFile/ArrangedData.csv"
-    if os.path.exists(path):
-        df = pd.read_csv(path, encoding='cp1252').fillna('')
-    else:
-        df = pd.DataFrame(columns=[
-            "ID", "Name", "Raw Complaint", "Location",
-            "Category", "Image ID", "Status", "Password", "Remark"
-        ])
-    df = df[df["Status"].isin(["UNSOLVED", "UNDER REVIEW"])]
-    return jsonify(df.to_dict(orient="records"))
+    arranged_df = pd.DataFrame(arranged_sheet.get_all_records()).fillna('')
+
+    #Filter UNSOLVED and UNDER REVIEW
+    arranged_df = arranged_df[arranged_df["Status"].isin(["UNSOLVED", "UNDER REVIEW"])]
+
+    return jsonify(arranged_df.to_dict(orient="records"))
 
 #Archive Complaints
 @app.route("/api/archive_complaints")
 def get_archive_complaints():
-    path = "CSVFile/Archive.csv"
-    if os.path.exists(path):
-        df = pd.read_csv(path, encoding='cp1252').fillna('')
-    else:
-        df = pd.DataFrame(columns=[
-            "ID", "Name", "Complaint", "Location",
-            "Agency", "Image ID", "Status", "Remark", "Feedback"
-        ])
-    df = df[df["Status"].isin(["SOLVED", "SPAM"])]
-    return jsonify(df.to_dict(orient="records"))
+    archive_df = pd.DataFrame(archive_sheet.get_all_records()).fillna('')
+
+    #Filter SOLVED and SPAM
+    archive_df = archive_df[archive_df["Status"].isin(["SOLVED", "SPAM"])]
+
+    return jsonify(archive_df.to_dict(orient="records"))
 
 #-------------------------ANNOUNCEMENT EDIT BACKEND-------------------------
 
 #Shows announcements
 @app.route('/api/announcements', methods=['GET'])
 def get_announcements():
-    ar = pd.read_csv("CSVFile/Announcements.csv", encoding='cp1252')
+    records = announcements_sheet.get_all_records()
 
-    #Clean and convert types
+    ar = pd.DataFrame(records).fillna('')
     ar['Space'] = pd.to_numeric(ar['Space'], errors='coerce').fillna(0).astype(int)
-
     ar = ar.sort_values(by='Space')
 
     return jsonify([
@@ -540,27 +533,32 @@ def get_announcements():
 @app.route('/api/announcements', methods=['POST'])
 def update_announcement():
     data = request.get_json()
-    space = int(data.get("Space"))  
+    space = int(data.get("Space"))
     title = data.get("Title") or ""
     body = data.get("Body") or ""
 
-    ar = pd.read_csv("CSVFile/Announcements.csv", encoding='cp1252')
-
+    records = announcements_sheet.get_all_records()
+    ar = pd.DataFrame(records).fillna('')
     ar['Space'] = pd.to_numeric(ar['Space'], errors='coerce').fillna(0).astype(int)
 
+    #Update existing
     if space in ar['Space'].values:
         ar.loc[ar['Space'] == space, ['Title', 'Body']] = [title, body]
     else:
+        #Insert new entry
         new_row = {"Space": space, "Title": title, "Body": body}
         ar = pd.concat([ar, pd.DataFrame([new_row])], ignore_index=True)
 
     ar = ar.sort_values(by='Space').reset_index(drop=True)
-    ar.to_csv("CSVFile/Announcements.csv", index=False, encoding='cp1252')
+
+    #Rewrite the whole sheet
+    announcements_sheet.clear()
+    announcements_sheet.update([ar.columns.values.tolist()] + ar.values.tolist())
 
     return jsonify({"message": "Announcement updated"}), 200
 
 #-------------------------ACCOUNT LOGIN BACKEND-------------------------
-Accounts = "CSVFile/Accounts.csv"
+Accounts = pd.DataFrame(accounts_sheet.get_all_records())
 @app.route('/api/admin/login', methods=['POST'])
 def admin_login():
     data = request.get_json()
@@ -573,7 +571,7 @@ def admin_login():
     if not os.path.exists(Accounts):
         return jsonify({"success": False, "message": "Accounts database not found"}), 500
 
-    accounts_df = pd.read_csv(Accounts, encoding='cp1252').fillna('')
+    accounts_df = pd.DataFrame(accounts_sheet.get_all_records())
 
     matched = accounts_df[
         (accounts_df['Username'].astype(str).str.strip() == username) &
@@ -587,11 +585,7 @@ def admin_login():
     
 #-------------------------NEW ACCOUNT BACKEND-------------------------
 #For future: add hashlib for password hashing
-@app.route("/api/admins", methods=["POST"])
 def NewAdmins():
-    #Load CSV
-    Accounts = "CSVFile/Accounts.csv"
-
     data = request.get_json()
     username = str(data.get("username", "")).strip()
     password = str(data.get("password", "")).strip()
@@ -602,10 +596,8 @@ def NewAdmins():
     if not username or not password:
         return jsonify({"success": False, "message": "Username, password, and name are required"}), 400
 
-    if os.path.exists(Accounts):
-        df = pd.read_csv(Accounts, encoding='cp1252').fillna('')
-    else:
-        df = pd.DataFrame(columns=["Username", "Password", "Full Name", "Email"])
+    #Load accounts from Google Sheet
+    df = pd.DataFrame(accounts_sheet.get_all_records())
 
     #Check if username already exists
     if username in df["Username"].astype(str).tolist():
@@ -619,15 +611,19 @@ def NewAdmins():
     }
 
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-    df.to_csv(Accounts, index=False, encoding='cp1252')
+
+    # Push back to Google Sheet
+    accounts_sheet.clear()
+    accounts_sheet.update([df.columns.values.tolist()] + df.values.tolist())
 
     return jsonify({"success": True, "message": "Admin account created"})
 
+
 @app.route('/api/admins', methods=['GET'])
 def get_admin_list():
-    df = pd.read_csv(Accounts, encoding='cp1252').fillna('')
+    # Load accounts from Google Sheet
+    df = pd.DataFrame(accounts_sheet.get_all_records())
     return jsonify(df.to_dict(orient="records"))
-
 
 #-------------------------END POINT-------------------------
 

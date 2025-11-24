@@ -28,7 +28,9 @@ CORS(app)
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
 #Load service account credentials
-creds = ServiceAccountCredentials.from_json_keyfile_name("JSON Key\CredentialsKey.json", scope)
+creds = ServiceAccountCredentials.from_json_keyfile_name(
+    r"JSON Key/publiccomplaintprogram-1f431cc7f437.json", scope
+)
 client = gspread.authorize(creds)
 spreadsheet = client.open("Main Database")
 

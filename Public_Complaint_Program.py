@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS  
 from dotenv import load_dotenv
 import os
+import io
 import pandas as pd
 import joblib
 import uuid
@@ -13,6 +14,10 @@ from sklearn.pipeline import make_pipeline
 from werkzeug.utils import secure_filename
 from transformers import pipeline
 from collections import Counter
+from flask import render_template, send_file, request, jsonify
+from weasyprint import HTML, CSS
+from datetime import datetime
+
 
 
 #To do:
@@ -95,6 +100,7 @@ def run_arrangement():
         'Image ID': str(imageID),
         'Status': str(status),
         'Password': str(password),
+        'Date': datetime.now().strftime('%Y-%m-%d'),
     }
     Database = pd.concat([Database, pd.DataFrame([new_row])], ignore_index=True)
     Database = Database.fillna('')
@@ -602,6 +608,166 @@ def get_admin_list():
     df = pd.read_csv(Accounts, encoding='cp1252').fillna('')
     return jsonify(df.to_dict(orient="records"))
 
+
+#-------------------------REPORT GENERATOR-------------------------
+@app.route('/reports')
+def reports_page():
+    """Render the reports page"""
+    return render_template('reports.html')
+
+@app.route('/generate-report', methods=['POST'])
+def generate_report():
+    """Generate PDF report based on selected parameters"""
+    try:
+        # Get parameters from the request
+        report_type = request.form.get('report_type', 'summary')
+        date_from = request.form.get('date_from', '')
+        date_to = request.form.get('date_to', '')
+        category = request.form.get('category', 'all')
+        
+        # Fetch actual data from your CSV
+        report_data = fetch_report_data(report_type, date_from, date_to, category)
+        
+        # Render HTML template with data
+        html_content = render_template('report_template.html', data=report_data)
+        
+        # Generate PDF from HTML
+        pdf = HTML(string=html_content).write_pdf()
+        
+        # Create a BytesIO object to send the PDF
+        pdf_io = io.BytesIO(pdf)
+        pdf_io.seek(0)
+        
+        # Generate filename
+        filename = f"complaint_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        
+        return send_file(
+            pdf_io,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/preview-report', methods=['POST'])
+def preview_report():
+    """Preview report in HTML format before generating PDF"""
+    try:
+        report_type = request.form.get('report_type', 'summary')
+        date_from = request.form.get('date_from', '')
+        date_to = request.form.get('date_to', '')
+        category = request.form.get('category', 'all')
+        
+        # Fetch actual data
+        report_data = fetch_report_data(report_type, date_from, date_to, category)
+        
+        return render_template('report_template.html', data=report_data)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+def fetch_report_data(report_type, date_from, date_to, category):
+    """
+    Fetch and process complaint data for reports
+    """
+    # Load data from CSV
+    arranged_path = 'CSVFile/ArrangedData.csv'
+    archive_path = 'CSVFile/Archive.csv'
+    
+    # Load both active and archived complaints
+    if os.path.exists(arranged_path):
+        df_active = pd.read_csv(arranged_path, encoding='cp1252').fillna('')
+    else:
+        df_active = pd.DataFrame()
+    
+    if os.path.exists(archive_path):
+        df_archive = pd.read_csv(archive_path, encoding='cp1252').fillna('')
+    else:
+        df_archive = pd.DataFrame()
+    
+    # Combine both dataframes
+    df = pd.concat([df_active, df_archive], ignore_index=True)
+    
+    # Filter by category if specified
+    if category != 'all' and 'Predicted Agency' in df.columns:
+        df = df[df['Predicted Agency'].str.upper() == category.upper()]
+    elif category != 'all' and 'Agency' in df.columns:
+        df = df[df['Agency'].str.upper() == category.upper()]
+    
+    # Note: Date filtering is disabled until Date column is added
+    # To enable date filtering, add Date column to your complaints
+    
+    # Calculate statistics
+    total_complaints = len(df)
+    
+    # Count by status
+    resolved = len(df[df['Status'].str.upper() == 'SOLVED']) if 'Status' in df.columns else 0
+    spam = len(df[df['Status'].str.upper() == 'SPAM']) if 'Status' in df.columns else 0
+    pending = len(df[df['Status'].str.upper().isin(['UNSOLVED', 'UNDER REVIEW'])]) if 'Status' in df.columns else 0
+    
+    # Get category breakdown
+    category_col = 'Predicted Agency' if 'Predicted Agency' in df.columns else 'Agency'
+    if category_col in df.columns:
+        category_counts = df[category_col].value_counts().to_dict()
+        categories = [{'name': k, 'count': int(v)} for k, v in category_counts.items()]
+    else:
+        categories = []
+    
+    # Get location breakdown (top 5)
+    location_breakdown = []
+    if 'Location' in df.columns:
+        location_counts = df['Location'].value_counts().head(5).to_dict()
+        location_breakdown = [{'name': k, 'count': int(v)} for k, v in location_counts.items()]
+    
+    # Get emotion analysis (average scores)
+    emotion_scores = {}
+    emotion_cols = ['Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score', 'Sadness Score', 'Surprise Score']
+    for col in emotion_cols:
+        if col in df.columns:
+            avg_score = df[col].astype(float).mean()
+            emotion_scores[col.replace(' Score', '')] = round(avg_score, 2)
+    
+    # Count flagged complaints
+    flagged_count = 0
+    if 'Flagged Words' in df.columns:
+        flagged_count = len(df[df['Flagged Words'] == True])
+    
+    # Prepare report data
+    report_data = {
+        'title': f'{report_type.title()} Complaint Report',
+        'report_type': report_type,
+        'generated_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'date_from': date_from if date_from else 'All Time',
+        'date_to': date_to if date_to else 'Present',
+        'category': category.upper() if category != 'all' else 'All Categories',
+        'total_complaints': total_complaints,
+        'resolved': resolved,
+        'spam': spam,
+        'pending': pending,
+        'flagged': flagged_count,
+        'categories': categories,
+        'locations': location_breakdown,
+        'emotions': emotion_scores,
+        'resolution_rate': round((resolved / total_complaints * 100), 1) if total_complaints > 0 else 0,
+    }
+    
+    # Add detailed complaint list for detailed reports
+    if report_type == 'detailed' and not df.empty:
+        complaint_list = []
+        for _, row in df.head(50).iterrows():  # Limit to 50 for PDF size
+            complaint_list.append({
+                'id': row.get('ID', ''),
+                'name': row.get('Name', 'Anonymous'),
+                'complaint': row.get('Complaint', row.get('Raw Complaint', ''))[:200] + '...',  # Truncate long complaints
+                'location': row.get('Location', ''),
+                'agency': row.get('Predicted Agency', row.get('Agency', '')),
+                'status': row.get('Status', '')
+            })
+        report_data['complaints'] = complaint_list
+    
+    return report_data
 
 #-------------------------END POINT-------------------------
 

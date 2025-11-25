@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Reports - Citizen Complaint Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+        
+        select, input[type="date"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        select:focus, input[type="date"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .date-range {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert.active {
+            display: block;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #764ba2;
+            transform: translateX(-5px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Back to Dashboard</a>
+        
+        <h1>📊 Generate Reports</h1>
+        <p class="subtitle">Create comprehensive PDF reports of citizen complaints</p>
+        
+        <div id="alert" class="alert"></div>
+        
+        <form id="reportForm">
+            <div class="form-group">
+                <label for="report_type">Report Type</label>
+                <select id="report_type" name="report_type" required>
+                    <option value="summary">Summary Report</option>
+                    <option value="detailed">Detailed Report</option>
+                    <option value="category">Category Analysis</option>
+                    <option value="trend">Trend Analysis</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Date Range</label>
+                <div class="date-range">
+                    <div>
+                        <input type="date" id="date_from" name="date_from" required>
+                    </div>
+                    <div>
+                        <input type="date" id="date_to" name="date_to" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="category">Category Filter</label>
+                <select id="category" name="category">
+                    <option value="all">All Categories</option>
+                    <option value="infrastructure">Infrastructure</option>
+                    <option value="safety">Public Safety</option>
+                    <option value="sanitation">Sanitation</option>
+                    <option value="utilities">Utilities</option>
+                    <option value="health">Health Services</option>
+                </select>
+            </div>
+            
+            <div class="button-group">
+                <button type="button" class="btn-secondary" onclick="previewReport()">
+                    👁️ Preview
+                </button>
+                <button type="submit" class="btn-primary">
+                    📄 Generate PDF
+                </button>
+            </div>
+        </form>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Generating your report...</p>
+        </div>
+    </div>
+    
+    <script>
+        // Set default dates (last 30 days)
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+        
+        document.getElementById('date_to').valueAsDate = today;
+        document.getElementById('date_from').valueAsDate = thirtyDaysAgo;
+        
+        // Handle form submission
+        document.getElementById('reportForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const loading = document.getElementById('loading');
+            const alert = document.getElementById('alert');
+            
+            loading.classList.add('active');
+            alert.classList.remove('active');
+            
+            try {
+                const response = await fetch('/generate-report', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `complaint_report_${Date.now()}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showAlert('Report generated successfully!', 'success');
+                } else {
+                    throw new Error('Failed to generate report');
+                }
+            } catch (error) {
+                showAlert('Error generating report: ' + error.message, 'error');
+            } finally {
+                loading.classList.remove('active');
+            }
+        });
+        
+        // Preview report in new tab
+        async function previewReport() {
+            const form = document.getElementById('reportForm');
+            const formData = new FormData(form);
+            
+            try {
+                const response = await fetch('/preview-report', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const html = await response.text();
+                    const newWindow = window.open();
+                    newWindow.document.write(html);
+                    newWindow.document.close();
+                } else {
+                    throw new Error('Failed to preview report');
+                }
+            } catch (error) {
+                showAlert('Error previewing report: ' + error.message, 'error');
+            }
+        }
+        
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert ${type} active`;
+            
+            setTimeout(() => {
+                alert.classList.remove('active');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

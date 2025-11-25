@@ -114,7 +114,7 @@ def run_arrangement():
     else:
         ID = int(df_db['ID'].max()) + 1
 
-    #Add new entry to the database
+    #Add new entry to the database (ComplaintsData.csv)
     new_row = [
         ID,
         name,
@@ -122,7 +122,7 @@ def run_arrangement():
         str(location),
         str(category),
         str(imageID),
-        str(status),
+        status,
         str(password),
         ""  # Remark field
     ]

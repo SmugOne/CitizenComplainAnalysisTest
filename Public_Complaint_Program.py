@@ -120,17 +120,17 @@ def run_arrangement():
         name,
         complaint,
         str(location),
+        status,
         str(category),
         str(imageID),
-        status,
         str(password),
-        ""  # Remark field
+        ""  #Remark field
     ]
 
     #Save updated database and returns it
     complaints_sheet.append_row(new_row)
 
-    Main()
+    Main()#
 
     #Return ID to frontend. Do not remove
     return jsonify({
@@ -240,7 +240,7 @@ def Main():
 def track_complaint(complaint_id):
     complaint_id = str(complaint_id).strip()
     
-    # Load live complaints from Google Sheets
+    #Load live complaints from Google Sheets
     ArrangedData = pd.DataFrame(arranged_sheet.get_all_records())
     ArchiveData = pd.DataFrame(archive_sheet.get_all_records())
 
@@ -614,7 +614,7 @@ def NewAdmins():
 
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
 
-    # Push back to Google Sheet
+    #Push back to Google Sheet
     accounts_sheet.clear()
     accounts_sheet.update([df.columns.values.tolist()] + df.values.tolist())
 
@@ -623,7 +623,7 @@ def NewAdmins():
 
 @app.route('/api/admins', methods=['GET'])
 def get_admin_list():
-    # Load accounts from Google Sheet
+    #Load accounts from Google Sheet
     df = pd.DataFrame(accounts_sheet.get_all_records())
     return jsonify(df.to_dict(orient="records"))
 

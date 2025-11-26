@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Reports - Citizen Complaint System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .date-range {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-preview {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-preview:hover:not(:disabled) {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn-generate {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-generate:hover:not(:disabled) {
+            background: #229954;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+        
+        .btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .info-box h3 {
+            color: #2c3e50;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .info-box ul {
+            color: #7f8c8d;
+            font-size: 13px;
+            padding-left: 20px;
+        }
+        
+        .info-box li {
+            margin: 5px 0;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-error {
+            background: #fee;
+            border-left: 4px solid #e74c3c;
+            color: #c0392b;
+        }
+
+        .alert-success {
+            background: #efe;
+            border-left: 4px solid #27ae60;
+            color: #229954;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Generate Report</h1>
+            <p>Create detailed complaint analysis reports</p>
+        </div>
+
+        <div id="alertBox" class="alert"></div>
+        
+        <form id="reportForm">
+            <div class="form-group">
+                <label for="report_type">Report Type</label>
+                <select id="report_type" name="report_type" required>
+                    <option value="summary">Summary Report</option>
+                    <option value="detailed">Detailed Report</option>
+                    <option value="category">Category Analysis</option>
+                    <option value="trend">Trend Analysis</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Date Range (Optional)</label>
+                <div class="date-range">
+                    <div>
+                        <input type="date" id="date_from" name="date_from" placeholder="From">
+                    </div>
+                    <div>
+                        <input type="date" id="date_to" name="date_to" placeholder="To">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="category">Filter by Category</label>
+                <select id="category" name="category">
+                    <option value="all">All Categories</option>
+                    <option value="DPWH">DPWH - Infrastructure</option>
+                    <option value="DOH">DOH - Health</option>
+                    <option value="DENR">DENR - Environment</option>
+                    <option value="OMBUDSMAN">Ombudsman</option>
+                    <option value="LTO">LTO - Transportation</option>
+                    <option value="MMDA">MMDA - Metro Manila</option>
+                    <option value="PNP">PNP - Police</option>
+                    <option value="DEPED">DepEd - Education</option>
+                    <option value="BFP">BFP - Fire</option>
+                    <option value="DOTR">DOTR - Transportation</option>
+                    <option value="DITC">DITC - Technology</option>
+                </select>
+            </div>
+            
+            <div class="button-group">
+                <button type="button" class="btn btn-preview" id="previewBtn" onclick="previewReport()">
+                    👁️ Preview
+                </button>
+                <button type="button" class="btn btn-generate" id="generateBtn" onclick="generateReport()">
+                    📥 Generate PDF
+                </button>
+            </div>
+        </form>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Generating report...</p>
+        </div>
+        
+        <div class="info-box">
+            <h3>ℹ️ Report Information</h3>
+            <ul>
+                <li><strong>Summary:</strong> Overview of complaints with statistics</li>
+                <li><strong>Detailed:</strong> Includes full complaint list</li>
+                <li><strong>Category:</strong> Breakdown by government agency</li>
+                <li><strong>Trend:</strong> Analysis over time</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // Set max date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date_to').setAttribute('max', today);
+        document.getElementById('date_from').setAttribute('max', today);
+
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type} show`;
+            setTimeout(() => {
+                alertBox.classList.remove('show');
+            }, 5000);
+        }
+
+        function getFormData() {
+            return {
+                report_type: document.getElementById('report_type').value,
+                date_from: document.getElementById('date_from').value,
+                date_to: document.getElementById('date_to').value,
+                category: document.getElementById('category').value
+            };
+        }
+
+        function validateDateRange() {
+            const dateFrom = document.getElementById('date_from').value;
+            const dateTo = document.getElementById('date_to').value;
+
+            if (dateFrom && dateTo && dateFrom > dateTo) {
+                showAlert('Start date cannot be after end date', 'error');
+                return false;
+            }
+            return true;
+        }
+        
+        function previewReport() {
+            if (!validateDateRange()) return;
+
+            const data = getFormData();
+            
+            // Create form and submit to open in new tab
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/preview-report';
+            form.target = '_blank';
+            
+            Object.keys(data).forEach(key => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = data[key];
+                form.appendChild(input);
+            });
+            
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+
+            showAlert('Opening preview in new tab...', 'success');
+        }
+        
+        async function generateReport() {
+            if (!validateDateRange()) return;
+
+            const loading = document.getElementById('loading');
+            const previewBtn = document.getElementById('previewBtn');
+            const generateBtn = document.getElementById('generateBtn');
+            
+            const formData = new FormData();
+            const data = getFormData();
+            
+            Object.keys(data).forEach(key => {
+                formData.append(key, data[key]);
+            });
+            
+            loading.classList.add('active');
+            previewBtn.disabled = true;
+            generateBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/generate-report', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    
+                    // Create filename
+                    const reportType = data.report_type;
+                    const dateStr = data.date_from && data.date_to 
+                        ? `_${data.date_from}_to_${data.date_to}` 
+                        : `_${new Date().toISOString().slice(0,10)}`;
+                    a.download = `complaint_report_${reportType}${dateStr}.pdf`;
+                    
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showAlert('Report generated successfully!', 'success');
+                } else {
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    showAlert(`Error: ${errorData.error || 'Failed to generate report'}`, 'error');
+                    console.error('Server error:', errorData);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Network error. Please check your connection and try again.', 'error');
+            } finally {
+                loading.classList.remove('active');
+                previewBtn.disabled = false;
+                generateBtn.disabled = false;
+            }
+        }
+
+        // Allow Enter key to trigger preview
+        document.getElementById('reportForm').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                previewReport();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ data.title }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 100%;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 3px solid #2c3e50;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 28px;
+        }
+        
+        .header .subtitle {
+            color: #7f8c8d;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        .info-section {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .info-section p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: #fff;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-card.resolved {
+            border-color: #27ae60;
+        }
+        
+        .stat-card.pending {
+            border-color: #f39c12;
+        }
+        
+        .stat-card.spam {
+            border-color: #e74c3c;
+        }
+        
+        .stat-card.flagged {
+            border-color: #e67e22;
+        }
+        
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 10px 0;
+        }
+        
+        .stat-card .label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+        }
+        
+        .section {
+            margin: 30px 0;
+            page-break-inside: avoid;
+        }
+        
+        .section h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .category-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .category-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #3498db;
+        }
+        
+        .category-item .name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .category-item .count {
+            background: #3498db;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        .emotion-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .emotion-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .emotion-item .score {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        
+        .emotion-item .label {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .complaint-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .complaint-table th {
+            background: #2c3e50;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-size: 12px;
+        }
+        
+        .complaint-table td {
+            padding: 8px;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 11px;
+        }
+        
+        .complaint-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .status-solved {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .status-pending {
+            background: #f39c12;
+            color: white;
+        }
+
+        .status-unsolved {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .status-spam {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .status-under.review {
+            background: #3498db;
+            color: white;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .insights {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .insights h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        
+        .insights ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .insights li {
+            margin: 5px 0;
+            color: #856404;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .no-data h3 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>{{ data.title }}</h1>
+        <p class="subtitle">Citizen Complaint Analysis Report</p>
+    </div>
+    
+    <!-- Report Information -->
+    <div class="info-section">
+        <p><strong>Generated:</strong> {{ data.generated_date }}</p>
+        <p><strong>Date Range:</strong> {{ data.date_from }} to {{ data.date_to }}</p>
+        <p><strong>Category Filter:</strong> {{ data.category }}</p>
+        <p><strong>Report Type:</strong> {{ data.report_type|title }}</p>
+    </div>
+    
+    {% if data.total_complaints > 0 %}
+    
+    <!-- Statistics Overview -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="label">Total Complaints</div>
+            <div class="number">{{ data.total_complaints }}</div>
+        </div>
+        <div class="stat-card resolved">
+            <div class="label">Resolved</div>
+            <div class="number">{{ data.resolved }}</div>
+            <div style="font-size: 11px; color: #27ae60; margin-top: 5px;">
+                {{ data.resolution_rate }}% Resolution Rate
+            </div>
+        </div>
+        <div class="stat-card pending">
+            <div class="label">Pending</div>
+            <div class="number">{{ data.pending }}</div>
+        </div>
+        <div class="stat-card flagged">
+            <div class="label">Flagged</div>
+            <div class="number">{{ data.flagged }}</div>
+        </div>
+    </div>
+    
+    <!-- Insights Section -->
+    <div class="insights">
+        <h3>📊 Key Insights</h3>
+        <ul>
+            <li><strong>Resolution Rate:</strong> {{ data.resolution_rate }}% of complaints have been resolved</li>
+            <li><strong>Pending Cases:</strong> {{ data.pending }} complaints require attention</li>
+            <li><strong>Flagged Cases:</strong> {{ data.flagged }} complaints contain priority keywords</li>
+            {% if data.categories and data.categories|length > 0 %}
+            <li><strong>Most Common Category:</strong> {{ data.categories[0].name }} ({{ data.categories[0].count }} complaints)</li>
+            {% endif %}
+            {% if data.spam > 0 %}
+            <li><strong>Spam Detected:</strong> {{ data.spam }} complaints marked as spam</li>
+            {% endif %}
+        </ul>
+    </div>
+    
+    <!-- Categories Breakdown -->
+    {% if data.categories and data.categories|length > 0 %}
+    <div class="section">
+        <h2>Complaints by Government Agency</h2>
+        <div class="category-list">
+            {% for category in data.categories %}
+            <div class="category-item">
+                <span class="name">{{ category.name }}</span>
+                <span class="count">{{ category.count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Location Breakdown -->
+    {% if data.locations and data.locations|length > 0 %}
+    <div class="section">
+        <h2>Top 5 Locations</h2>
+        <div class="category-list">
+            {% for location in data.locations %}
+            <div class="category-item">
+                <span class="name">{{ location.name }}</span>
+                <span class="count">{{ location.count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Emotion Analysis -->
+    {% if data.emotions and data.emotions|length > 0 %}
+    <div class="section">
+        <h2>Emotion Analysis (Average Scores)</h2>
+        <div class="emotion-grid">
+            {% for emotion, score in data.emotions.items() %}
+            <div class="emotion-item">
+                <div class="score">{{ score }}</div>
+                <div class="label">{{ emotion }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Detailed Complaint List (only for detailed reports) -->
+    {% if data.report_type == 'detailed' and data.complaints and data.complaints|length > 0 %}
+    <div class="section">
+        <h2>Complaint Details (First 50)</h2>
+        <table class="complaint-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Complaint</th>
+                    <th>Location</th>
+                    <th>Agency</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for complaint in data.complaints %}
+                <tr>
+                    <td>{{ complaint.id }}</td>
+                    <td>{{ complaint.name }}</td>
+                    <td>{{ complaint.complaint }}</td>
+                    <td>{{ complaint.location }}</td>
+                    <td>{{ complaint.agency }}</td>
+                    <td>
+                        {% set status_lower = complaint.status|lower|replace(' ', '.') %}
+                        <span class="status-badge status-{{ status_lower }}">
+                            {{ complaint.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    
+    <!-- No Data Message -->
+    <div class="no-data">
+        <h3>⚠️ No Data Available</h3>
+        <p>No complaints found matching your selected filters.</p>
+        <p>Try adjusting the date range or category filter.</p>
+    </div>
+    
+    {% endif %}
+    
+    <!-- Footer -->
+    <div class="footer">
+        <p>Citizen Complaint Analysis System</p>
+        <p>This report was automatically generated on {{ data.generated_date }}</p>
+        <p>Report includes data from both active and archived complaints</p>
+    </div>
+</body>
+</html>

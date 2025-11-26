@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS  
 from dotenv import load_dotenv
 import os
+import io
 import pandas as pd
 import joblib
 import uuid
@@ -18,6 +19,10 @@ from werkzeug.utils import secure_filename
 from transformers import pipeline
 from collections import Counter
 from sklearn.pipeline import make_pipeline
+from flask import render_template, send_file, request, jsonify
+from weasyprint import HTML, CSS
+from datetime import datetime
+
 
 #Connection:
 load_dotenv()
@@ -91,7 +96,6 @@ def upload_image():
 #Flask-React Connect and Assign from ComplaintsFormScreen:
 @app.route('/api/complaints', methods=['POST'])
 def run_arrangement():
-
     #Distribute Data from ComplaintsFormScreen
     data = request.get_json()
     name = data.get('name') or 'Anonymous'
@@ -102,6 +106,8 @@ def run_arrangement():
     status = data.get('status') or "UNSOLVED" 
     password = data.get('password') or ''
     remark = data.get('remark') or ''
+    contact_no = data.get('contact_no') or ''  # Add contact number support
+    respondent = data.get('respondent') or ''  # Add respondent support
 
     #Datasets:
     try:
@@ -128,6 +134,29 @@ def run_arrangement():
         str(password),
         str(remark),
     ]
+    # AUTO-GENERATE TIMESTAMP
+    current_datetime = datetime.now()
+    date_submitted = current_datetime.strftime('%Y-%m-%d')  # Format: 2025-11-27
+    time_submitted = current_datetime.strftime('%H:%M:%S')  # Format: 14:30:45
+
+    #Add new entry to the database WITH AUTO TIMESTAMPS
+    new_row = {
+        'Date': date_submitted,           # AUTO-GENERATED
+        'Time': time_submitted,           # AUTO-GENERATED
+        'Contact No': contact_no,
+        'ID': ID,
+        'Name': name,
+        'Respondent': respondent,
+        'Raw Complaint': complaint,
+        'Location': str(location),
+        'Status': str(status),
+        'Category': str(category),
+        'Image ID': str(imageID),
+        'Password': str(password),
+        'Remark': '',
+    }
+    Database = pd.concat([Database, pd.DataFrame([new_row])], ignore_index=True)
+    Database = Database.fillna('')
 
     #Save updated database and returns it
     complaints_sheet.append_row(new_row)
@@ -222,12 +251,13 @@ def Main():
         predicted_agencies = AgencyModel.predict(Database['Complaint'].fillna("").str.lower())
         Database['Predicted Agency'] = predicted_agencies
 
-    #Final selected output to ArrangedData
+    #Final selected output to ArrangedData - INCLUDES Date and Time
     output = Database[[ 
         'ID', 'Name', 'Complaint', 'Location',
         'Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score',
         'Sadness Score', 'Surprise Score',
         'Predicted Agency', 'Flagged Words', 'Image ID', 'Status', 'Password', 'Remark',
+        'Date', 'Time'  # PRESERVE TIMESTAMPS
     ]]
 
     #Save and return to GSheets
@@ -373,10 +403,9 @@ def get_admin_stats():
 def update_complaint():
     data = request.get_json()
 
-    allowed_agencies = [
-        "DPWH", "DOH", "DENR", "OMBUDSMAN",
-        "LTO", "MMDA", "PNP", "DEPED",
-        "BFP", "DOTR", "DITC", "NONE"
+    allowed = [
+        "DPWH", "DOH", "DENR", "OMBUDSMAN", "LTO", "MMDA", 
+        "PNP", "DEPED", "BFP", "DOTR", "DITC", "NONE",
     ]
 
     complaint_id = str(data.get("id"))
@@ -464,6 +493,54 @@ def update_complaint():
         archive_sheet.update(
             [archive.columns.tolist()] + archive.astype(str).values.tolist()
         )
+    #Update ComplaintsData.csv
+    list_path = "CSVFile/ComplaintsData.csv"
+    comp_list = pd.read_csv(list_path, encoding='cp1252')
+    if "Remark" not in comp_list.columns:
+        comp_list["Remark"] = ""
+    
+    comp_list.loc[comp_list['ID'].astype(str) == complaint_id, ['Status', 'Category', 'Remark']] = [status, agency, remark]
+    comp_list.to_csv(list_path, index=False, encoding='cp1252')
+
+    #Update Archive.csv - MATCHING YOUR STRUCTURE
+    archive_path = "CSVFile/Archive.csv"
+    if status.upper() in ["SOLVED", "SPAM"]:
+        archive = pd.read_csv(archive_path, encoding='cp1252') if os.path.exists(archive_path) else pd.DataFrame(columns=[ 
+            "Date", "Time", "Contact No", "ID", "Name", "Respondent", 
+            "Complaint", "Location", "Agency", "Image ID", "Status", "Remark", "Feedback"
+        ])
+
+        # Get the row from ComplaintsData
+        row_to_archive = comp_list.loc[comp_list['ID'].astype(str) == complaint_id].copy()
+        
+        if not row_to_archive.empty:
+            # Map columns to Archive.csv structure
+            archive_row = pd.DataFrame([{
+                'Date': row_to_archive['Date'].values[0],
+                'Time': row_to_archive['Time'].values[0],
+                'Contact No': row_to_archive.get('Contact No', [''])[0] if 'Contact No' in row_to_archive.columns else '',
+                'ID': row_to_archive['ID'].values[0],
+                'Name': row_to_archive['Name'].values[0],
+                'Respondent': row_to_archive.get('Respondent', [''])[0] if 'Respondent' in row_to_archive.columns else '',
+                'Complaint': row_to_archive['Raw Complaint'].values[0],
+                'Location': row_to_archive['Location'].values[0],
+                'Agency': agency,
+                'Image ID': row_to_archive['Image ID'].values[0],
+                'Status': status,
+                'Remark': remark,
+                'Feedback': ''
+            }])
+
+            # Check if ID already exists in archive (prevent duplicates)
+            if complaint_id not in archive['ID'].astype(str).values:
+                archive = pd.concat([archive, archive_row], ignore_index=True)
+            else:
+                # Update existing archive entry
+                archive.loc[archive['ID'].astype(str) == complaint_id, [
+                    'Status', 'Agency', 'Remark'
+                ]] = [status, agency, remark]
+            
+            archive.to_csv(archive_path, index=False, encoding='cp1252')
 
     return jsonify({"success": True})
 
@@ -659,6 +736,241 @@ def get_admin_list():
     #Load accounts from Google Sheet
     df = pd.DataFrame(accounts_sheet.get_all_records())
     return jsonify(df.to_dict(orient="records"))
+
+
+#-------------------------REPORT GENERATOR-------------------------
+#-------------------------REPORT GENERATOR (UPDATED)-------------------------
+@app.route('/reports')
+def reports_page():
+    """Render the reports page"""
+    try:
+        return render_template('reports.html')
+    except Exception as e:
+        print(f"ERROR loading reports page: {e}")
+        return jsonify({'error': 'Could not load reports page', 'details': str(e)}), 500
+
+@app.route('/generate-report', methods=['POST', 'GET'])
+def generate_report():
+    """Generate PDF report based on selected parameters"""
+    try:
+        # Support both POST (form) and GET (query params) for React Native
+        if request.method == 'POST':
+            report_type = request.form.get('report_type', 'summary')
+            date_from = request.form.get('date_from', '')
+            date_to = request.form.get('date_to', '')
+            category = request.form.get('category', 'all')
+        else:  # GET method
+            report_type = request.args.get('report_type', 'summary')
+            date_from = request.args.get('date_from', '')
+            date_to = request.args.get('date_to', '')
+            category = request.args.get('category', 'all')
+        
+        print(f"Generating {report_type} report - Category: {category}, From: {date_from}, To: {date_to}")
+        
+        # Fetch actual data from your CSV
+        report_data = fetch_report_data(report_type, date_from, date_to, category)
+        
+        if report_data['total_complaints'] == 0:
+            print("WARNING: No complaints found for the selected filters")
+        
+        # Render HTML template with data
+        html_content = render_template('report_template.html', data=report_data)
+        
+        # Generate PDF from HTML
+        pdf = HTML(string=html_content).write_pdf()
+        
+        # Create a BytesIO object to send the PDF
+        pdf_io = io.BytesIO(pdf)
+        pdf_io.seek(0)
+        
+        # Generate filename with date range if provided
+        if date_from and date_to:
+            filename = f"complaint_report_{report_type}_{date_from}_to_{date_to}.pdf"
+        else:
+            filename = f"complaint_report_{report_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        
+        print(f"✓ PDF generated successfully: {filename}")
+        
+        return send_file(
+            pdf_io,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except FileNotFoundError as e:
+        print(f"ERROR: Template file not found - {e}")
+        return jsonify({'error': 'Template file not found. Check templates folder.', 'details': str(e)}), 500
+    except Exception as e:
+        print(f"ERROR generating report: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to generate report', 'details': str(e)}), 500
+
+@app.route('/preview-report', methods=['POST', 'GET'])
+def preview_report():
+    """Preview report in HTML format before generating PDF - Supports both POST and GET"""
+    try:
+        # Support both POST (form) and GET (query params) for React Native
+        if request.method == 'POST':
+            report_type = request.form.get('report_type', 'summary')
+            date_from = request.form.get('date_from', '')
+            date_to = request.form.get('date_to', '')
+            category = request.form.get('category', 'all')
+        else:  # GET method
+            report_type = request.args.get('report_type', 'summary')
+            date_from = request.args.get('date_from', '')
+            date_to = request.args.get('date_to', '')
+            category = request.args.get('category', 'all')
+        
+        print(f"Previewing {report_type} report - Category: {category}, From: {date_from}, To: {date_to}")
+        
+        # Fetch actual data
+        report_data = fetch_report_data(report_type, date_from, date_to, category)
+        
+        return render_template('report_template.html', data=report_data)
+        
+    except FileNotFoundError as e:
+        print(f"ERROR: Template file not found - {e}")
+        return f"<h1>Error: Template not found</h1><p>{str(e)}</p><p>Make sure 'report_template.html' exists in the templates folder.</p>", 500
+    except Exception as e:
+        print(f"ERROR previewing report: {e}")
+        import traceback
+        traceback.print_exc()
+        return f"<h1>Error generating preview</h1><p>{str(e)}</p>", 500
+
+def fetch_report_data(report_type, date_from, date_to, category):
+    """
+    Fetch and process complaint data for reports WITH DATE FILTERING
+    """
+    arranged_path = 'CSVFile/ArrangedData.csv'
+    archive_path = 'CSVFile/Archive.csv'
+    
+    print(f"Loading data from: {arranged_path} and {archive_path}")
+    
+    # Load active complaints
+    if os.path.exists(arranged_path):
+        df_active = pd.read_csv(arranged_path, encoding='cp1252').fillna('')
+        print(f"✓ Loaded {len(df_active)} active complaints")
+    else:
+        df_active = pd.DataFrame()
+        print(f"⚠ ArrangedData.csv not found")
+    
+    # Load archived complaints
+    if os.path.exists(archive_path):
+        df_archive = pd.read_csv(archive_path, encoding='cp1252').fillna('')
+        print(f"✓ Loaded {len(df_archive)} archived complaints")
+    else:
+        df_archive = pd.DataFrame()
+        print(f"⚠ Archive.csv not found")
+    
+    # Combine both dataframes
+    df = pd.concat([df_active, df_archive], ignore_index=True)
+    print(f"Total complaints before filtering: {len(df)}")
+    
+    # Filter by category
+    if category != 'all':
+        initial_count = len(df)
+        if 'Predicted Agency' in df.columns:
+            df = df[df['Predicted Agency'].str.strip().str.upper() == category.upper()]
+        elif 'Agency' in df.columns:
+            df = df[df['Agency'].str.strip().str.upper() == category.upper()]
+        print(f"After category filter ({category}): {len(df)} complaints (removed {initial_count - len(df)})")
+    
+    # DATE FILTERING - IMPROVED
+    if 'Date' in df.columns and not df.empty:
+        # Convert Date column to datetime
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+        
+        initial_count = len(df)
+        
+        if date_from:
+            date_from_dt = pd.to_datetime(date_from)
+            df = df[df['Date'] >= date_from_dt]
+            print(f"After date_from filter ({date_from}): {len(df)} complaints")
+        
+        if date_to:
+            date_to_dt = pd.to_datetime(date_to)
+            df = df[df['Date'] <= date_to_dt]
+            print(f"After date_to filter ({date_to}): {len(df)} complaints")
+    
+    print(f"Final complaint count: {len(df)}")
+    
+    # Calculate statistics
+    total_complaints = len(df)
+    resolved = len(df[df['Status'].str.strip().str.upper() == 'SOLVED']) if 'Status' in df.columns else 0
+    spam = len(df[df['Status'].str.strip().str.upper() == 'SPAM']) if 'Status' in df.columns else 0
+    pending = len(df[df['Status'].str.strip().str.upper().isin(['UNSOLVED', 'UNDER REVIEW'])]) if 'Status' in df.columns else 0
+    
+    # Category breakdown
+    category_col = 'Predicted Agency' if 'Predicted Agency' in df.columns else 'Agency'
+    categories = []
+    if category_col in df.columns and not df.empty:
+        df[category_col] = df[category_col].astype(str).str.strip().str.upper()
+        category_counts = df[category_col].value_counts().to_dict()
+        categories = [{'name': k, 'count': int(v)} for k, v in category_counts.items() if k and k != '']
+        categories = sorted(categories, key=lambda x: x['count'], reverse=True)
+    
+    # Location breakdown (top 5)
+    location_breakdown = []
+    if 'Location' in df.columns and not df.empty:
+        df['Location'] = df['Location'].astype(str).str.strip()
+        location_counts = df[df['Location'] != '']['Location'].value_counts().head(5).to_dict()
+        location_breakdown = [{'name': k, 'count': int(v)} for k, v in location_counts.items()]
+    
+    # Emotion analysis
+    emotion_scores = {}
+    emotion_cols = ['Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score', 'Sadness Score', 'Surprise Score']
+    for col in emotion_cols:
+        if col in df.columns and not df.empty:
+            numeric_scores = pd.to_numeric(df[col], errors='coerce')
+            avg_score = numeric_scores.mean()
+            if not pd.isna(avg_score):
+                emotion_scores[col.replace(' Score', '')] = round(avg_score, 2)
+    
+    # Count flagged complaints
+    flagged_count = 0
+    if 'Flagged Words' in df.columns and not df.empty:
+        flagged_count = int((df['Flagged Words'] == True).sum())
+    
+    # Prepare report data
+    report_data = {
+        'title': f'{report_type.title()} Complaint Report',
+        'report_type': report_type,
+        'generated_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'date_from': date_from if date_from else 'All Time',
+        'date_to': date_to if date_to else 'Present',
+        'category': category.upper() if category != 'all' else 'All Categories',
+        'total_complaints': total_complaints,
+        'resolved': resolved,
+        'spam': spam,
+        'pending': pending,
+        'flagged': flagged_count,
+        'categories': categories,
+        'locations': location_breakdown,
+        'emotions': emotion_scores,
+        'resolution_rate': round((resolved / total_complaints * 100), 1) if total_complaints > 0 else 0,
+    }
+    
+    # Add detailed complaint list for detailed reports
+    if report_type == 'detailed' and not df.empty:
+        complaint_list = []
+        for _, row in df.head(50).iterrows():
+            complaint_text = row.get('Complaint', row.get('Raw Complaint', ''))
+            
+            complaint_list.append({
+                'id': str(row.get('ID', '')),
+                'name': row.get('Name', 'Anonymous'),
+                'complaint': str(complaint_text)[:200] + '...' if len(str(complaint_text)) > 200 else str(complaint_text),
+                'location': row.get('Location', ''),
+                'agency': row.get('Predicted Agency', row.get('Agency', '')),
+                'status': row.get('Status', ''),
+            })
+        report_data['complaints'] = complaint_list
+    
+    print(f"✓ Report data prepared: {total_complaints} total, {resolved} resolved, {pending} pending")
+    
+    return report_data
 
 #-------------------------END POINT-------------------------
 

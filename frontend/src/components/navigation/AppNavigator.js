@@ -14,6 +14,7 @@ import AdminLoginScreen from "../../screens/Citizen/Admin/AdminLoginScreen";
 import DashboardScreen from "../../screens/Citizen/Admin/DashboardScreen";
 import ManageAdminUserScreen from "../../screens/Citizen/Admin/ManageAdminUserScreen.js";
 import StatisticsScreen from "../../screens/Citizen/Admin/StatisticsScreen.js";
+import ManageReportScreen from "../../screens/Citizen/Admin/ManageReportScreen.js";
 
 const Stack = createStackNavigator();
 
@@ -33,6 +34,7 @@ export default function AppNavigator() {
         <Stack.Screen name="AdminDashboard" component={DashboardScreen} />
         <Stack.Screen name="ManageAdminUser" component={ManageAdminUserScreen} />
         <Stack.Screen name="StatisticsScreen" component={StatisticsScreen} />
+        <Stack.Screen name="ManageReportScreen" component={ManageReportScreen} />
       </Stack.Navigator>
     </NavigationContainer>
     

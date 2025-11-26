@@ -92,6 +92,9 @@ export default function LayoutAdmin({ children, navigation, noScroll = false }) 
               <TouchableOpacity onPress={() => nav("StatisticsScreen")} style={styles.sidebarLink}>
                 <Text style={styles.sidebarLinkText}>Statistics</Text>
               </TouchableOpacity>
+              <TouchableOpacity onPress={() => nav("ManageReportScreen")} style={styles.sidebarLink}>
+                <Text style={styles.sidebarLinkText}>Reports</Text>
+              </TouchableOpacity>
               <View style={styles.divider} />
               <TouchableOpacity onPress={() => nav("CitizenHome")} style={styles.sidebarLink}>
                 <Text style={[styles.sidebarLinkText, { color: "#ffd66b" }]}>Log out</Text>

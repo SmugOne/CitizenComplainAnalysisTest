@@ -7,6 +7,7 @@ import joblib
 import uuid
 import gspread
 import json
+import math
 
 from oauth2client.service_account import ServiceAccountCredentials
 from sklearn.preprocessing import PolynomialFeatures
@@ -100,6 +101,7 @@ def run_arrangement():
     imageID = data.get('imageID') or ''
     status = data.get('status') or "UNSOLVED" 
     password = data.get('password') or ''
+    remark = data.get('remark') or ''
 
     #Datasets:
     try:
@@ -124,18 +126,18 @@ def run_arrangement():
         str(category),
         str(imageID),
         str(password),
-        ""  #Remark field
+        str(remark),
     ]
 
     #Save updated database and returns it
     complaints_sheet.append_row(new_row)
 
-    Main()#
+    Main()
 
     #Return ID to frontend. Do not remove
     return jsonify({
         "message": "Complaint submitted successfully",
-        "ID": str(new_row)
+        "ID": ID,
     })
 
 #-------------------------MAIN ALGORITHM LIST BACKEND-------------------------
@@ -240,22 +242,26 @@ def Main():
 def track_complaint(complaint_id):
     complaint_id = str(complaint_id).strip()
     
-    #Load live complaints from Google Sheets
+    #Load live complaints
     ArrangedData = pd.DataFrame(arranged_sheet.get_all_records())
-    ArchiveData = pd.DataFrame(archive_sheet.get_all_records())
-
     found_live = ArrangedData[ArrangedData['ID'].astype(str) == complaint_id]
 
     if not found_live.empty:
         complaint_data = found_live.iloc[0].to_dict()
         status = complaint_data['Status'].upper()
         
-        if status == 'UNSOLVED':
-            complaint_data['Remark'] = ""
+        if status in ['UNSOLVED']:
+            complaint_data['Remarks'] = ""
+            return jsonify({"found": True, "complaint": complaint_data})
+        
+        #If SOLVED or SPAM, fetch archive for Remarks
+        df_archive = pd.DataFrame(archive_sheet.get_all_records())
+        found_archive = df_archive[df_archive['ID'].astype(str) == complaint_id]
+        
+        if not found_archive.empty:
+            complaint_data['Remarks'] = found_archive.iloc[0].get('Remark', '')
         else:
-            #If SOLVED or SPAM, fetch archive for Remark
-            found_archive = ArchiveData[ArchiveData['ID'].astype(str) == complaint_id]
-            complaint_data['Remark'] = found_archive.iloc[0].get('Remark', '') if not found_archive.empty else ""
+            complaint_data['Remarks'] = ""
         
         return jsonify({"found": True, "complaint": complaint_data})
 
@@ -267,7 +273,7 @@ def track_complaint(complaint_id):
 @app.route('/api/complaints', methods=['GET'])
 def get_complaints():
     try:
-        df = pd.read_csv('CSVFile/ArrangedData.csv')
+        df = pd.DataFrame(arranged_sheet.get_all_records())
         df = df.fillna('')
     except FileNotFoundError:
         df = Main()
@@ -285,7 +291,7 @@ def get_complaints():
 @app.route('/api/admin/stats', methods=['GET'])
 def get_admin_stats():
     try:
-        df = pd.read_csv('CSVFile/ArrangedData.csv', encoding='cp1252')
+        df = pd.DataFrame(arranged_sheet.get_all_records())
     except FileNotFoundError:
         try:
             df = Main()
@@ -349,11 +355,6 @@ def get_admin_stats():
                         'category': category
                     })
         
-        print(f"✓ API /api/admin/stats called successfully")
-        print(f"  - Total complaints: {len(complaints)}")
-        print(f"  - Status counts: {status_counts}")
-        print(f"  - First 3 complaints: {complaints[:3]}")
-        
     except Exception as e:
         print(f"ERROR in stats processing: {e}")
         import traceback
@@ -372,72 +373,97 @@ def get_admin_stats():
 def update_complaint():
     data = request.get_json()
 
-    allowed = [
-        "DPWH",
-        "DOH",
-        "DENR",
-        "OMBUDSMAN",
-        "LTO",
-        "MMDA",
-        "PNP",
-        "DEPED",
-        "BFP",
-        "DOTR",
-        "DITC",
-        "NONE",
+    allowed_agencies = [
+        "DPWH", "DOH", "DENR", "OMBUDSMAN",
+        "LTO", "MMDA", "PNP", "DEPED",
+        "BFP", "DOTR", "DITC", "NONE"
     ]
 
-    #load data
     complaint_id = str(data.get("id"))
     status = data.get("status")
     agency = data.get("agency", "NONE")
-    if agency not in allowed:
-        return jsonify({"error": "Invalid agency"}), 400
-    remark = data.get("remark")
+    remark = data.get("remark", "")
 
-    #Changes status to UNDER REVIEW if there is remark but status is UNSOLVED
+    if agency not in allowed_agencies:
+        return jsonify({"error": "Invalid agency"}), 400
+
+    # Change UNSOLVED → UNDER REVIEW if remark exists
     if status == "UNSOLVED" and remark.strip() != "":
         status = "UNDER REVIEW"
 
-    #Update ArrangedData.csv
-    arranged_df = pd.DataFrame(arranged_sheet.get_all_records())
-    mask = arranged_df['ID'].astype(str) == complaint_id
-    if mask.any():
-        arranged_df.loc[mask, ['Status', 'Predicted Agency']] = [status, agency]
-        # Push back to Google Sheets
-        arranged_sheet.clear()
-        arranged_sheet.update([arranged_df.columns.values.tolist()] + arranged_df.values.tolist())
+    # -----------------------------
+    # UPDATE ARRANGED SHEET
+    # -----------------------------
+    arranged = pd.DataFrame(arranged_sheet.get_all_records())
+    
+    # Ensure columns exist
+    for col in ["ID", "Status", "Predicted Agency"]:
+        if col not in arranged.columns:
+            arranged[col] = ""
+        else:
+            arranged[col] = arranged[col].fillna("").replace([float("inf"), float("-inf")], "")
 
-    #Update ComplaintsData.csv (add Remark column if not exists)
-    complaints_df = pd.DataFrame(complaints_sheet.get_all_records())
-    if "Remark" not in complaints_df.columns:
-        complaints_df["Remark"] = ""
-    mask = complaints_df['ID'].astype(str) == complaint_id
-    if mask.any():
-        complaints_df.loc[mask, ['Status', 'Category', 'Remark']] = [status, agency, remark]
-        complaints_sheet.clear()
-        complaints_sheet.update([complaints_df.columns.values.tolist()] + complaints_df.values.tolist())
+    arranged.loc[
+        arranged["ID"].astype(str) == complaint_id,
+        ["Status", "Predicted Agency"]
+    ] = [status, agency]
 
+    arranged_sheet.update(
+        [arranged.columns.tolist()] + arranged.astype(str).values.tolist()
+    )
 
-    #Update Archive.csv
+    # -----------------------------
+    # UPDATE COMPLAINTS SHEET
+    # -----------------------------
+    comp_list = pd.DataFrame(complaints_sheet.get_all_records())
+
+    required_cols = ["ID", "Status", "Category", "Remark", "Location", "Image ID", "Raw Complaint", "Name"]
+    for col in required_cols:
+        if col not in comp_list.columns:
+            comp_list[col] = ""
+        else:
+            comp_list[col] = comp_list[col].fillna("").replace([float("inf"), float("-inf")], "")
+
+    comp_list.loc[
+        comp_list["ID"].astype(str) == complaint_id,
+        ["Status", "Category", "Remark"]
+    ] = [status, agency, remark]
+
+    complaints_sheet.update(
+        [comp_list.columns.tolist()] + comp_list.astype(str).values.tolist()
+    )
+
+    # -----------------------------
+    # UPDATE ARCHIVE SHEET
+    # -----------------------------
     if status.upper() in ["SOLVED", "SPAM"]:
-        archive_df = pd.DataFrame(archive_sheet.get_all_records())
-        
-        row_to_archive = complaints_df.loc[complaints_df['ID'].astype(str) == complaint_id, [
-            "ID", "Name", "Raw Complaint", "Location", "Category", "Image ID", "Status", "Remark"
-        ]].copy()
+        archive = pd.DataFrame(archive_sheet.get_all_records())
 
-        #Rename columns for Archive
-        row_to_archive = row_to_archive.rename(columns={
+        row = comp_list.loc[
+            comp_list["ID"].astype(str) == complaint_id,
+            ["ID", "Name", "Raw Complaint", "Location", "Category",
+             "Image ID", "Status", "Remark"]
+        ].copy()
+
+        # Rename for archive
+        row = row.rename(columns={
             "Raw Complaint": "Complaint",
-            "Category": "Agency",
-            "Remark": "Remark"
+            "Category": "Agency"
         })
 
-        #Append
-        archive_df = pd.concat([archive_df, row_to_archive], ignore_index=True)
-        archive_sheet.clear()
-        archive_sheet.update([archive_df.columns.values.tolist()] + archive_df.values.tolist())
+        # Ensure all archive columns exist and are strings
+        for col in ["ID", "Name", "Complaint", "Location", "Agency", "Image ID", "Status", "Remark"]:
+            if col not in archive.columns:
+                archive[col] = ""
+            if col in row.columns:
+                row[col] = row[col].fillna("").replace([float("inf"), float("-inf")], "")
+            else:
+                row[col] = ""
+
+        archive = pd.concat([archive, row], ignore_index=True)
+        archive_sheet.update(
+            [archive.columns.tolist()] + archive.astype(str).values.tolist()
+        )
 
     return jsonify({"success": True})
 
@@ -452,64 +478,70 @@ def submit_feedback():
     if not complaint_id or not feedback:
         return jsonify({"success": False, "message": "Missing ID or feedback"})
 
-    #Load Archive and ArrangedData
+    #Load sheets
     arranged_path = pd.DataFrame(arranged_sheet.get_all_records())
     archive = pd.DataFrame(archive_sheet.get_all_records())
 
-    #Check if complaint exists in ArrangedData
-    if complaint_id not in archive['ID'].astype(str).values:
+    #Ensure Feedback column exists
+    if "Feedback" not in archive.columns:
+        archive["Feedback"] = ""
+    archive["Feedback"] = archive["Feedback"].fillna("")
+
+    #Check if complaint exists in Archive or ArrangedData
+    if complaint_id not in archive['ID'].astype(str).values and \
+       complaint_id not in arranged_path['ID'].astype(str).values:
         return jsonify({"success": False, "message": "Complaint ID not found"})
 
     #Check if feedback already submitted
     if complaint_id in archive['ID'].astype(str).values:
         existing_feedback = archive.loc[archive['ID'].astype(str) == complaint_id, "Feedback"].values[0]
-        if existing_feedback and existing_feedback.strip() != "":
+ 
+        if str(existing_feedback).strip():
             return jsonify({"success": False, "message": "You already made a feedback."})
-
-    #Update feedback in Archive.csv
-    if complaint_id in archive['ID'].astype(str).values:
+        
+        # Update existing row
         archive.loc[archive['ID'].astype(str) == complaint_id, "Feedback"] = feedback
     else:
-        #If complaint is not yet in Archive copy it from ArrangedData
-        row_to_archive = archive.loc[archive['ID'].astype(str) == complaint_id].copy()
-        row_to_archive = row_to_archive.rename(columns={
-            "Complaint": "Complaint",
-            "Predicted Agency": "Agency",
-            "Remark": "Remark"
-        })
-        row_to_archive = row_to_archive[["ID", "Name", "Complaint", "Location", "Agency", "Image ID", "Status", "Remark"]]
+        #Copy from ArrangedData
+        row_to_archive = arranged_path.loc[arranged_path['ID'].astype(str) == complaint_id].copy()
         row_to_archive["Feedback"] = feedback
         archive = pd.concat([archive, row_to_archive], ignore_index=True)
 
+    #Update Google Sheet
     archive_sheet.clear()
-
-    archive_sheet.update(
-        [archive.columns.values.tolist()] + archive.values.tolist()
-    )
+    archive_sheet.update([archive.columns.values.tolist()] + archive.values.tolist())
 
     return jsonify({"success": True, "message": "Feedback submitted"})
 
 #-------------------------COMPLAINT LIST SCREEN BACKEND-------------------------
 
 #Active Complaints
-@app.route("/api/complaints")
+@app.route("/api/complaints/all")
 def get_active_complaints():
-    arranged_df = pd.DataFrame(arranged_sheet.get_all_records()).fillna('')
-
-    #Filter UNSOLVED and UNDER REVIEW
-    arranged_df = arranged_df[arranged_df["Status"].isin(["UNSOLVED", "UNDER REVIEW"])]
-
-    return jsonify(arranged_df.to_dict(orient="records"))
+    records = arranged_sheet.get_all_records()
+    if records:
+        df = pd.DataFrame(records).fillna('')
+    else:
+        df = pd.DataFrame(columns=[
+            "ID", "Name", "Raw Complaint", "Location",
+            "Category", "Image ID", "Status", "Password", "Remark"
+        ])
+    df = df[df["Status"].isin(["UNSOLVED", "UNDER REVIEW"])]
+    return jsonify(df.to_dict(orient="records"))
 
 #Archive Complaints
 @app.route("/api/archive_complaints")
 def get_archive_complaints():
-    archive_df = pd.DataFrame(archive_sheet.get_all_records()).fillna('')
-
-    #Filter SOLVED and SPAM
-    archive_df = archive_df[archive_df["Status"].isin(["SOLVED", "SPAM"])]
-
-    return jsonify(archive_df.to_dict(orient="records"))
+    records = archive_sheet.get_all_records()
+    if records:  # Check if the sheet has any records
+        df = pd.DataFrame(records).fillna('')
+    else:
+        df = pd.DataFrame(columns=[
+            "ID", "Name", "Complaint", "Location",
+            "Agency", "Image ID", "Status", "Remark", "Feedback"
+        ])
+    df = df[df["Status"].isin(["SOLVED", "SPAM"])]
+    return jsonify(df.to_dict(orient="records"))
 
 #-------------------------ANNOUNCEMENT EDIT BACKEND-------------------------
 
@@ -560,7 +592,6 @@ def update_announcement():
     return jsonify({"message": "Announcement updated"}), 200
 
 #-------------------------ACCOUNT LOGIN BACKEND-------------------------
-Accounts = pd.DataFrame(accounts_sheet.get_all_records())
 @app.route('/api/admin/login', methods=['POST'])
 def admin_login():
     data = request.get_json()
@@ -570,14 +601,15 @@ def admin_login():
     if not username or not password:
         return jsonify({"success": False, "message": "Username and password required"}), 400
 
-    if not os.path.exists(Accounts):
-        return jsonify({"success": False, "message": "Accounts database not found"}), 500
+    df = pd.DataFrame(accounts_sheet.get_all_records())
 
-    accounts_df = pd.DataFrame(accounts_sheet.get_all_records())
+    #Ensure proper string conversion & strip whitespace
+    df['Username'] = df['Username'].astype(str).str.strip()
+    df['Password'] = df['Password'].astype(str).str.strip()
 
-    matched = accounts_df[
-        (accounts_df['Username'].astype(str).str.strip() == username) &
-        (accounts_df['Password'].astype(str).str.strip() == password)  
+    matched = df[
+        (df['Username'] == username) &
+        (df['Password'] == password)
     ]
 
     if not matched.empty:
@@ -587,6 +619,7 @@ def admin_login():
     
 #-------------------------NEW ACCOUNT BACKEND-------------------------
 #For future: add hashlib for password hashing
+@app.route('/api/admins', methods=['POST'])
 def NewAdmins():
     data = request.get_json()
     username = str(data.get("username", "")).strip()

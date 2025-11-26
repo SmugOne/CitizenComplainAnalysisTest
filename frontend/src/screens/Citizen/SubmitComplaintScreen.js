@@ -248,9 +248,18 @@ export default function SubmitComplaintScreen({ navigation }) {
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>Location:</Text>
-          <Text style={{ flex: 1, fontSize: 12 }}>{location ? location : "No location set"}</Text>
+          <TextInput
+            style={[styles.input, { flex: 1, height: 40 }]}
+            placeholder="Enter location (optional)"
+            value={location}
+            onChangeText={setLocation}
+          />
           <TouchableOpacity onPress={handleGetLocation} style={styles.locBtn}>
-            {locLoading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.locBtnText}>Get Location</Text>}
+            {locLoading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.locBtnText}>Get Location</Text>
+            )}
           </TouchableOpacity>
         </View>
         {/* IMAGE UPLOAD SECTION */}

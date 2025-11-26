@@ -13,24 +13,20 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/complaints`);
+        const response = await fetch(`${API_URL}/api/admin/stats`);
         const data = await response.json();
 
-        if (Array.isArray(data)) {
-          const resolved = data.filter(
-            (c) => c.Status === "SOLVED" || c.Status === "SPAM"
-          ).length;
-          const total = data.filter(
-            (c) =>
-              c.Status === "UNSOLVED" ||
-              c.Status === "SOLVED" ||
-              c.Status === "SPAM" ||
-              c.Status === "UNDER REVIEW"
-          ).length;
+        //resolved complaints = SOLVED + SPAM
+        const resolved = Object.values(data.statusCounts)
+          .slice(1,3)  // or count only "SOLVED" + "SPAM"
+          .reduce((a,b) => a+b, 0);
 
-          setResolvedCount(resolved);
-          setTotalCount(total);
-        }
+        //total complaints = sum of all statuses
+        const total = Object.values(data.statusCounts).reduce((a,b) => a+b, 0);
+
+        setResolvedCount(resolved);
+        setTotalCount(total);
+
       } catch (err) {
         console.error("Error fetching complaints stats:", err);
       }

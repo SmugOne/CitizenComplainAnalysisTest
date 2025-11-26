@@ -74,7 +74,7 @@ export default function ComplaintListScreen({ navigation }) {
     const fetchData = async () => {
       try {
         const [activeRes, archiveRes] = await Promise.all([
-          fetch(`${API_URL}/api/complaints`),
+          fetch(`${API_URL}/api/complaints/all`),
           fetch(`${API_URL}/api/archive_complaints`)
         ]);
         const [activeData, archiveData] = await Promise.all([activeRes.json(), archiveRes.json()]);
@@ -131,15 +131,22 @@ export default function ComplaintListScreen({ navigation }) {
   //Refetch function
   const refetchComplaints = async () => {
     setLoading(true);
+    setFetchError(false);
     try {
-      const [activeRes, archiveRes] = await Promise.all([
-        fetch(`${API_URL}/api/complaints`),
-        fetch(`${API_URL}/api/archive_complaints`)
-      ]);
-      const [activeData, archiveData] = await Promise.all([activeRes.json(), archiveRes.json()]);
-      setActiveComplaints(activeData);
-      setArchivedComplaints(archiveData);
-    } catch {
+      const activeRes = await fetch(`${API_URL}/api/complaints/all`);
+      const archiveRes = await fetch(`${API_URL}/api/archive_complaints`);
+
+    //Ensure both responses are ok
+      if (!activeRes.ok || !archiveRes.ok) throw new Error("API fetch failed");
+
+      const activeData = await activeRes.json();
+      const archiveData = await archiveRes.json();
+
+    //Ensure data is an array
+      setActiveComplaints(Array.isArray(activeData) ? activeData : []);
+      setArchivedComplaints(Array.isArray(archiveData) ? archiveData : []);
+    } catch (err) {
+      console.error("Fetch error:", err);
       setFetchError(true);
     } finally {
       setLoading(false);
@@ -173,9 +180,12 @@ export default function ComplaintListScreen({ navigation }) {
   const currentStatusOptions = viewMode === "Active" ? STATUS_OPTIONS_ACTIVE : STATUS_OPTIONS_ARCHIVE;
 
   const totalFiltered = currentComplaints.length;
-  const flaggedCount = currentComplaints.filter(
-    row => row["Flagged Words"] === true || row["Flagged Words"] === "True"
-  ).length;
+  const flaggedCount = currentComplaints.filter(row => {
+  const v = (row["Flagged Words"] || "").toString().trim().toUpperCase();
+  return (
+    v === "TRUE" 
+  );
+}).length;
   //Main resolver screen:
     if (screen === "resolve" && selectedComplaint) {
       return (
@@ -355,7 +365,7 @@ export default function ComplaintListScreen({ navigation }) {
             ) : (
               currentComplaints.map((c) => {
                 const isFlagged =
-                  c["Flagged Words"] === true || c["Flagged Words"] === "True";
+                  String(c["Flagged Words"]).trim().toUpperCase() === "TRUE";
 
                 return (
                   <View
@@ -421,7 +431,7 @@ const styles = StyleSheet.create({
   actionBtn: { backgroundColor: "#DC2626", paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, alignSelf: "center" },
   actionBtnText: { color: "#fff", fontWeight: "bold" },
   detailsBox: { backgroundColor: "#f7f7f7", padding: 15, borderRadius: 10, marginBottom: 20 },
-  flaggedRow: { backgroundColor: "#ffeaea" },
+  flaggedRow: { backgroundColor: "#f8dedeff" },
   actionBox: { backgroundColor: "#ffffff", padding: 18, borderRadius: 12, marginTop: 20, borderWidth: 1, borderColor: "#ddd" },
   resolveCard: { backgroundColor: "#f9fbfd", width: "95%", borderRadius: 14, padding: 20 },
   resolveContainer: { flex: 1, padding: 20, backgroundColor: "#f9fbfd" },

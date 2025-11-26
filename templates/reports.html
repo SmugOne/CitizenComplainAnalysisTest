@@ -100,12 +100,17 @@
             font-family: inherit;
         }
         
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
         .btn-preview {
             background: #3498db;
             color: white;
         }
         
-        .btn-preview:hover {
+        .btn-preview:hover:not(:disabled) {
             background: #2980b9;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
@@ -116,13 +121,13 @@
             color: white;
         }
         
-        .btn-generate:hover {
+        .btn-generate:hover:not(:disabled) {
             background: #229954;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
         }
         
-        .btn:active {
+        .btn:active:not(:disabled) {
             transform: translateY(0);
         }
         
@@ -175,6 +180,29 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-error {
+            background: #fee;
+            border-left: 4px solid #e74c3c;
+            color: #c0392b;
+        }
+
+        .alert-success {
+            background: #efe;
+            border-left: 4px solid #27ae60;
+            color: #229954;
+        }
     </style>
 </head>
 <body>
@@ -183,6 +211,8 @@
             <h1>📊 Generate Report</h1>
             <p>Create detailed complaint analysis reports</p>
         </div>
+
+        <div id="alertBox" class="alert"></div>
         
         <form id="reportForm">
             <div class="form-group">
@@ -226,10 +256,10 @@
             </div>
             
             <div class="button-group">
-                <button type="button" class="btn btn-preview" onclick="previewReport()">
+                <button type="button" class="btn btn-preview" id="previewBtn" onclick="previewReport()">
                     👁️ Preview
                 </button>
-                <button type="button" class="btn btn-generate" onclick="generateReport()">
+                <button type="button" class="btn btn-generate" id="generateBtn" onclick="generateReport()">
                     📥 Generate PDF
                 </button>
             </div>
@@ -252,6 +282,20 @@
     </div>
     
     <script>
+        // Set max date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date_to').setAttribute('max', today);
+        document.getElementById('date_from').setAttribute('max', today);
+
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type} show`;
+            setTimeout(() => {
+                alertBox.classList.remove('show');
+            }, 5000);
+        }
+
         function getFormData() {
             return {
                 report_type: document.getElementById('report_type').value,
@@ -260,16 +304,24 @@
                 category: document.getElementById('category').value
             };
         }
+
+        function validateDateRange() {
+            const dateFrom = document.getElementById('date_from').value;
+            const dateTo = document.getElementById('date_to').value;
+
+            if (dateFrom && dateTo && dateFrom > dateTo) {
+                showAlert('Start date cannot be after end date', 'error');
+                return false;
+            }
+            return true;
+        }
         
         function previewReport() {
-            const formData = new FormData();
+            if (!validateDateRange()) return;
+
             const data = getFormData();
             
-            Object.keys(data).forEach(key => {
-                formData.append(key, data[key]);
-            });
-            
-            // Open preview in new tab
+            // Create form and submit to open in new tab
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = '/preview-report';
@@ -286,10 +338,17 @@
             document.body.appendChild(form);
             form.submit();
             document.body.removeChild(form);
+
+            showAlert('Opening preview in new tab...', 'success');
         }
         
         async function generateReport() {
+            if (!validateDateRange()) return;
+
             const loading = document.getElementById('loading');
+            const previewBtn = document.getElementById('previewBtn');
+            const generateBtn = document.getElementById('generateBtn');
+            
             const formData = new FormData();
             const data = getFormData();
             
@@ -298,6 +357,8 @@
             });
             
             loading.classList.add('active');
+            previewBtn.disabled = true;
+            generateBtn.disabled = true;
             
             try {
                 const response = await fetch('/generate-report', {
@@ -310,26 +371,42 @@
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `complaint_report_${new Date().toISOString().slice(0,10)}.pdf`;
+                    
+                    // Create filename
+                    const reportType = data.report_type;
+                    const dateStr = data.date_from && data.date_to 
+                        ? `_${data.date_from}_to_${data.date_to}` 
+                        : `_${new Date().toISOString().slice(0,10)}`;
+                    a.download = `complaint_report_${reportType}${dateStr}.pdf`;
+                    
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
+                    
+                    showAlert('Report generated successfully!', 'success');
                 } else {
-                    alert('Error generating report. Please try again.');
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    showAlert(`Error: ${errorData.error || 'Failed to generate report'}`, 'error');
+                    console.error('Server error:', errorData);
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error generating report. Please try again.');
+                showAlert('Network error. Please check your connection and try again.', 'error');
             } finally {
                 loading.classList.remove('active');
+                previewBtn.disabled = false;
+                generateBtn.disabled = false;
             }
         }
-        
-        // Set max date to today
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('date_to').setAttribute('max', today);
-        document.getElementById('date_from').setAttribute('max', today);
+
+        // Allow Enter key to trigger preview
+        document.getElementById('reportForm').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                previewReport();
+            }
+        });
     </script>
 </body>
 </html>

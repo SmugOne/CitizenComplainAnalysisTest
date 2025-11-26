@@ -201,9 +201,19 @@
             background: #f39c12;
             color: white;
         }
+
+        .status-unsolved {
+            background: #e74c3c;
+            color: white;
+        }
         
         .status-spam {
-            background: #e74c3c;
+            background: #95a5a6;
+            color: white;
+        }
+
+        .status-under.review {
+            background: #3498db;
             color: white;
         }
         
@@ -238,6 +248,20 @@
             margin: 5px 0;
             color: #856404;
         }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .no-data h3 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -254,6 +278,8 @@
         <p><strong>Category Filter:</strong> {{ data.category }}</p>
         <p><strong>Report Type:</strong> {{ data.report_type|title }}</p>
     </div>
+    
+    {% if data.total_complaints > 0 %}
     
     <!-- Statistics Overview -->
     <div class="stats-grid">
@@ -279,22 +305,23 @@
     </div>
     
     <!-- Insights Section -->
-    {% if data.total_complaints > 0 %}
     <div class="insights">
         <h3>📊 Key Insights</h3>
         <ul>
             <li><strong>Resolution Rate:</strong> {{ data.resolution_rate }}% of complaints have been resolved</li>
             <li><strong>Pending Cases:</strong> {{ data.pending }} complaints require attention</li>
             <li><strong>Flagged Cases:</strong> {{ data.flagged }} complaints contain priority keywords</li>
-            {% if data.categories %}
+            {% if data.categories and data.categories|length > 0 %}
             <li><strong>Most Common Category:</strong> {{ data.categories[0].name }} ({{ data.categories[0].count }} complaints)</li>
+            {% endif %}
+            {% if data.spam > 0 %}
+            <li><strong>Spam Detected:</strong> {{ data.spam }} complaints marked as spam</li>
             {% endif %}
         </ul>
     </div>
-    {% endif %}
     
     <!-- Categories Breakdown -->
-    {% if data.categories %}
+    {% if data.categories and data.categories|length > 0 %}
     <div class="section">
         <h2>Complaints by Government Agency</h2>
         <div class="category-list">
@@ -309,7 +336,7 @@
     {% endif %}
     
     <!-- Location Breakdown -->
-    {% if data.locations %}
+    {% if data.locations and data.locations|length > 0 %}
     <div class="section">
         <h2>Top 5 Locations</h2>
         <div class="category-list">
@@ -324,7 +351,7 @@
     {% endif %}
     
     <!-- Emotion Analysis -->
-    {% if data.emotions %}
+    {% if data.emotions and data.emotions|length > 0 %}
     <div class="section">
         <h2>Emotion Analysis (Average Scores)</h2>
         <div class="emotion-grid">
@@ -339,9 +366,9 @@
     {% endif %}
     
     <!-- Detailed Complaint List (only for detailed reports) -->
-    {% if data.report_type == 'detailed' and data.complaints %}
+    {% if data.report_type == 'detailed' and data.complaints and data.complaints|length > 0 %}
     <div class="section">
-        <h2>Complaint Details</h2>
+        <h2>Complaint Details (First 50)</h2>
         <table class="complaint-table">
             <thead>
                 <tr>
@@ -362,7 +389,8 @@
                     <td>{{ complaint.location }}</td>
                     <td>{{ complaint.agency }}</td>
                     <td>
-                        <span class="status-badge status-{{ complaint.status|lower }}">
+                        {% set status_lower = complaint.status|lower|replace(' ', '.') %}
+                        <span class="status-badge status-{{ status_lower }}">
                             {{ complaint.status }}
                         </span>
                     </td>
@@ -373,10 +401,22 @@
     </div>
     {% endif %}
     
+    {% else %}
+    
+    <!-- No Data Message -->
+    <div class="no-data">
+        <h3>⚠️ No Data Available</h3>
+        <p>No complaints found matching your selected filters.</p>
+        <p>Try adjusting the date range or category filter.</p>
+    </div>
+    
+    {% endif %}
+    
     <!-- Footer -->
     <div class="footer">
         <p>Citizen Complaint Analysis System</p>
         <p>This report was automatically generated on {{ data.generated_date }}</p>
+        <p>Report includes data from both active and archived complaints</p>
     </div>
 </body>
 </html>

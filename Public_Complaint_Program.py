@@ -97,6 +97,9 @@ def upload_image():
 @app.route('/api/complaints', methods=['POST'])
 def run_arrangement():
     #Distribute Data from ComplaintsFormScreen
+    date = request.form.get('date') or ''
+    time = request.form.get('time') or ''
+    contactno = request.form.get('contactno') or ''
     data = request.get_json()
     name = data.get('name') or 'Anonymous'
     complaint = data.get('complaint') or ''
@@ -124,6 +127,9 @@ def run_arrangement():
 
     #Add new entry to the database (ComplaintsData.csv)
     new_row = [
+        date,
+        time,
+        contactno,
         ID,
         name,
         complaint,
@@ -256,8 +262,7 @@ def Main():
         'ID', 'Name', 'Complaint', 'Location',
         'Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score',
         'Sadness Score', 'Surprise Score',
-        'Predicted Agency', 'Flagged Words', 'Image ID', 'Status', 'Password', 'Remark',
-        'Date', 'Time', 'Contact No', 
+        'Predicted Agency', 'Flagged Words', 'Image ID', 'Status', 'Password', 'Remark', 'Date', 'Time', 'Contact No'
     ]]
 
     #Save and return to GSheets
@@ -522,7 +527,7 @@ def update_complaint():
 
         row = comp_list.loc[
             comp_list["ID"].astype(str) == complaint_id,
-            ["ID", "Name", "Raw Complaint", "Location", "Category",
+            ["Date", "Time", "Contact No", "ID", "Name", "Raw Complaint", "Location", "Category",
              "Image ID", "Status", "Remark"]
         ].copy()
 
@@ -533,7 +538,7 @@ def update_complaint():
         })
 
         # Ensure all archive columns exist and are strings
-        for col in ["ID", "Name", "Complaint", "Location", "Agency", "Image ID", "Status", "Remark"]:
+        for col in ["Date", "Time", "Contact No", "ID", "Name", "Complaint", "Location", "Agency", "Image ID", "Status", "Remark"]:
             if col not in archive.columns:
                 archive[col] = ""
             if col in row.columns:
@@ -603,7 +608,7 @@ def get_active_complaints():
         df = pd.DataFrame(records).fillna('')
     else:
         df = pd.DataFrame(columns=[
-            "ID", "Name", "Raw Complaint", "Location",
+            "Date", "Time", "Contact No", "ID", "Name", "Raw Complaint", "Location",
             "Category", "Image ID", "Status", "Password", "Remark"
         ])
     df = df[df["Status"].isin(["UNSOLVED", "UNDER REVIEW"])]
@@ -617,7 +622,7 @@ def get_archive_complaints():
         df = pd.DataFrame(records).fillna('')
     else:
         df = pd.DataFrame(columns=[
-            "ID", "Name", "Complaint", "Location",
+            "Date", "Time", "Contact No", "ID", "Name", "Complaint", "Location",
             "Agency", "Image ID", "Status", "Remark", "Feedback"
         ])
     df = df[df["Status"].isin(["SOLVED", "SPAM"])]

@@ -134,15 +134,15 @@ def run_arrangement():
         str(password),
         str(remark),
     ]
-    # AUTO-GENERATE TIMESTAMP
+    #Timestamp Autogenerate
     current_datetime = datetime.now()
     date_submitted = current_datetime.strftime('%Y-%m-%d')  # Format: 2025-11-27
     time_submitted = current_datetime.strftime('%H:%M:%S')  # Format: 14:30:45
 
     #Add new entry to the database WITH AUTO TIMESTAMPS
     new_row = {
-        'Date': date_submitted,           # AUTO-GENERATED
-        'Time': time_submitted,           # AUTO-GENERATED
+        'Date': date_submitted,          
+        'Time': time_submitted,          
         'Contact No': contact_no,
         'ID': ID,
         'Name': name,
@@ -251,19 +251,71 @@ def Main():
         predicted_agencies = AgencyModel.predict(Database['Complaint'].fillna("").str.lower())
         Database['Predicted Agency'] = predicted_agencies
 
-    #Final selected output to ArrangedData - INCLUDES Date and Time
+    #Final selected output to ArrangedData
     output = Database[[ 
         'ID', 'Name', 'Complaint', 'Location',
         'Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score',
         'Sadness Score', 'Surprise Score',
         'Predicted Agency', 'Flagged Words', 'Image ID', 'Status', 'Password', 'Remark',
-        'Date', 'Time'  # PRESERVE TIMESTAMPS
+        'Date', 'Time', 'Contact No', 
     ]]
 
     #Save and return to GSheets
     arranged_sheet.clear()
     arranged_sheet.update([output.columns.values.tolist()] + output.values.tolist())
     return output
+
+#-------------------------UPDATE COMPLAINT BACKEND-------------------------
+    #Update ComplaintsData.csv
+    # list_path = "CSVFile/ComplaintsData.csv"
+    # comp_list = pd.read_csv(list_path, encoding='cp1252')
+    # if "Remark" not in comp_list.columns:
+    #     comp_list["Remark"] = ""
+    
+    # comp_list.loc[comp_list['ID'].astype(str) == complaint_id, ['Status', 'Category', 'Remark']] = [status, agency, remark]
+    # comp_list.to_csv(list_path, index=False, encoding='cp1252')
+
+    # #Update Archive.csv - MATCHING YOUR STRUCTURE
+    # archive_path = "CSVFile/Archive.csv"
+    # if status.upper() in ["SOLVED", "SPAM"]:
+    #     archive = pd.read_csv(archive_path, encoding='cp1252') if os.path.exists(archive_path) else pd.DataFrame(columns=[ 
+    #         "Date", "Time", "Contact No", "ID", "Name", "Respondent", 
+    #         "Complaint", "Location", "Agency", "Image ID", "Status", "Remark", "Feedback"
+    #     ])
+
+    #     # Get the row from ComplaintsData
+    #     row_to_archive = comp_list.loc[comp_list['ID'].astype(str) == complaint_id].copy()
+        
+    #     if not row_to_archive.empty:
+    #         # Map columns to Archive.csv structure
+    #         archive_row = pd.DataFrame([{
+    #             'Date': row_to_archive['Date'].values[0],
+    #             'Time': row_to_archive['Time'].values[0],
+    #             'Contact No': row_to_archive.get('Contact No', [''])[0] if 'Contact No' in row_to_archive.columns else '',
+    #             'ID': row_to_archive['ID'].values[0],
+    #             'Name': row_to_archive['Name'].values[0],
+    #             'Respondent': row_to_archive.get('Respondent', [''])[0] if 'Respondent' in row_to_archive.columns else '',
+    #             'Complaint': row_to_archive['Raw Complaint'].values[0],
+    #             'Location': row_to_archive['Location'].values[0],
+    #             'Agency': agency,
+    #             'Image ID': row_to_archive['Image ID'].values[0],
+    #             'Status': status,
+    #             'Remark': remark,
+    #             'Feedback': ''
+    #         }])
+
+    #         # Check if ID already exists in archive (prevent duplicates)
+    #         if complaint_id not in archive['ID'].astype(str).values:
+    #             archive = pd.concat([archive, archive_row], ignore_index=True)
+    #         else:
+    #             # Update existing archive entry
+    #             archive.loc[archive['ID'].astype(str) == complaint_id, [
+    #                 'Status', 'Agency', 'Remark'
+    #             ]] = [status, agency, remark]
+            
+    #         archive.to_csv(archive_path, index=False, encoding='cp1252')
+
+    # return jsonify({"success": True})
 
 #-------------------------TRACK COMPLAINT BACKEND-------------------------
 
@@ -403,7 +455,7 @@ def get_admin_stats():
 def update_complaint():
     data = request.get_json()
 
-    allowed = [
+    allowed_agencies = [
         "DPWH", "DOH", "DENR", "OMBUDSMAN", "LTO", "MMDA", 
         "PNP", "DEPED", "BFP", "DOTR", "DITC", "NONE",
     ]
@@ -493,56 +545,7 @@ def update_complaint():
         archive_sheet.update(
             [archive.columns.tolist()] + archive.astype(str).values.tolist()
         )
-    #Update ComplaintsData.csv
-    list_path = "CSVFile/ComplaintsData.csv"
-    comp_list = pd.read_csv(list_path, encoding='cp1252')
-    if "Remark" not in comp_list.columns:
-        comp_list["Remark"] = ""
-    
-    comp_list.loc[comp_list['ID'].astype(str) == complaint_id, ['Status', 'Category', 'Remark']] = [status, agency, remark]
-    comp_list.to_csv(list_path, index=False, encoding='cp1252')
 
-    #Update Archive.csv - MATCHING YOUR STRUCTURE
-    archive_path = "CSVFile/Archive.csv"
-    if status.upper() in ["SOLVED", "SPAM"]:
-        archive = pd.read_csv(archive_path, encoding='cp1252') if os.path.exists(archive_path) else pd.DataFrame(columns=[ 
-            "Date", "Time", "Contact No", "ID", "Name", "Respondent", 
-            "Complaint", "Location", "Agency", "Image ID", "Status", "Remark", "Feedback"
-        ])
-
-        # Get the row from ComplaintsData
-        row_to_archive = comp_list.loc[comp_list['ID'].astype(str) == complaint_id].copy()
-        
-        if not row_to_archive.empty:
-            # Map columns to Archive.csv structure
-            archive_row = pd.DataFrame([{
-                'Date': row_to_archive['Date'].values[0],
-                'Time': row_to_archive['Time'].values[0],
-                'Contact No': row_to_archive.get('Contact No', [''])[0] if 'Contact No' in row_to_archive.columns else '',
-                'ID': row_to_archive['ID'].values[0],
-                'Name': row_to_archive['Name'].values[0],
-                'Respondent': row_to_archive.get('Respondent', [''])[0] if 'Respondent' in row_to_archive.columns else '',
-                'Complaint': row_to_archive['Raw Complaint'].values[0],
-                'Location': row_to_archive['Location'].values[0],
-                'Agency': agency,
-                'Image ID': row_to_archive['Image ID'].values[0],
-                'Status': status,
-                'Remark': remark,
-                'Feedback': ''
-            }])
-
-            # Check if ID already exists in archive (prevent duplicates)
-            if complaint_id not in archive['ID'].astype(str).values:
-                archive = pd.concat([archive, archive_row], ignore_index=True)
-            else:
-                # Update existing archive entry
-                archive.loc[archive['ID'].astype(str) == complaint_id, [
-                    'Status', 'Agency', 'Remark'
-                ]] = [status, agency, remark]
-            
-            archive.to_csv(archive_path, index=False, encoding='cp1252')
-
-    return jsonify({"success": True})
 
 #-------------------------FEEDBACK BACKEND-------------------------
 

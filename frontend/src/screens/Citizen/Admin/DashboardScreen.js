@@ -9,10 +9,13 @@ const COLUMN_WIDTHS = {
   ID: 60,
   Name: 120,
   Complaint: 320,
-  Category: 120,
-  Status: 120,
-  Location: 150,
-  ImageID: 120,
+  Category: 100,
+  Status: 100,
+  Location: 120,
+  ContactNo: 120,
+  Date: 100,
+  Time: 80,
+  ImageID: 100,
   Action: 100,
 };
 
@@ -338,6 +341,9 @@ export default function ComplaintListScreen({ navigation }) {
                   <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Category }]}>Category</Text>
                   <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Status }]}>Status</Text>
                   <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Location }]}>Location</Text>
+                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.ContactNo }]}>Contact</Text>
+                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Date }]}>Date</Text>
+                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Time }]}>Time</Text>
                   <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.ImageID }]}>Image ID</Text>
                   <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Action }]}>Action</Text>
                 </>
@@ -346,9 +352,12 @@ export default function ComplaintListScreen({ navigation }) {
                   <Text style={[styles.headerCell, { width: 60 }]}>ID</Text>
                   <Text style={[styles.headerCell, { width: 120 }]}>Name</Text>
                   <Text style={[styles.headerCell, { width: 320 }]}>Complaint</Text>
-                  <Text style={[styles.headerCell, { width: 150 }]}>Location</Text>
-                  <Text style={[styles.headerCell, { width: 120 }]}>Agency</Text>
-                  <Text style={[styles.headerCell, { width: 120 }]}>Image ID</Text>
+                  <Text style={[styles.headerCell, { width: 120 }]}>Location</Text>
+                  <Text style={[styles.headerCell, { width: 100 }]}>Agency</Text>
+                  <Text style={[styles.headerCell, { width: 120 }]}>Contact</Text>
+                  <Text style={[styles.headerCell, { width: 100 }]}>Date</Text>
+                  <Text style={[styles.headerCell, { width: 80 }]}>Time</Text>
+                  <Text style={[styles.headerCell, { width: 100 }]}>Image ID</Text>
                   <Text style={[styles.headerCell, { width: 100 }]}>Status</Text>
                   <Text style={[styles.headerCell, { width: 150 }]}>Remark</Text>
                   <Text style={[styles.headerCell, { width: 150 }]}>Feedback</Text>
@@ -364,9 +373,7 @@ export default function ComplaintListScreen({ navigation }) {
               <Text style={{ margin: 10, color: "#11493f" }}>No {viewMode.toLowerCase()} complaints found.</Text>
             ) : (
               currentComplaints.map((c) => {
-                const isFlagged =
-                  String(c["Flagged Words"]).trim().toUpperCase() === "TRUE";
-
+                const isFlagged = String(c["Flagged Words"]).trim().toUpperCase() === "TRUE";
                 return (
                   <View
                     style={[styles.tableRow, isFlagged && styles.flaggedRow]}
@@ -374,24 +381,17 @@ export default function ComplaintListScreen({ navigation }) {
                   >
                     {viewMode === "Active" ? (
                       <>
-                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.ID }]}>
-                          {isFlagged ? "🚩 " : ""}
-                          {c.ID}
-                        </Text>
+                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.ID }]}>{isFlagged ? "🚩 " : ""}{c.ID}</Text>
                         <Text style={[styles.cell, { width: COLUMN_WIDTHS.Name }]}>{c.Name}</Text>
-                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Complaint, textAlign: "left" }]}>
-                          {c.Complaint || c["Raw Complaint"]}
-                        </Text>
-                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Category }]}>
-                          {c["Predicted Agency"] || c["Category"]}
-                        </Text>
+                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Complaint, textAlign: "left" }]}>{c.Complaint || c["Raw Complaint"]}</Text>
+                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Category }]}>{c["Predicted Agency"] || c["Category"]}</Text>
                         <Text style={[styles.cell, { width: COLUMN_WIDTHS.Status }]}>{c.Status}</Text>
                         <Text style={[styles.cell, { width: COLUMN_WIDTHS.Location }]}>{c.Location}</Text>
-                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.ImageID }]}>{c.ImageID}</Text>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { width: COLUMN_WIDTHS.Action }]}
-                          onPress={() => openResolver(c)}
-                        >
+                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.ContactNo }]}>{c.ContactNo || ""}</Text>
+                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Date }]}>{c.Date || ""}</Text>
+                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Time }]}>{c.Time || ""}</Text>
+                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.ImageID }]}>{c.ImageID || ""}</Text>
+                        <TouchableOpacity style={[styles.actionBtn, { width: COLUMN_WIDTHS.Action }]} onPress={() => openResolver(c)}>
                           <Text style={styles.actionBtnText}>Resolve</Text>
                         </TouchableOpacity>
                       </>
@@ -400,9 +400,12 @@ export default function ComplaintListScreen({ navigation }) {
                         <Text style={[styles.cell, { width: 60 }]}>{isFlagged ? "🚩 " : ""}{c.ID}</Text>
                         <Text style={[styles.cell, { width: 120 }]}>{c.Name}</Text>
                         <Text style={[styles.cell, { width: 320, textAlign: "left" }]}>{c.Complaint || c["Raw Complaint"]}</Text>
-                        <Text style={[styles.cell, { width: 150 }]}>{c.Location}</Text>
-                        <Text style={[styles.cell, { width: 120 }]}>{c.Agency || c["Predicted Agency"] || c["Category"]}</Text>
-                        <Text style={[styles.cell, { width: 120 }]}>{c["Image ID"]}</Text>
+                        <Text style={[styles.cell, { width: 120 }]}>{c.Location}</Text>
+                        <Text style={[styles.cell, { width: 100 }]}>{c.Agency || c["Predicted Agency"] || c["Category"]}</Text>
+                        <Text style={[styles.cell, { width: 120 }]}>{c.ContactNo || ""}</Text>
+                        <Text style={[styles.cell, { width: 100 }]}>{c.Date || ""}</Text>
+                        <Text style={[styles.cell, { width: 80 }]}>{c.Time || ""}</Text>
+                        <Text style={[styles.cell, { width: 100 }]}>{c["Image ID"] || ""}</Text>
                         <Text style={[styles.cell, { width: 100 }]}>{c.Status}</Text>
                         <Text style={[styles.cell, { width: 150 }]}>{c.Remark || ""}</Text>
                         <Text style={[styles.cell, { width: 150 }]}>{c.Feedback || ""}</Text>

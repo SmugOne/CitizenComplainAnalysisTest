@@ -20,8 +20,15 @@ from transformers import pipeline
 from collections import Counter
 from sklearn.pipeline import make_pipeline
 from flask import render_template, send_file, request, jsonify
-from weasyprint import HTML, CSS
 from datetime import datetime
+#For PDF generation
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.lib.units import mm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 
 #Connection:
@@ -747,8 +754,7 @@ def get_admin_list():
 
 
 #-------------------------REPORT GENERATOR-------------------------
-#-------------------------REPORT GENERATOR (UPDATED)-------------------------
-@app.route('/reports')
+@app.route('/api/reports')
 def reports_page():
     """Render the reports page"""
     try:
@@ -757,65 +763,219 @@ def reports_page():
         print(f"ERROR loading reports page: {e}")
         return jsonify({'error': 'Could not load reports page', 'details': str(e)}), 500
 
-@app.route('/generate-report', methods=['POST', 'GET'])
+@app.route('/api/generate-report', methods=['POST', 'GET'])
 def generate_report():
-    """Generate PDF report based on selected parameters"""
+    """Generate PDF report (ReportLab) based on selected parameters"""
     try:
-        # Support both POST (form) and GET (query params) for React Native
+        # --- Extract params (support POST form and GET query) ---
         if request.method == 'POST':
             report_type = request.form.get('report_type', 'summary')
             date_from = request.form.get('date_from', '')
             date_to = request.form.get('date_to', '')
             category = request.form.get('category', 'all')
-        else:  # GET method
+        else:
             report_type = request.args.get('report_type', 'summary')
             date_from = request.args.get('date_from', '')
             date_to = request.args.get('date_to', '')
             category = request.args.get('category', 'all')
-        
-        print(f"Generating {report_type} report - Category: {category}, From: {date_from}, To: {date_to}")
-        
-        # Fetch actual data from your CSV
+
+        print(f"Generating (ReportLab) {report_type} report - Category: {category}, From: {date_from}, To: {date_to}")
+
+        # --- Build report data using your existing function ---
         report_data = fetch_report_data(report_type, date_from, date_to, category)
-        
-        if report_data['total_complaints'] == 0:
-            print("WARNING: No complaints found for the selected filters")
-        
-        # Render HTML template with data
-        html_content = render_template('report_template.html', data=report_data)
-        
-        # Generate PDF from HTML
-        pdf = HTML(string=html_content).write_pdf()
-        
-        # Create a BytesIO object to send the PDF
-        pdf_io = io.BytesIO(pdf)
-        pdf_io.seek(0)
-        
-        # Generate filename with date range if provided
+
+        # --- Prepare PDF buffer ---
+        buffer = io.BytesIO()
+
+        # Choose page size (A4 recommended for reports)
+        page_size = A4
+
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=page_size,
+            rightMargin=18 * mm,
+            leftMargin=18 * mm,
+            topMargin=18 * mm,
+            bottomMargin=18 * mm,
+        )
+
+        # --- Register a UTF-8 font if available (optional) ---
+        try:
+            # Try to register DejaVuSans if font file exists in project root or known path
+            font_path = os.path.join(os.getcwd(), "fonts", "DejaVuSans.ttf")
+            if os.path.exists(font_path):
+                pdfmetrics.registerFont(TTFont("DejaVuSans", font_path))
+                base_font_name = "DejaVuSans"
+            else:
+                # fallback: attempt to register common system font path (windows)
+                alt_path = r"C:\Windows\Fonts\DejaVuSans.ttf"
+                if os.path.exists(alt_path):
+                    pdfmetrics.registerFont(TTFont("DejaVuSans", alt_path))
+                    base_font_name = "DejaVuSans"
+                else:
+                    base_font_name = "Helvetica"
+        except Exception:
+            base_font_name = "Helvetica"
+
+        # --- Styles ---
+        styles = getSampleStyleSheet()
+        styles.add(ParagraphStyle(name="ReportTitle", fontName=base_font_name, fontSize=18, leading=22, spaceAfter=8))
+        styles.add(ParagraphStyle(name="SubTitle", fontName=base_font_name, fontSize=12, leading=14, spaceAfter=6))
+        styles.add(ParagraphStyle(name="Small", fontName=base_font_name, fontSize=9, leading=11))
+        normal = ParagraphStyle(name="NormalCustom", fontName=base_font_name, fontSize=10, leading=12)
+
+        elements = []
+
+        # --- Header / Title ---
+        title_text = report_data.get("title", "Complaint Report")
+        elements.append(Paragraph(title_text, styles["ReportTitle"]))
+        meta = f"Generated: {report_data.get('generated_date', '')}  |  Type: {report_data.get('report_type','')}"
+        elements.append(Paragraph(meta, styles["SubTitle"]))
+        elements.append(Spacer(1, 8))
+
+        # --- Summary boxes (totals) ---
+        totals_table = [
+            ["Total Complaints", str(report_data.get("total_complaints", 0))],
+            ["Resolved", str(report_data.get("resolved", 0))],
+            ["Pending", str(report_data.get("pending", 0))],
+            ["Spam", str(report_data.get("spam", 0))],
+            ["Flagged", str(report_data.get("flagged", 0))],
+            ["Resolution Rate", f"{report_data.get('resolution_rate', 0)}%"],
+            ["Date Range", f"{report_data.get('date_from')} → {report_data.get('date_to')}"],
+            ["Category Filter", report_data.get("category", "All Categories")]
+        ]
+        t = Table(totals_table, colWidths=[90*mm, 80*mm])
+        t.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#11493f")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTNAME", (0, 0), (-1, -1), base_font_name),
+            ("FONTSIZE", (0,0), (-1,-1), 10),
+            ("GRID", (0,0), (-1,-1), 0.25, colors.grey),
+            ("BACKGROUND", (0,1), (-1,-1), colors.whitesmoke),
+        ]))
+        elements.append(t)
+        elements.append(Spacer(1, 12))
+
+        # --- Category breakdown table ---
+        categories = report_data.get("categories", [])
+        if categories:
+            elements.append(Paragraph("Category breakdown", styles["SubTitle"]))
+            cat_data = [["Agency", "Count"]] + [[c["name"], str(c["count"])] for c in categories]
+            cat_table = Table(cat_data, colWidths=[100*mm, 70*mm])
+            cat_table.setStyle(TableStyle([
+                ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#197278")),
+                ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+                ("GRID", (0,0), (-1,-1), 0.25, colors.grey),
+                ("ALIGN", (1,1), (-1,-1), "CENTER"),
+            ]))
+            elements.append(cat_table)
+            elements.append(Spacer(1, 10))
+
+        # --- Location breakdown ---
+        locations = report_data.get("locations", [])
+        if locations:
+            elements.append(Paragraph("Top locations", styles["SubTitle"]))
+            loc_data = [["Location", "Count"]] + [[l["name"], str(l["count"])] for l in locations]
+            loc_table = Table(loc_data, colWidths=[120*mm, 50*mm])
+            loc_table.setStyle(TableStyle([
+                ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#11493f")),
+                ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+                ("GRID", (0,0), (-1,-1), 0.25, colors.grey),
+                ("ALIGN", (1,1), (-1,-1), "CENTER"),
+            ]))
+            elements.append(loc_table)
+            elements.append(Spacer(1, 10))
+
+        # --- Emotion averages ---
+        emotions = report_data.get("emotions", {})
+        if emotions:
+            elements.append(Paragraph("Average emotion scores", styles["SubTitle"]))
+            emo_data = [["Emotion", "Average Score"]] + [[k, str(v)] for k, v in emotions.items()]
+            emo_table = Table(emo_data, colWidths=[120*mm, 50*mm])
+            emo_table.setStyle(TableStyle([
+                ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#197278")),
+                ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+                ("GRID", (0,0), (-1,-1), 0.25, colors.grey),
+                ("ALIGN", (1,1), (-1,-1), "CENTER"),
+            ]))
+            elements.append(emo_table)
+            elements.append(Spacer(1, 10))
+
+        # --- Detailed complaints list when requested ---
+        if report_type == "detailed":
+            complaints_list = report_data.get("complaints", [])
+            elements.append(PageBreak())
+            elements.append(Paragraph("Detailed complaints (first 50)", styles["ReportTitle"]))
+            elements.append(Spacer(1, 6))
+
+            # header row
+            detail_rows = [["ID", "Name", "Agency", "Status", "Location", "Complaint (truncated)"]]
+            for c in complaints_list:
+                detail_rows.append([
+                    c.get("id", ""),
+                    c.get("name", ""),
+                    c.get("agency", ""),
+                    c.get("status", ""),
+                    c.get("location", ""),
+                    (c.get("complaint", "")[:200] + ("..." if len(c.get("complaint",""))>200 else ""))
+                ])
+
+            # Limit column widths and allow wrapping
+            detail_table = Table(detail_rows, colWidths=[18*mm, 30*mm, 28*mm, 28*mm, 30*mm, 60*mm])
+            detail_table.setStyle(TableStyle([
+                ("GRID", (0,0), (-1,-1), 0.25, colors.grey),
+                ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#11493f")),
+                ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+                ("FONTNAME", (0,0), (-1,0), base_font_name),
+                ("FONTSIZE", (0,0), (-1,-1), 8),
+            ]))
+            elements.append(detail_table)
+            elements.append(Spacer(1, 10))
+
+        # --- Trend / Category special pages (basic) ---
+        if report_type == "trend":
+            elements.append(PageBreak())
+            elements.append(Paragraph("Trend analysis (basic)", styles["ReportTitle"]))
+            elements.append(Paragraph("If you want charts in the PDF, generate images (matplotlib) and draw them here.", normal))
+            elements.append(Spacer(1, 8))
+
+        if report_type == "category":
+            elements.append(PageBreak())
+            elements.append(Paragraph("Category analysis (detailed)", styles["ReportTitle"]))
+            elements.append(Spacer(1, 6))
+            elements.append(Paragraph("Use the categories table above for quick counts. For richer visuals, embed charts.", normal))
+            elements.append(Spacer(1, 6))
+
+        # Build the PDF
+        doc.build(elements)
+
+        buffer.seek(0)
+
+        # Filename creation
         if date_from and date_to:
             filename = f"complaint_report_{report_type}_{date_from}_to_{date_to}.pdf"
         else:
             filename = f"complaint_report_{report_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        
-        print(f"✓ PDF generated successfully: {filename}")
-        
+
+        print(f"✓ PDF (ReportLab) generated successfully: {filename}")
+
         return send_file(
-            pdf_io,
+            buffer,
             mimetype='application/pdf',
             as_attachment=True,
             download_name=filename
         )
-        
+
     except FileNotFoundError as e:
-        print(f"ERROR: Template file not found - {e}")
-        return jsonify({'error': 'Template file not found. Check templates folder.', 'details': str(e)}), 500
+        print(f"ERROR: Template or resource not found - {e}")
+        return jsonify({'error': 'Required resource not found.', 'details': str(e)}), 500
     except Exception as e:
-        print(f"ERROR generating report: {e}")
+        print(f"ERROR generating report (ReportLab): {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': 'Failed to generate report', 'details': str(e)}), 500
 
-@app.route('/preview-report', methods=['POST', 'GET'])
+@app.route('/api/preview-report', methods=['POST', 'GET'])
 def preview_report():
     """Preview report in HTML format before generating PDF - Supports both POST and GET"""
     try:

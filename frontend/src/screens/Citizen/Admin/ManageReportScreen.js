@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import LayoutAdmin from '../../../components/LayoutAdmin';
+import { API_URL } from "@env";
 
 export default function ManageReportScreen({ navigation }) {
   const [reportType, setReportType] = useState('summary');
@@ -19,43 +20,21 @@ export default function ManageReportScreen({ navigation }) {
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Backend URL - change this to your Flask server IP
-  const BACKEND_URL = 'http://192.168.1.3:5000';
-
   const previewReport = async () => {
     setLoading(true);
-    
     try {
-      // Prepare form data
-      const formData = new FormData();
-      formData.append('report_type', reportType);
-      formData.append('date_from', startDate);
-      formData.append('date_to', endDate);
-      formData.append('category', category);
-
-      const url = `${BACKEND_URL}/preview-report`;
-      
-      // Open preview in browser
-      const previewUrl = `${url}?report_type=${reportType}&date_from=${startDate}&date_to=${endDate}&category=${category}`;
+      const previewUrl = `${API_URL}/preview-report?report_type=${reportType}&date_from=${startDate}&date_to=${endDate}&category=${category}`;
       
       const canOpen = await Linking.canOpenURL(previewUrl);
-      
       if (canOpen) {
         await Linking.openURL(previewUrl);
-        Alert.alert(
-          'Preview Opened',
-          'Report preview has been opened in your browser',
-          [{ text: 'OK' }]
-        );
+        Alert.alert('Preview Opened', 'Report preview has been opened in your browser');
       } else {
         throw new Error('Cannot open browser');
       }
     } catch (error) {
       console.error('Preview error:', error);
-      Alert.alert(
-        'Error', 
-        `Failed to preview report: ${error.message}\n\nMake sure Flask server is running at ${BACKEND_URL}`
-      );
+      Alert.alert('Error', `Failed to preview report: ${error.message}\nMake sure Flask server is running at ${API_URL}`);
     } finally {
       setLoading(false);
     }
@@ -63,61 +42,20 @@ export default function ManageReportScreen({ navigation }) {
 
   const generateReport = async () => {
     setLoading(true);
-    
     try {
-      const formData = new FormData();
-      formData.append('report_type', reportType);
-      formData.append('date_from', startDate);
-      formData.append('date_to', endDate);
-      formData.append('category', category);
-
-      const url = `${BACKEND_URL}/generate-report`;
+      // Use GET to match backend behavior for opening PDF in browser
+      const pdfUrl = `${API_URL}/generate-report?...`;
       
-      console.log('Generating report:', {
-        type: reportType,
-        category,
-        dateRange: `${startDate || 'All'} to ${endDate || 'Today'}`
-      });
-
-      const response = await fetch(url, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Server error: ${response.status}`);
+      const canOpen = await Linking.canOpenURL(pdfUrl);
+      if (canOpen) {
+        await Linking.openURL(pdfUrl);
+        Alert.alert('Success', 'PDF report opened in your browser.');
+      } else {
+        throw new Error('Cannot open PDF viewer');
       }
-
-      // For React Native, we need to handle the PDF differently
-      // Option 1: Open PDF in browser
-      const pdfUrl = `${url}?report_type=${reportType}&date_from=${startDate}&date_to=${endDate}&category=${category}`;
-      
-      Alert.alert(
-        'Success',
-        'Report generated successfully! Opening PDF...',
-        [
-          {
-            text: 'Open PDF',
-            onPress: async () => {
-              const canOpen = await Linking.canOpenURL(pdfUrl);
-              if (canOpen) {
-                await Linking.openURL(pdfUrl);
-              } else {
-                Alert.alert('Error', 'Cannot open PDF viewer');
-              }
-            }
-          },
-          { text: 'Cancel', style: 'cancel' }
-        ]
-      );
-
     } catch (error) {
       console.error('Generate report error:', error);
-      Alert.alert(
-        'Error',
-        `Failed to generate report: ${error.message}\n\nTroubleshooting:\n- Check if Flask server is running\n- Verify server address: ${BACKEND_URL}\n- Ensure CSV data files exist`
-      );
+      Alert.alert('Error', `Failed to generate report: ${error.message}\nCheck if Flask server is running and accessible`);
     } finally {
       setLoading(false);
     }
@@ -206,7 +144,7 @@ export default function ManageReportScreen({ navigation }) {
             
             {/* Note about date selection */}
             <Text style={styles.dateNote}>
-              ℹ️ To change dates, use the web interface at: {BACKEND_URL}/reports
+              ℹ️ To change dates, use the web interface at: {API_URL}/reports
             </Text>
           </View>
 
@@ -262,7 +200,7 @@ export default function ManageReportScreen({ navigation }) {
           <TouchableOpacity
             style={styles.webLinkButton}
             onPress={async () => {
-              const webUrl = `${BACKEND_URL}/reports`;
+              const webUrl = `${API_URL}/reports`;
               const canOpen = await Linking.canOpenURL(webUrl);
               if (canOpen) {
                 await Linking.openURL(webUrl);
@@ -280,7 +218,7 @@ export default function ManageReportScreen({ navigation }) {
         {/* Server Status Info */}
         <View style={styles.statusCard}>
           <Text style={styles.statusTitle}>🔧 Server Configuration</Text>
-          <Text style={styles.statusText}>Backend URL: {BACKEND_URL}</Text>
+          <Text style={styles.statusText}>Backend URL: {API_URL}</Text>
           <Text style={styles.statusHint}>
             Make sure Flask server is running and accessible from this device
           </Text>

@@ -47,6 +47,7 @@ export default function SubmitComplaintScreen({ navigation }) {
   const [locLoading, setLocLoading] = useState(false);
   const [image, setImage] = useState(null);
   const [imageLoading, setImageLoading] = useState(false);
+  const [contactNo, setContactNo] = useState("");
 
   // Modal Alert handling
   const [modal, setModal] = useState({ show: false, message: "" });
@@ -158,6 +159,7 @@ export default function SubmitComplaintScreen({ navigation }) {
           complaint: complaint,
           category: category.value,
           location: location,
+          contactNo: contactNo,
           imageID: imageId,
           imageUrl: imageUrl,
           status: "UNSOLVED",
@@ -178,6 +180,7 @@ export default function SubmitComplaintScreen({ navigation }) {
       setComplaint("");
       setCategory(defaultCategories[0]);
       setLocation("");
+      setContactNo("");
       setAnonymous(false);
       setImage(null);
     } 
@@ -217,7 +220,7 @@ export default function SubmitComplaintScreen({ navigation }) {
           multiline
         />
         <View style={styles.row}>
-          <Text style={styles.label}>Category:</Text>
+          <Text style={styles.label}>Category:    </Text>
           {Platform.OS === "web" ? (
             <select
               style={styles.select}
@@ -246,8 +249,27 @@ export default function SubmitComplaintScreen({ navigation }) {
             </Picker>
           )}
         </View>
+
+        {/* CONTACT NUMBER INPUT */}
         <View style={styles.row}>
-          <Text style={styles.label}>Location:</Text>
+          <Text style={styles.label}>Contact No:</Text>
+            <TextInput
+              style={[styles.input, { flex: 1, height: 40 }]}
+              placeholder="Contact Number (optional)"
+              keyboardType={Platform.OS === "ios" ? "number-pad" : "numeric"}
+              value={contactNo}
+              maxLength={11} 
+              onChangeText={(text) => {
+                //Keep only digits
+                const numericText = text.replace(/[^0-9]/g, "");
+                setContactNo(numericText);
+              }}
+            />
+        </View>
+
+        {/* LOCATION INPUT */}
+        <View style={styles.row}>
+          <Text style={styles.label}>Location:    </Text>
           <TextInput
             style={[styles.input, { flex: 1, height: 40 }]}
             placeholder="Enter location (optional)"
@@ -262,6 +284,7 @@ export default function SubmitComplaintScreen({ navigation }) {
             )}
           </TouchableOpacity>
         </View>
+
         {/* IMAGE UPLOAD SECTION */}
         <View style={styles.row}>
           <Text style={styles.label}>Attach Image:</Text>

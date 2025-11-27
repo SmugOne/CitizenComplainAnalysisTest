@@ -96,7 +96,6 @@ export default function ManageReportScreen({ navigation }) {
                 <Picker.Item label="Summary Report" value="summary" />
                 <Picker.Item label="Detailed Report" value="detailed" />
                 <Picker.Item label="Category Analysis" value="category" />
-                <Picker.Item label="Trend Analysis" value="trend" />
               </Picker>
             </View>
           </View>
@@ -141,11 +140,6 @@ export default function ManageReportScreen({ navigation }) {
                 <Text style={styles.dateValue}>{getEndDateDisplay()}</Text>
               </View>
             </View>
-            
-            {/* Note about date selection */}
-            <Text style={styles.dateNote}>
-              ℹ️ To change dates, use the web interface at: {API_URL}/reports
-            </Text>
           </View>
 
           {/* Report Info */}
@@ -291,12 +285,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#11493f',
     fontWeight: '600',
-  },
-  dateNote: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 12,
-    fontStyle: 'italic',
   },
   reportInfo: {
     backgroundColor: '#f0f8ff',

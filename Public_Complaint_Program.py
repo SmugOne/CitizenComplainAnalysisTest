@@ -103,11 +103,9 @@ def upload_image():
 #Flask-React Connect and Assign from ComplaintsFormScreen:
 @app.route('/api/complaints', methods=['POST'])
 def run_arrangement():
-    #Distribute Data from ComplaintsFormScreen
-    date = request.form.get('date') or ''
-    time = request.form.get('time') or ''
-    contactno = request.form.get('contactno') or ''
+    Database = pd.DataFrame(complaints_sheet.get_all_records())
     data = request.get_json()
+    
     name = data.get('name') or 'Anonymous'
     complaint = data.get('complaint') or ''
     location = data.get('location') or ''
@@ -115,68 +113,45 @@ def run_arrangement():
     imageID = data.get('imageID') or ''
     status = data.get('status') or "UNSOLVED" 
     password = data.get('password') or ''
-    remark = data.get('remark') or ''
-    contact_no = data.get('contact_no') or ''  # Add contact number support
-    respondent = data.get('respondent') or ''  # Add respondent support
+    contact_no = data.get('contactNo') or ''  
 
-    #Datasets:
+    #Assign new ID
     try:
-        existing_records = complaints_sheet.get_all_records()
-        df_db = pd.DataFrame(existing_records)
+        df_db = pd.DataFrame(complaints_sheet.get_all_records())
+        ID = int(df_db['ID'].max()) + 1 if not df_db.empty else 1
     except:
-        df_db = pd.DataFrame()
-
-    #Assign new ID based on last one
-    if df_db.empty or 'ID' not in df_db.columns:
         ID = 1
-    else:
-        ID = int(df_db['ID'].max()) + 1
 
-    #Add new entry to the database (ComplaintsData.csv)
-    new_row = [
-        date,
-        time,
-        contactno,
-        ID,
-        name,
-        complaint,
-        str(location),
-        status,
-        str(category),
-        str(imageID),
-        str(password),
-        str(remark),
-    ]
-    #Timestamp Autogenerate
+    #Timestamp
     current_datetime = datetime.now()
-    date_submitted = current_datetime.strftime('%Y-%m-%d')  # Format: 2025-11-27
-    time_submitted = current_datetime.strftime('%H:%M:%S')  # Format: 14:30:45
+    date_submitted = current_datetime.strftime('%Y-%m-%d')
+    time_submitted = current_datetime.strftime('%H:%M:%S')
 
-    #Add new entry to the database WITH AUTO TIMESTAMPS
-    new_row = {
-        'Date': date_submitted,          
-        'Time': time_submitted,          
-        'Contact No': contact_no,
-        'ID': ID,
-        'Name': name,
-        'Respondent': respondent,
-        'Raw Complaint': complaint,
-        'Location': str(location),
-        'Status': str(status),
-        'Category': str(category),
-        'Image ID': str(imageID),
-        'Password': str(password),
-        'Remark': '',
-    }
-    Database = pd.concat([Database, pd.DataFrame([new_row])], ignore_index=True)
-    Database = Database.fillna('')
+    #Prepare row for Google Sheet
+    columns = ComplaintsData.columns.tolist()
+    new_row_list = [
+        date_submitted,      
+        time_submitted,       
+        contact_no,           
+        ID,                  
+        name,                 
+        complaint,            
+        str(location),         
+        str(status),           
+        str(category),         
+        str(imageID),          
+        str(password),         
+        ''                     
+    ]
 
-    #Save updated database and returns it
-    complaints_sheet.append_row(new_row)
+    # Make sure length matches columns
+    if len(new_row_list) < len(columns):
+        new_row_list += [''] * (len(columns) - len(new_row_list))
+
+    complaints_sheet.append_row(new_row_list)
 
     Main()
 
-    #Return ID to frontend. Do not remove
     return jsonify({
         "message": "Complaint submitted successfully",
         "ID": ID,
@@ -276,58 +251,6 @@ def Main():
     arranged_sheet.clear()
     arranged_sheet.update([output.columns.values.tolist()] + output.values.tolist())
     return output
-
-#-------------------------UPDATE COMPLAINT BACKEND-------------------------
-    #Update ComplaintsData.csv
-    # list_path = "CSVFile/ComplaintsData.csv"
-    # comp_list = pd.read_csv(list_path, encoding='cp1252')
-    # if "Remark" not in comp_list.columns:
-    #     comp_list["Remark"] = ""
-    
-    # comp_list.loc[comp_list['ID'].astype(str) == complaint_id, ['Status', 'Category', 'Remark']] = [status, agency, remark]
-    # comp_list.to_csv(list_path, index=False, encoding='cp1252')
-
-    # #Update Archive.csv - MATCHING YOUR STRUCTURE
-    # archive_path = "CSVFile/Archive.csv"
-    # if status.upper() in ["SOLVED", "SPAM"]:
-    #     archive = pd.read_csv(archive_path, encoding='cp1252') if os.path.exists(archive_path) else pd.DataFrame(columns=[ 
-    #         "Date", "Time", "Contact No", "ID", "Name", "Respondent", 
-    #         "Complaint", "Location", "Agency", "Image ID", "Status", "Remark", "Feedback"
-    #     ])
-
-    #     # Get the row from ComplaintsData
-    #     row_to_archive = comp_list.loc[comp_list['ID'].astype(str) == complaint_id].copy()
-        
-    #     if not row_to_archive.empty:
-    #         # Map columns to Archive.csv structure
-    #         archive_row = pd.DataFrame([{
-    #             'Date': row_to_archive['Date'].values[0],
-    #             'Time': row_to_archive['Time'].values[0],
-    #             'Contact No': row_to_archive.get('Contact No', [''])[0] if 'Contact No' in row_to_archive.columns else '',
-    #             'ID': row_to_archive['ID'].values[0],
-    #             'Name': row_to_archive['Name'].values[0],
-    #             'Respondent': row_to_archive.get('Respondent', [''])[0] if 'Respondent' in row_to_archive.columns else '',
-    #             'Complaint': row_to_archive['Raw Complaint'].values[0],
-    #             'Location': row_to_archive['Location'].values[0],
-    #             'Agency': agency,
-    #             'Image ID': row_to_archive['Image ID'].values[0],
-    #             'Status': status,
-    #             'Remark': remark,
-    #             'Feedback': ''
-    #         }])
-
-    #         # Check if ID already exists in archive (prevent duplicates)
-    #         if complaint_id not in archive['ID'].astype(str).values:
-    #             archive = pd.concat([archive, archive_row], ignore_index=True)
-    #         else:
-    #             # Update existing archive entry
-    #             archive.loc[archive['ID'].astype(str) == complaint_id, [
-    #                 'Status', 'Agency', 'Remark'
-    #             ]] = [status, agency, remark]
-            
-    #         archive.to_csv(archive_path, index=False, encoding='cp1252')
-
-    # return jsonify({"success": True})
 
 #-------------------------TRACK COMPLAINT BACKEND-------------------------
 

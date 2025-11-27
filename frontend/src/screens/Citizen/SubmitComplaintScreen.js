@@ -29,11 +29,12 @@ function ModalAlert({ visible, message, onClose }) {
 const defaultCategories = [
   {label: "Select Category", value: ""},
   {label: "Garbage Collection", value: "DENR"},
-  {label: "Road Damage", value: "DPWH"},
+  {label: "Road Damage", value: "TRAFFIC MANAGEMENT"},
   {label: "Water Services", value: "DENR"},
   {label: "Electricity Services", value: "DOE"},
   {label: "Education Services", value: "DEPED"},
   {label: "Corruption", value: "OMBUDSMAN"},
+  {label: "Government Employee Issue", value: "OMBUDSMAN"},
   {label: "Transport Issue", value: "DOTR"},
   {label: "Others", value: ""},
 ];

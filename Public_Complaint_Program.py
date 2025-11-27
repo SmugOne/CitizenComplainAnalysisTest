@@ -329,8 +329,8 @@ def get_admin_stats():
     #Define expected categories and statuses
     valid_agencies = [
         "DPWH", "DOH", "DENR", "OMBUDSMAN",
-        "LTO", "MMDA", "PNP", "DEPED",
-        "BFP", "DOTR", "DITC", "NONE"
+        "TRAFFIC MANAGEMENT", "PNP", "DEPED",
+        "BFP", "DOTR", "DITC", "OTHERS", "NONE",
     ]
     
     valid_statuses = ["SOLVED", "SPAM", "UNDER REVIEW", "UNSOLVED"]
@@ -391,8 +391,8 @@ def update_complaint():
     data = request.get_json()
 
     allowed_agencies = [
-        "DPWH", "DOH", "DENR", "OMBUDSMAN", "LTO", "MMDA", 
-        "PNP", "DEPED", "BFP", "DOTR", "DITC", "NONE",
+        "DPWH", "DOH", "DENR", "OMBUDSMAN", "TRAFFIC MANAGEMENT", 
+        "PNP", "DEPED", "BFP", "DOTR", "DITC", "OTHERS", "NONE",
     ]
 
     complaint_id = str(data.get("id"))
@@ -480,6 +480,13 @@ def update_complaint():
         archive_sheet.update(
             [archive.columns.tolist()] + archive.astype(str).values.tolist()
         )
+
+    return jsonify({
+        "status": "success",
+        "message": f"Complaint {complaint_id} updated successfully",
+        "updated_status": status,
+        "updated_agency": agency
+})
 
 
 #-------------------------FEEDBACK BACKEND-------------------------

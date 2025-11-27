@@ -22,7 +22,7 @@ const COLUMN_WIDTHS = {
 //Filter options
 const CATEGORY_OPTIONS = [
   "All", "DPWH", "DOH", "DENR", "OMBUDSMAN",
-  "LTO", "MMDA", "PNP", "DEPED", "BFP", "DOTR", "DITC"
+  "TRAFFIC MANAGEMENT", "PNP", "DEPED", "BFP", "DOTR", "DITC", "OTHERS", "NONE",
 ];
 
 //Filter for active complaints
@@ -34,8 +34,8 @@ const STATUS_OPTIONS_ARCHIVE = ["All", "SOLVED", "SPAM"];
 //Agencies for resolver screen
 const AGENCY_OPTIONS = [
   "DPWH", "DOH", "DENR", "OMBUDSMAN",
-  "LTO", "MMDA", "PNP", "DEPED",
-  "BFP", "DOTR", "DITC", "NONE"
+  "TRAFFIC MANAGEMENT", "PNP", "DEPED",
+  "BFP", "DOTR", "DITC", "OTHERS", "NONE",
 ];
 
 
@@ -54,6 +54,7 @@ export default function ComplaintListScreen({ navigation }) {
   const [newStatus, setNewStatus] = useState("UNSOLVED");
   const [newAgency, setNewAgency] = useState("");
   const [remark, setRemark] = useState("");
+  const [remarkAgency, setRemarkAgency] = useState("");
   const [resolveTab, setResolveTab] = useState("details");
   //Modal state
   const [modalVisible, setModalVisible] = useState(false);

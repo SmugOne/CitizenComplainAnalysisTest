@@ -8,8 +8,8 @@ import { API_URL } from "@env";
 
 const AGENCY_OPTIONS = [
   "DPWH", "DOH", "DENR", "OMBUDSMAN",
-  "LTO", "MMDA", "PNP", "DEPED",
-  "BFP", "DOTR", "DITC", "NONE"
+  "TRAFFIC MANAGEMENT", "PNP", "DEPED",
+  "BFP", "DOTR", "DITC", "OTHERS", "NONE",
 ];
 
 const STATUS_OPTIONS = ["SOLVED", "SPAM", "UNDER REVIEW", "UNSOLVED"];
@@ -298,7 +298,7 @@ function BarChart({ data, isCompact = false }) {
     availableWidth = width - 90;
   }
   
-  const chartHeight = isCompact ? 260 : 300;
+  const chartHeight = isCompact ? 500 : 300;
   const chartWidth = Math.max(availableWidth, 300);
   
   const maxValue = Math.max(...data.map(d => d.value), 1);
@@ -359,8 +359,12 @@ function BarChart({ data, isCompact = false }) {
             const x = leftMargin + i * (barWidth + barSpacing);
             const y = chartHeight - 52 - barHeight;
 
+            // Truncate very long labels
+            const displayLabel = item.label.length > 15 ? item.label.slice(0, 15) + "…" : item.label;
+
             return (
               <G key={i}>
+                {/* Bar */}
                 <Rect 
                   x={x} 
                   y={y} 
@@ -369,6 +373,8 @@ function BarChart({ data, isCompact = false }) {
                   fill="#27ae60" 
                   rx={4} 
                 />
+
+                {/* Value on top */}
                 {item.value > 0 && (
                   <SvgText 
                     x={x + barWidth / 2} 
@@ -382,16 +388,21 @@ function BarChart({ data, isCompact = false }) {
                     {item.value}
                   </SvgText>
                 )}
+
+                {/* Rotated x-axis label */}
                 <SvgText 
                   x={x + barWidth / 2} 
-                  y={chartHeight - 28} 
+                  y={chartHeight - 10} 
                   fontSize={isXs ? 9 : 10} 
                   fill="#666" 
-                  textAnchor="middle" 
+                  textAnchor="end" // anchor to rotate nicely
+                  transform={`rotate(-45, ${x + barWidth / 2}, ${chartHeight - 10})`}
                   fontWeight="500"
                   fontFamily="Poppins"
+                  width={barWidth + 5}
+                  ellipsizeMode="tail"  
                 >
-                  {item.label}
+                  {displayLabel}
                 </SvgText>
               </G>
             );

@@ -162,13 +162,6 @@ export default function ManageReportScreen({ navigation }) {
             </Text>
           </View>
 
-          {/* Info Box */}
-          <View style={styles.infoBox}>
-            <Text style={styles.infoText}>
-              💡 <Text style={styles.infoBold}>Tip:</Text> Preview your report first to ensure the data looks correct before generating the PDF.
-            </Text>
-          </View>
-
           {/* Action Buttons */}
           <View style={styles.buttonGroup}>
             <TouchableOpacity
@@ -194,35 +187,26 @@ export default function ManageReportScreen({ navigation }) {
                 <Text style={styles.buttonText}>📥 Generate PDF</Text>
               )}
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, styles.webLinkButton, { flex: 1 }]}
+              onPress={async () => {
+                const webUrl = `${API_URL}/reports`;
+                const canOpen = await Linking.canOpenURL(webUrl);
+                if (canOpen) {
+                  await Linking.openURL(webUrl);
+                } else {
+                  Alert.alert('Error', 'Cannot open browser');
+                }
+              }}
+            >
+              <Text style={[styles.buttonText, { color: '#11493f', fontWeight: '600' }]}>
+                🌐 Open Full Generator
+              </Text>
+            </TouchableOpacity>
           </View>
-
-          {/* Web Interface Link */}
-          <TouchableOpacity
-            style={styles.webLinkButton}
-            onPress={async () => {
-              const webUrl = `${API_URL}/reports`;
-              const canOpen = await Linking.canOpenURL(webUrl);
-              if (canOpen) {
-                await Linking.openURL(webUrl);
-              } else {
-                Alert.alert('Error', 'Cannot open browser');
-              }
-            }}
-          >
-            <Text style={styles.webLinkText}>
-              🌐 Open Full Report Generator in Browser
-            </Text>
-          </TouchableOpacity>
         </View>
 
-        {/* Server Status Info */}
-        <View style={styles.statusCard}>
-          <Text style={styles.statusTitle}>🔧 Server Configuration</Text>
-          <Text style={styles.statusText}>Backend URL: {API_URL}</Text>
-          <Text style={styles.statusHint}>
-            Make sure Flask server is running and accessible from this device
-          </Text>
-        </View>
       </View>
     </LayoutAdmin>
   );
@@ -335,14 +319,6 @@ const styles = StyleSheet.create({
   },
   reportInfoBold: {
     fontWeight: '700',
-  },
-  infoBox: {
-    backgroundColor: '#e8f5e9',
-    padding: 16,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#11493f',
-    marginBottom: 24,
   },
   infoText: {
     fontSize: 13,

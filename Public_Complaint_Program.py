@@ -21,6 +21,7 @@ from collections import Counter
 from sklearn.pipeline import make_pipeline
 from flask import render_template, send_file, request, jsonify
 from datetime import datetime
+from flask import send_from_directory
 #For PDF generation
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
 from reportlab.lib.pagesizes import letter, A4
@@ -68,35 +69,38 @@ Accounts = pd.DataFrame(accounts_sheet.get_all_records())
 
 #-------------------------IMAGE BACKEND-------------------------
 
-#Image Folder:
-ImageFolder = os.path.join(os.getcwd(),'ImageFolder')
-os.makedirs(ImageFolder, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = ImageFolder
+UPLOAD_FOLDER = "ImageFolder"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-#Image upload from ComplaintsFormScreen:
-@app.route('/api/uploadImage', methods=['POST'])
+@app.route("/api/uploadImage", methods=["POST"])
 def upload_image():
-    if 'image' not in request.files:
-        return jsonify({"error": "No image part in the request"}), 400
+    if "image" not in request.files:
+        return jsonify({"error": "No image part in request"}), 400
 
-    file = request.files['image']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
+    file = request.files["image"]
 
-    #Stores image with identifier
-    image = request.files['image']
-    filename = secure_filename(image.filename)
-    imageId = str(uuid.uuid4())  # unique ID for the image
-    saved_filename = f"{imageId}_{filename}"
-    image.save(os.path.join(app.config['UPLOAD_FOLDER'], saved_filename))
+    if file.filename == "":
+        return jsonify({"error": "No file uploaded"}), 400
 
-    #push imageid into Image Folder
+    # Generate random image ID
+    image_id = str(uuid.uuid4())[:8]
+    filename = secure_filename(f"{image_id}.jpg")
+    filepath = os.path.join(UPLOAD_FOLDER, filename)
+
+    # Save file
+    file.save(filepath)
+
     return jsonify({
         "message": "Image uploaded successfully",
-        "imageId": imageId,
-        "file_name": saved_filename,
-        "imageUrl": f"/uploads/{saved_filename}"
-    })
+        "imageId": image_id,
+        "imageUrl": f"/api/getImage/{filename}"
+    }), 200
+
+
+# Route to serve images back to frontend if needed
+@app.route("/api/getImage/<filename>")
+def get_image(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 #-------------------------COMPLAINT INPUT BACKEND-------------------------
 

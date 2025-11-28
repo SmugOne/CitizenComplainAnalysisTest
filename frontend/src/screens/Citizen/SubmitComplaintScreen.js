@@ -122,27 +122,28 @@ export default function SubmitComplaintScreen({ navigation }) {
     const generatedPassword = generatePassword();
 
     //Upload image to backend
+    async function uriToFile(uri, filename) {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    return new File([blob], filename, { type: blob.type });
+  }
+
     if (image) {
       try {
+        const realFile = await uriToFile(image, "complaint_image.jpg");
+
         const formData = new FormData();
-        formData.append("image", {
-          uri: image,
-          name: "complaint_image.jpg",
-          type: "image/jpeg",
-        });
+        formData.append("image", realFile);
 
         const uploadResponse = await fetch(`${API_URL}/api/uploadImage`, {
           method: "POST",
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
           body: formData,
         });
 
         const uploadData = await uploadResponse.json();
         imageId = uploadData.imageId;
         imageUrl = uploadData.imageUrl;
-      } 
+      }
       catch (err) {
         console.error("Error uploading image:", err);
         showModal("Failed to upload image. Please try again.");

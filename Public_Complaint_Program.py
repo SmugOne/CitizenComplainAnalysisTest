@@ -21,7 +21,7 @@ from collections import Counter
 from sklearn.pipeline import make_pipeline
 from flask import render_template, send_file, request, jsonify
 from datetime import datetime
-from flask import send_from_directory
+from flask import send_from_directory, abort
 #For PDF generation
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
 from reportlab.lib.pagesizes import letter, A4
@@ -69,9 +69,13 @@ Accounts = pd.DataFrame(accounts_sheet.get_all_records())
 
 #-------------------------IMAGE BACKEND-------------------------
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+IMAGE_FOLDER = os.path.join(os.path.dirname(__file__), "ImageFolder")
 UPLOAD_FOLDER = "ImageFolder"
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+#Image upload route
 @app.route("/api/uploadImage", methods=["POST"])
 def upload_image():
     if "image" not in request.files:
@@ -84,8 +88,12 @@ def upload_image():
 
     # Generate random image ID
     image_id = str(uuid.uuid4())[:8]
-    filename = secure_filename(f"{image_id}.jpg")
-    filepath = os.path.join(UPLOAD_FOLDER, filename)
+    ext = os.path.splitext(file.filename)[1].lower()  # Keep original extension
+    if ext not in ['.jpg', '.jpeg', '.png']:
+        ext = '.jpg'  # fallback
+    filename = secure_filename(f"{image_id}{ext}")
+    filepath = os.path.join(IMAGE_FOLDER, filename)
+    file.save(filepath)
 
     # Save file
     file.save(filepath)
@@ -98,10 +106,15 @@ def upload_image():
     }), 200
 
 
-# Route to serve images back to frontend if needed
+#Image retrieval route
 @app.route("/api/getImage/<filename>")
 def get_image(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
+    # Ensure extension is included in filename
+    file_path = os.path.join(IMAGE_FOLDER, filename)
+    if os.path.exists(file_path):
+        return send_from_directory(IMAGE_FOLDER, filename)
+    else:
+        abort(404, description="File not found")
 
 
 #-------------------------COMPLAINT INPUT BACKEND-------------------------
@@ -161,6 +174,7 @@ def run_arrangement():
     return jsonify({
         "message": "Complaint submitted successfully",
         "ID": ID,
+        "imageFilename": imageFilename
     })
 
 #-------------------------MAIN ALGORITHM LIST BACKEND-------------------------
@@ -405,6 +419,7 @@ def update_complaint():
     status = data.get("status")
     agency = data.get("agency", "NONE")
     remark = data.get("remark", "")
+    image_filename = data.get("imageFilename")
 
     if agency not in allowed_agencies:
         return jsonify({"error": "Invalid agency"}), 400
@@ -486,12 +501,21 @@ def update_complaint():
         archive_sheet.update(
             [archive.columns.tolist()] + archive.astype(str).values.tolist()
         )
+    
+    for ext in ["jpg", "png"]:
+        if os.path.exists(os.path.join(IMAGE_FOLDER, f"{image_filename}.{ext}")):
+            image_filename_with_ext = f"{image_filename}.{ext}"
+            break
+    else:
+        image_filename_with_ext = None
 
     return jsonify({
         "status": "success",
         "message": f"Complaint {complaint_id} updated successfully",
         "updated_status": status,
-        "updated_agency": agency
+        "updated_agency": agency,
+        "success": True, 
+        "image_served": image_filename_with_ext,
 })
 
 

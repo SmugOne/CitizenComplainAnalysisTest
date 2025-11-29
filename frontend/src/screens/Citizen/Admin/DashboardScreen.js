@@ -231,9 +231,7 @@ export default function ComplaintListScreen({ navigation }) {
 
               <Text style={styles.detailLabel}>Image ID:</Text>
 
-              <TouchableOpacity
-                onPress={() => Linking.openURL(`${API_URL}/api/getImage/${filename}`)}
-              >
+              <TouchableOpacity onPress={() => Linking.openURL(`${API_URL}/api/getImage/${filename}`)}>
                 <Text style={{ color: "blue", textDecorationLine: "underline" }}>
                   {filename || "No Image"}
                 </Text>

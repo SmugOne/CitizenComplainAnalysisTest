@@ -109,12 +109,20 @@ def upload_image():
 #Image retrieval route
 @app.route("/api/getImage/<filename>")
 def get_image(filename):
-    # Ensure extension is included in filename
+    IMAGE_FOLDER = os.path.join(os.path.dirname(__file__), "ImageFolder")
+    
+    # Try with given name
     file_path = os.path.join(IMAGE_FOLDER, filename)
     if os.path.exists(file_path):
         return send_from_directory(IMAGE_FOLDER, filename)
-    else:
-        abort(404, description="File not found")
+    
+    # Try adding .jpg if not found
+    if not filename.lower().endswith(".jpg"):
+        file_path_jpg = os.path.join(IMAGE_FOLDER, f"{filename}.jpg")
+        if os.path.exists(file_path_jpg):
+            return send_from_directory(IMAGE_FOLDER, f"{filename}.jpg")
+    
+    return abort(404, description="File not found")
 
 
 #-------------------------COMPLAINT INPUT BACKEND-------------------------

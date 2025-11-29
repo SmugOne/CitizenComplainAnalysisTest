@@ -93,6 +93,7 @@ def upload_image():
     return jsonify({
         "message": "Image uploaded successfully",
         "imageId": image_id,
+        "filename": filename,
         "imageUrl": f"/api/getImage/{filename}"
     }), 200
 
@@ -101,6 +102,7 @@ def upload_image():
 @app.route("/api/getImage/<filename>")
 def get_image(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
+
 
 #-------------------------COMPLAINT INPUT BACKEND-------------------------
 
@@ -114,7 +116,7 @@ def run_arrangement():
     complaint = data.get('complaint') or ''
     location = data.get('location') or ''
     category = data.get('category') or ''
-    imageID = data.get('imageID') or ''
+    imageFilename = data.get('imageFilename') or ''
     status = data.get('status') or "UNSOLVED" 
     password = data.get('password') or ''
     contact_no = data.get('contactNo') or ''  
@@ -143,7 +145,7 @@ def run_arrangement():
         str(location),         
         str(status),           
         str(category),         
-        str(imageID),          
+        str(imageFilename),          
         str(password),         
         ''                     
     ]
@@ -389,7 +391,7 @@ def get_admin_stats():
     
     return jsonify(response_data)
 
-#Update ComplaintList and ArrangedComplaint for Admin Dashboard:
+#Update ComplaintList and ArrangedComplsaint for Admin Dashboard:
 @app.route('/api/complaints/update', methods=['POST'])
 def update_complaint():
     data = request.get_json()

@@ -294,7 +294,7 @@ export default function ManageReportScreen({ navigation }) {
 
             {/* Quick Date Range Presets */}
             <View style={styles.presetContainer}>
-              <Text style={styles.presetLabel}>Quick Select:</Text>
+              {/*<Text style={styles.presetLabel}>Quick Select:</Text> */}
               <View style={styles.presetButtons}>
                 <TouchableOpacity 
                   style={styles.presetButton}
@@ -422,7 +422,7 @@ export default function ManageReportScreen({ navigation }) {
           </View>
 
           {/* Test Connection Button */}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.testButton}
             onPress={testConnection}
             disabled={loading}
@@ -430,7 +430,7 @@ export default function ManageReportScreen({ navigation }) {
             <Text style={styles.testButtonText}>
               🔌 Test Server Connection
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* Web Link Button */}
           <TouchableOpacity
@@ -455,26 +455,6 @@ export default function ManageReportScreen({ navigation }) {
               🌐 Open Full Web Generator
             </Text>
           </TouchableOpacity>
-
-          {/* Status Info */}
-          <View style={styles.statusCard}>
-            <Text style={styles.statusTitle}>💡 Tips & Status</Text>
-            <Text style={styles.statusText}>
-              • Server URL: {API_URL}
-            </Text>
-            <Text style={styles.statusText}>
-              • Dates are fully editable - pick any range
-            </Text>
-            <Text style={styles.statusText}>
-              • Use quick select buttons for common ranges
-            </Text>
-            <Text style={styles.statusText}>
-              • Validation happens when you preview/generate
-            </Text>
-            <Text style={styles.statusText}>
-              • Try "Test Server Connection" if having issues
-            </Text>
-          </View>
         </View>
       </ScrollView>
     </LayoutAdmin>

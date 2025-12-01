@@ -250,13 +250,13 @@ export default function ManageReportScreen({ navigation }) {
                 <Picker.Item label="DOH - Health" value="DOH" />
                 <Picker.Item label="DENR - Environment" value="DENR" />
                 <Picker.Item label="Ombudsman" value="OMBUDSMAN" />
-                <Picker.Item label="LTO - Transportation" value="LTO" />
-                <Picker.Item label="MMDA - Metro Manila" value="MMDA" />
+                <Picker.Item label="Traffic Management" value="TRAFFIC MANAGEMENT" />
                 <Picker.Item label="PNP - Police" value="PNP" />
                 <Picker.Item label="DepEd - Education" value="DEPED" />
                 <Picker.Item label="BFP - Fire" value="BFP" />
                 <Picker.Item label="DOTR - Transportation" value="DOTR" />
                 <Picker.Item label="DITC - Technology" value="DITC" />
+                <Picker.Item label="Others" value="OTHERS" />
               </Picker>
             </View>
           </View>

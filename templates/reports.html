@@ -13,7 +13,7 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #11493f 0%, #197278 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -36,7 +36,7 @@
         }
         
         .header h1 {
-            color: #2c3e50;
+            color: #11493f;
             font-size: 28px;
             margin-bottom: 10px;
         }
@@ -52,7 +52,7 @@
         
         .form-group label {
             display: block;
-            color: #2c3e50;
+            color: #11493f;
             font-weight: 600;
             margin-bottom: 8px;
             font-size: 14px;
@@ -62,24 +62,33 @@
         .form-group input {
             width: 100%;
             padding: 12px 15px;
-            border: 2px solid #ecf0f1;
+            border: 2px solid #11493f;
             border-radius: 8px;
             font-size: 14px;
             transition: all 0.3s ease;
             font-family: inherit;
+            background-color: #f7f1de;
         }
         
         .form-group select:focus,
         .form-group input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #197278;
+            box-shadow: 0 0 0 3px rgba(25, 114, 120, 0.1);
+            background-color: white;
         }
         
         .date-range {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
+        }
+
+        .date-hint {
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+            margin-top: 5px;
         }
         
         .button-group {
@@ -106,25 +115,25 @@
         }
         
         .btn-preview {
-            background: #3498db;
+            background: #11493f;
             color: white;
         }
         
         .btn-preview:hover:not(:disabled) {
-            background: #2980b9;
+            background: #197278;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+            box-shadow: 0 5px 15px rgba(17, 73, 63, 0.3);
         }
         
         .btn-generate {
-            background: #27ae60;
+            background: #d32f2f;
             color: white;
         }
         
         .btn-generate:hover:not(:disabled) {
-            background: #229954;
+            background: #b71c1c;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+            box-shadow: 0 5px 15px rgba(211, 47, 47, 0.3);
         }
         
         .btn:active:not(:disabled) {
@@ -133,14 +142,14 @@
         
         .info-box {
             background: #e8f4f8;
-            border-left: 4px solid #3498db;
+            border-left: 4px solid #11493f;
             padding: 15px;
             border-radius: 5px;
             margin-top: 20px;
         }
         
         .info-box h3 {
-            color: #2c3e50;
+            color: #11493f;
             font-size: 14px;
             margin-bottom: 8px;
         }
@@ -168,7 +177,7 @@
         
         .spinner {
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border-top: 3px solid #11493f;
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -203,6 +212,30 @@
             border-left: 4px solid #27ae60;
             color: #229954;
         }
+
+        .report-preview {
+            background: #f7f1de;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 2px solid #11493f;
+        }
+
+        .report-preview h3 {
+            color: #11493f;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .report-preview p {
+            color: #11493f;
+            font-size: 13px;
+            margin: 5px 0;
+        }
+
+        .report-preview strong {
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -226,13 +259,27 @@
             </div>
             
             <div class="form-group">
-                <label>Date Range (Optional)</label>
+                <label>Date Range (Required)</label>
                 <div class="date-range">
                     <div>
-                        <input type="date" id="date_from" name="date_from" placeholder="From">
+                        <input 
+                            type="date" 
+                            id="date_from" 
+                            name="date_from" 
+                            placeholder="Start Date"
+                            required
+                        >
+                        <div class="date-hint">Start date</div>
                     </div>
                     <div>
-                        <input type="date" id="date_to" name="date_to" placeholder="To">
+                        <input 
+                            type="date" 
+                            id="date_to" 
+                            name="date_to" 
+                            placeholder="End Date"
+                            required
+                        >
+                        <div class="date-hint">End date</div>
                     </div>
                 </div>
             </div>
@@ -254,6 +301,14 @@
                     <option value="DITC">DITC - Technology</option>
                 </select>
             </div>
+
+            <!-- Report Preview Info -->
+            <div class="report-preview">
+                <h3>📋 Selected Configuration</h3>
+                <p><strong>Type:</strong> <span id="preview_type">Summary Report</span></p>
+                <p><strong>Date Range:</strong> <span id="preview_dates">Please select dates</span></p>
+                <p><strong>Category:</strong> <span id="preview_category">All Categories</span></p>
+            </div>
             
             <div class="button-group">
                 <button type="button" class="btn btn-preview" id="previewBtn" onclick="previewReport()">
@@ -274,18 +329,71 @@
             <h3>ℹ️ Report Information</h3>
             <ul>
                 <li><strong>Summary:</strong> Overview of complaints with statistics</li>
-                <li><strong>Detailed:</strong> Includes full complaint list</li>
+                <li><strong>Detailed:</strong> Includes full complaint list (first 50)</li>
                 <li><strong>Category:</strong> Breakdown by government agency</li>
                 <li><strong>Trend:</strong> Analysis over time</li>
+                <li><strong>Date Range:</strong> Both start and end dates are required</li>
             </ul>
         </div>
     </div>
     
     <script>
-        // Set max date to today
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('date_to').setAttribute('max', today);
-        document.getElementById('date_from').setAttribute('max', today);
+        // Set default dates (last 30 days)
+        const today = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+
+        const dateFromInput = document.getElementById('date_from');
+        const dateToInput = document.getElementById('date_to');
+
+        dateFromInput.value = thirtyDaysAgo.toISOString().split('T')[0];
+        dateToInput.value = today.toISOString().split('T')[0];
+        dateFromInput.max = today.toISOString().split('T')[0];
+        dateToInput.max = today.toISOString().split('T')[0];
+
+        // Update preview when inputs change
+        function updatePreview() {
+            const reportType = document.getElementById('report_type').value;
+            const dateFrom = document.getElementById('date_from').value;
+            const dateTo = document.getElementById('date_to').value;
+            const category = document.getElementById('category').value;
+
+            const typeNames = {
+                'summary': 'Summary Report',
+                'detailed': 'Detailed Report',
+                'category': 'Category Analysis',
+                'trend': 'Trend Analysis'
+            };
+
+            document.getElementById('preview_type').textContent = typeNames[reportType];
+            
+            if (dateFrom && dateTo) {
+                document.getElementById('preview_dates').textContent = `${dateFrom} to ${dateTo}`;
+            } else {
+                document.getElementById('preview_dates').textContent = 'Please select dates';
+            }
+
+            document.getElementById('preview_category').textContent = 
+                category === 'all' ? 'All Categories' : category;
+        }
+
+        // Add event listeners
+        document.getElementById('report_type').addEventListener('change', updatePreview);
+        document.getElementById('date_from').addEventListener('change', updatePreview);
+        document.getElementById('date_to').addEventListener('change', updatePreview);
+        document.getElementById('category').addEventListener('change', updatePreview);
+
+        // Initialize preview
+        updatePreview();
+
+        // Validate date range
+        dateFromInput.addEventListener('change', function() {
+            dateToInput.min = this.value;
+            if (dateToInput.value && this.value > dateToInput.value) {
+                dateToInput.value = this.value;
+            }
+            updatePreview();
+        });
 
         function showAlert(message, type) {
             const alertBox = document.getElementById('alertBox');
@@ -309,10 +417,16 @@
             const dateFrom = document.getElementById('date_from').value;
             const dateTo = document.getElementById('date_to').value;
 
-            if (dateFrom && dateTo && dateFrom > dateTo) {
+            if (!dateFrom || !dateTo) {
+                showAlert('Please select both start and end dates', 'error');
+                return false;
+            }
+
+            if (dateFrom > dateTo) {
                 showAlert('Start date cannot be after end date', 'error');
                 return false;
             }
+
             return true;
         }
         
@@ -321,23 +435,12 @@
 
             const data = getFormData();
             
-            // Create form and submit to open in new tab
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/preview-report';
-            form.target = '_blank';
+            // Create URL with query parameters
+            const params = new URLSearchParams(data);
+            const url = `/api/preview-report?${params.toString()}`;
             
-            Object.keys(data).forEach(key => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = data[key];
-                form.appendChild(input);
-            });
-            
-            document.body.appendChild(form);
-            form.submit();
-            document.body.removeChild(form);
+            // Open in new tab
+            window.open(url, '_blank');
 
             showAlert('Opening preview in new tab...', 'success');
         }
@@ -349,21 +452,17 @@
             const previewBtn = document.getElementById('previewBtn');
             const generateBtn = document.getElementById('generateBtn');
             
-            const formData = new FormData();
             const data = getFormData();
-            
-            Object.keys(data).forEach(key => {
-                formData.append(key, data[key]);
-            });
             
             loading.classList.add('active');
             previewBtn.disabled = true;
             generateBtn.disabled = true;
             
             try {
-                const response = await fetch('/generate-report', {
-                    method: 'POST',
-                    body: formData
+                // Use GET method with query parameters
+                const params = new URLSearchParams(data);
+                const response = await fetch(`/api/generate-report?${params.toString()}`, {
+                    method: 'GET'
                 });
                 
                 if (response.ok) {
@@ -374,10 +473,8 @@
                     
                     // Create filename
                     const reportType = data.report_type;
-                    const dateStr = data.date_from && data.date_to 
-                        ? `_${data.date_from}_to_${data.date_to}` 
-                        : `_${new Date().toISOString().slice(0,10)}`;
-                    a.download = `complaint_report_${reportType}${dateStr}.pdf`;
+                    const dateStr = `${data.date_from}_to_${data.date_to}`;
+                    a.download = `complaint_report_${reportType}_${dateStr}.pdf`;
                     
                     document.body.appendChild(a);
                     a.click();

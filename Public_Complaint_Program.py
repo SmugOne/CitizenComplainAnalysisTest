@@ -29,6 +29,12 @@ from reportlab.lib import colors
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from flask import request, send_file, jsonify, render_template
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
 
 
 #Connection:
@@ -684,6 +690,7 @@ def get_admin_list():
 
 
 #-------------------------REPORT GENERATOR-------------------------
+
 @app.route('/api/reports')
 def reports_page():
     """Render the reports page"""
@@ -692,6 +699,7 @@ def reports_page():
     except Exception as e:
         print(f"ERROR loading reports page: {e}")
         return jsonify({'error': 'Could not load reports page', 'details': str(e)}), 500
+
 
 @app.route('/api/generate-report', methods=['POST', 'GET'])
 def generate_report():
@@ -834,39 +842,40 @@ def generate_report():
         # --- Detailed complaints list when requested ---
         if report_type == "detailed":
             complaints_list = report_data.get("complaints", [])
-            elements.append(PageBreak())
-            elements.append(Paragraph("Detailed complaints (first 50)", styles["ReportTitle"]))
-            elements.append(Spacer(1, 6))
+            if complaints_list:
+                elements.append(PageBreak())
+                elements.append(Paragraph("Detailed complaints (first 50)", styles["ReportTitle"]))
+                elements.append(Spacer(1, 6))
 
-            # header row
-            detail_rows = [["ID", "Name", "Agency", "Status", "Location", "Complaint (truncated)"]]
-            for c in complaints_list:
-                detail_rows.append([
-                    c.get("id", ""),
-                    c.get("name", ""),
-                    c.get("agency", ""),
-                    c.get("status", ""),
-                    c.get("location", ""),
-                    (c.get("complaint", "")[:200] + ("..." if len(c.get("complaint",""))>200 else ""))
-                ])
+                # header row
+                detail_rows = [["ID", "Name", "Agency", "Status", "Location", "Complaint (truncated)"]]
+                for c in complaints_list:
+                    detail_rows.append([
+                        c.get("id", ""),
+                        c.get("name", ""),
+                        c.get("agency", ""),
+                        c.get("status", ""),
+                        c.get("location", ""),
+                        (c.get("complaint", "")[:200] + ("..." if len(c.get("complaint",""))>200 else ""))
+                    ])
 
-            # Limit column widths and allow wrapping
-            detail_table = Table(detail_rows, colWidths=[18*mm, 30*mm, 28*mm, 28*mm, 30*mm, 60*mm])
-            detail_table.setStyle(TableStyle([
-                ("GRID", (0,0), (-1,-1), 0.25, colors.grey),
-                ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#11493f")),
-                ("TEXTCOLOR", (0,0), (-1,0), colors.white),
-                ("FONTNAME", (0,0), (-1,0), base_font_name),
-                ("FONTSIZE", (0,0), (-1,-1), 8),
-            ]))
-            elements.append(detail_table)
-            elements.append(Spacer(1, 10))
+                # Limit column widths and allow wrapping
+                detail_table = Table(detail_rows, colWidths=[18*mm, 30*mm, 28*mm, 28*mm, 30*mm, 60*mm])
+                detail_table.setStyle(TableStyle([
+                    ("GRID", (0,0), (-1,-1), 0.25, colors.grey),
+                    ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#11493f")),
+                    ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+                    ("FONTNAME", (0,0), (-1,0), base_font_name),
+                    ("FONTSIZE", (0,0), (-1,-1), 8),
+                ]))
+                elements.append(detail_table)
+                elements.append(Spacer(1, 10))
 
         # --- Trend / Category special pages (basic) ---
         if report_type == "trend":
             elements.append(PageBreak())
             elements.append(Paragraph("Trend analysis (basic)", styles["ReportTitle"]))
-            elements.append(Paragraph("If you want charts in the PDF, generate images (matplotlib) and draw them here.", normal))
+            elements.append(Paragraph("For visual charts, consider integrating matplotlib or plotly chart images.", normal))
             elements.append(Spacer(1, 8))
 
         if report_type == "category":
@@ -905,6 +914,7 @@ def generate_report():
         traceback.print_exc()
         return jsonify({'error': 'Failed to generate report', 'details': str(e)}), 500
 
+
 @app.route('/api/preview-report', methods=['POST', 'GET'])
 def preview_report():
     """Preview report in HTML format before generating PDF - Supports both POST and GET"""
@@ -937,34 +947,121 @@ def preview_report():
         traceback.print_exc()
         return f"<h1>Error generating preview</h1><p>{str(e)}</p>", 500
 
+
 def fetch_report_data(report_type, date_from, date_to, category):
     """
     Fetch and process complaint data for reports WITH DATE FILTERING
+    FIXED VERSION with better path handling
     """
-    arranged_path = 'CSVFile/ArrangedData.csv'
-    archive_path = 'CSVFile/Archive.csv'
+    # Get the absolute path to ensure correct file location
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    csv_folder = os.path.join(base_dir, 'CSVFile')
+    arranged_path = os.path.join(csv_folder, 'ArrangedData.csv')
+    archive_path = os.path.join(csv_folder, 'Archive.csv')
     
-    print(f"Loading data from: {arranged_path} and {archive_path}")
+    print(f"\n{'='*70}")
+    print(f"LOADING DATA FOR REPORT")
+    print(f"{'='*70}")
+    print(f"Base directory: {base_dir}")
+    print(f"CSV Folder: {csv_folder}")
+    print(f"ArrangedData path: {arranged_path}")
+    print(f"Archive path: {archive_path}")
+    print(f"{'='*70}\n")
     
-    # Load active complaints
+    # Initialize empty dataframes
+    df_active = pd.DataFrame()
+    df_archive = pd.DataFrame()
+    
+    # Load active complaints with multiple encoding attempts
     if os.path.exists(arranged_path):
-        df_active = pd.read_csv(arranged_path, encoding='cp1252').fillna('')
-        print(f"✓ Loaded {len(df_active)} active complaints")
+        try:
+            df_active = pd.read_csv(arranged_path, encoding='cp1252').fillna('')
+            print(f"✓ Loaded {len(df_active)} active complaints from ArrangedData.csv")
+            print(f"  Columns: {', '.join(df_active.columns.tolist()[:5])}...")
+        except UnicodeDecodeError:
+            try:
+                df_active = pd.read_csv(arranged_path, encoding='utf-8').fillna('')
+                print(f"✓ Loaded {len(df_active)} active complaints (UTF-8 encoding)")
+            except Exception as e:
+                print(f"❌ Error reading ArrangedData.csv with UTF-8: {e}")
+        except Exception as e:
+            print(f"❌ Error reading ArrangedData.csv: {e}")
     else:
-        df_active = pd.DataFrame()
-        print(f"⚠ ArrangedData.csv not found")
+        print(f"⚠ ArrangedData.csv not found at: {arranged_path}")
+        print(f"  Files in CSVFile folder:")
+        if os.path.exists(csv_folder):
+            files = os.listdir(csv_folder)
+            for f in files:
+                print(f"    - {f}")
+        else:
+            print(f"  ❌ CSVFile folder doesn't exist!")
     
-    # Load archived complaints
+    # Load archived complaints with multiple encoding attempts
     if os.path.exists(archive_path):
-        df_archive = pd.read_csv(archive_path, encoding='cp1252').fillna('')
-        print(f"✓ Loaded {len(df_archive)} archived complaints")
+        try:
+            df_archive = pd.read_csv(archive_path, encoding='cp1252').fillna('')
+            print(f"✓ Loaded {len(df_archive)} archived complaints from Archive.csv")
+        except UnicodeDecodeError:
+            try:
+                df_archive = pd.read_csv(archive_path, encoding='utf-8').fillna('')
+                print(f"✓ Loaded {len(df_archive)} archived complaints (UTF-8 encoding)")
+            except Exception as e:
+                print(f"❌ Error reading Archive.csv with UTF-8: {e}")
+        except Exception as e:
+            print(f"❌ Error reading Archive.csv: {e}")
     else:
-        df_archive = pd.DataFrame()
-        print(f"⚠ Archive.csv not found")
+        print(f"⚠ Archive.csv not found at: {archive_path}")
+    
+    # If both are empty, try alternative names
+    if df_active.empty and df_archive.empty:
+        print(f"\n⚠ WARNING: No data found in standard files. Checking alternatives...")
+        
+        # Try ComplaintsData.csv as fallback
+        complaints_path = os.path.join(csv_folder, 'ComplaintsData.csv')
+        if os.path.exists(complaints_path):
+            try:
+                df_active = pd.read_csv(complaints_path, encoding='cp1252').fillna('')
+                print(f"✓ Loaded {len(df_active)} complaints from ComplaintsData.csv")
+            except:
+                try:
+                    df_active = pd.read_csv(complaints_path, encoding='utf-8').fillna('')
+                    print(f"✓ Loaded {len(df_active)} complaints from ComplaintsData.csv (UTF-8)")
+                except Exception as e:
+                    print(f"❌ Error reading ComplaintsData.csv: {e}")
     
     # Combine both dataframes
     df = pd.concat([df_active, df_archive], ignore_index=True)
-    print(f"Total complaints before filtering: {len(df)}")
+    print(f"\nTotal complaints before filtering: {len(df)}")
+    
+    if df.empty:
+        print(f"\n{'='*70}")
+        print(f"❌ ERROR: NO DATA FOUND!")
+        print(f"{'='*70}")
+        print(f"Please check:")
+        print(f"1. CSV files exist in: {csv_folder}")
+        print(f"2. Files are named correctly: ArrangedData.csv, Archive.csv")
+        print(f"3. Files contain data")
+        print(f"{'='*70}\n")
+        
+        # Return empty report data
+        return {
+            'title': f'{report_type.title()} Complaint Report',
+            'report_type': report_type,
+            'generated_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'date_from': date_from if date_from else 'All Time',
+            'date_to': date_to if date_to else 'Present',
+            'category': category.upper() if category != 'all' else 'All Categories',
+            'total_complaints': 0,
+            'resolved': 0,
+            'spam': 0,
+            'pending': 0,
+            'flagged': 0,
+            'categories': [],
+            'locations': [],
+            'emotions': {},
+            'resolution_rate': 0,
+            'complaints': []
+        }
     
     # Filter by category
     if category != 'all':
@@ -975,7 +1072,7 @@ def fetch_report_data(report_type, date_from, date_to, category):
             df = df[df['Agency'].str.strip().str.upper() == category.upper()]
         print(f"After category filter ({category}): {len(df)} complaints (removed {initial_count - len(df)})")
     
-    # DATE FILTERING - IMPROVED
+    # DATE FILTERING
     if 'Date' in df.columns and not df.empty:
         # Convert Date column to datetime
         df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
@@ -992,7 +1089,7 @@ def fetch_report_data(report_type, date_from, date_to, category):
             df = df[df['Date'] <= date_to_dt]
             print(f"After date_to filter ({date_to}): {len(df)} complaints")
     
-    print(f"Final complaint count: {len(df)}")
+    print(f"Final complaint count: {len(df)}\n")
     
     # Calculate statistics
     total_complaints = len(df)
@@ -1066,7 +1163,7 @@ def fetch_report_data(report_type, date_from, date_to, category):
             })
         report_data['complaints'] = complaint_list
     
-    print(f"✓ Report data prepared: {total_complaints} total, {resolved} resolved, {pending} pending")
+    print(f"✓ Report data prepared: {total_complaints} total, {resolved} resolved, {pending} pending\n")
     
     return report_data
 

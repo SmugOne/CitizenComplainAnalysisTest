@@ -59,7 +59,7 @@ export default function ComplaintListScreen({ navigation }) {
   //Modal state
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
-  const imageIdToSend = selectedComplaint ? resolveImageId(selectedComplaint) : "";
+  
 
   const MyModal = ({ visible, message, onClose }) => (
   <Modal visible={visible} transparent animationType="fade">
@@ -124,6 +124,7 @@ export default function ComplaintListScreen({ navigation }) {
   };
 
   const submitResolution = () => {
+    const imageIdToSend = selectedComplaint ? resolveImageId(selectedComplaint) : "";
     fetch(`${API_URL}/api/complaints/update`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -208,6 +209,7 @@ export default function ComplaintListScreen({ navigation }) {
     v === "TRUE" 
   );
 }).length;
+
   //Main resolver screen:
     if (screen === "resolve" && selectedComplaint) {
       const filename = resolveImageId(selectedComplaint);
@@ -444,7 +446,15 @@ export default function ComplaintListScreen({ navigation }) {
                             <Text style={[styles.cell, { width: 120 }]}>{c.ContactNo || ""}</Text>
                             <Text style={[styles.cell, { width: 100 }]}>{c.Date || ""}</Text>
                             <Text style={[styles.cell, { width: 80 }]}>{c.Time || ""}</Text>
-                            <Text style={[styles.cell, { width: 100 }]}>{imgId || ""}</Text>
+                            <View style={[styles.cell, { width: 100, alignItems: "center", justifyContent: "center" }]}>
+                              {imgUrl ? (
+                                <TouchableOpacity onPress={() => Linking.openURL(imgUrl)}>
+                                  <Text style={{ color: "#197278", textDecorationLine: "underline" }}>{imgId}</Text>
+                                </TouchableOpacity>
+                              ) : (
+                                <Text>None</Text>
+                              )}
+                            </View>
                             <Text style={[styles.cell, { width: 100 }]}>{c.Status}</Text>
                             <Text style={[styles.cell, { width: 150 }]}>{c.Remark || ""}</Text>
                             <Text style={[styles.cell, { width: 150 }]}>{c.Feedback || ""}</Text>

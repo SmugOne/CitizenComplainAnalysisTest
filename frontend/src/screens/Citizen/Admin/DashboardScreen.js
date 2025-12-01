@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Modal, View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from "react-native";
+import { Modal, View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Linking} from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import Layout from "../../../components/LayoutAdmin";
 import { API_URL } from "@env";
@@ -59,6 +59,7 @@ export default function ComplaintListScreen({ navigation }) {
   //Modal state
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
+  const imageIdToSend = selectedComplaint ? resolveImageId(selectedComplaint) : "";
 
   const MyModal = ({ visible, message, onClose }) => (
   <Modal visible={visible} transparent animationType="fade">
@@ -72,6 +73,23 @@ export default function ComplaintListScreen({ navigation }) {
     </View>
   </Modal>
 );
+
+  const resolveImageId = (row) => {
+    return (
+      row?.ImageID ||
+      row?.["Image ID"] ||
+      row?.ImageId ||
+      row?.["ImageID"] ||
+      row?.imageId ||
+      row?.imageFilename ||
+      ""
+    );
+  };
+
+  const buildImageUrl = (filename) => {
+    if (!filename) return "";
+    return `${API_URL}/api/getImage/${filename}`;
+  };
 
   //Load data
   useEffect(() => {
@@ -112,6 +130,7 @@ export default function ComplaintListScreen({ navigation }) {
       body: JSON.stringify({
         id: selectedComplaint.ID,
         status: newStatus,
+        imageFilename: imageIdToSend, 
         agency: newAgency,
         remark: remark,
       }),
@@ -136,17 +155,16 @@ export default function ComplaintListScreen({ navigation }) {
   const refetchComplaints = async () => {
     setLoading(true);
     setFetchError(false);
+
     try {
       const activeRes = await fetch(`${API_URL}/api/complaints/all`);
       const archiveRes = await fetch(`${API_URL}/api/archive_complaints`);
 
-    //Ensure both responses are ok
       if (!activeRes.ok || !archiveRes.ok) throw new Error("API fetch failed");
 
       const activeData = await activeRes.json();
       const archiveData = await archiveRes.json();
 
-    //Ensure data is an array
       setActiveComplaints(Array.isArray(activeData) ? activeData : []);
       setArchivedComplaints(Array.isArray(archiveData) ? archiveData : []);
     } catch (err) {
@@ -192,6 +210,7 @@ export default function ComplaintListScreen({ navigation }) {
 }).length;
   //Main resolver screen:
     if (screen === "resolve" && selectedComplaint) {
+      const filename = resolveImageId(selectedComplaint);
       return (
         <Layout navigation={navigation}>
           <View style={styles.resolveContainer}>
@@ -211,9 +230,13 @@ export default function ComplaintListScreen({ navigation }) {
               <Text style={styles.detailValue}>{selectedComplaint.Complaint || selectedComplaint["Raw Complaint"]}</Text>
 
               <Text style={styles.detailLabel}>Image ID:</Text>
-              <Text style={styles.detailValue}>
-                {selectedComplaint.ImageID || "None"}
-              </Text>
+
+              <TouchableOpacity onPress={() => Linking.openURL(`${API_URL}/api/getImage/${filename}`)}>
+                <Text style={{ color: "blue", textDecorationLine: "underline" }}>
+                  {filename || "No Image"}
+                </Text>
+              </TouchableOpacity>
+
             </View>
 
             {/* Status & Agency */}
@@ -273,155 +296,170 @@ export default function ComplaintListScreen({ navigation }) {
     }
 
     //Main Table Screen
-    return (
-    <Layout navigation={navigation}>
-      <View style={{ flex: 1, padding: 20, }}>
-        <Text style={styles.title}>
-          {viewMode === "Active" ? "Active Complaints" : "Archived Complaints"}
-        </Text>
+      return (
+        <Layout navigation={navigation}>
+          <View style={{ flex: 1, padding: 20 }}>
+            <Text style={styles.title}>{viewMode === "Active" ? "Active Complaints" : "Archived Complaints"}</Text>
 
-        {/* Modal */}
-        <MyModal
-          visible={modalVisible}
-          message={modalMessage}
-          onClose={() => setModalVisible(false)}
-        />
+            {/* Modal */}
+            <MyModal visible={modalVisible} message={modalMessage} onClose={() => setModalVisible(false)} />
 
-        {/* Widgets */}
-        <View style={styles.widgetsRow}>
-          <View style={[styles.widget, { backgroundColor: "#eaf3fc" }]}>
-            <Text style={[styles.widgetTitle, { color: "#11493f" }]}>Total Complaints</Text>
-            <Text style={styles.widgetValue}>{totalFiltered}</Text>
-          </View>
-          <View style={[styles.widget, { backgroundColor: "#fbeaec" }]}>
-            <Text style={[styles.widgetTitle, { color: "#c00" }]}>Flagged Urgent Complaints</Text>
-            <Text style={[styles.widgetValue, { color: "#c00" }]}>{flaggedCount}</Text>
-          </View>
-        </View>
-
-        {/* Filters */}
-        <View style={styles.filterRow}>
-          <Picker
-            selectedValue={viewMode}
-            style={styles.picker}
-            onValueChange={setViewMode}
-          >
-            <Picker.Item label="Active Complaints" value="Active" />
-            <Picker.Item label="Archived Complaints" value="Archive" />
-          </Picker>
-
-          <Picker
-            selectedValue={categoryFilter}
-            style={styles.picker}
-            onValueChange={setCategoryFilter}
-          >
-            {CATEGORY_OPTIONS.map(opt => <Picker.Item label={opt} value={opt} key={opt} />)}
-          </Picker>
-
-          <Picker
-            selectedValue={viewMode === "Active" ? statusFilterActive : statusFilterArchive}
-            style={styles.picker}
-            onValueChange={val => viewMode === "Active" ? setStatusFilterActive(val) : setStatusFilterArchive(val)}
-          >
-            {currentStatusOptions.map(opt => <Picker.Item label={opt} value={opt} key={opt} />)}
-          </Picker>
-        </View>
-
-        {/* Table */}
-        {viewMode === "Active" ? (
-        <Text style={{ fontWeight: "bold", marginBottom: 6, alignContent: "center", }}>The Active Complaint list is an organized ranking of the top priority complaints based on emotional urgency.</Text>
-        ) : null}
-        <ScrollView style={{ maxHeight: 400 }}>
-          <View style={styles.tableContainer}>
-            <View style={styles.tableHeader}>
-              {viewMode === "Active" ? (
-                <>
-                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.ID }]}>ID</Text>
-                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Name }]}>Name</Text>
-                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Complaint }]}>Complaint</Text>
-                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Category }]}>Category</Text>
-                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Status }]}>Status</Text>
-                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Location }]}>Location</Text>
-                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.ContactNo }]}>Contact</Text>
-                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Date }]}>Date</Text>
-                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Time }]}>Time</Text>
-                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.ImageID }]}>Image ID</Text>
-                  <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Action }]}>Action</Text>
-                </>
-              ) : (
-                <>
-                  <Text style={[styles.headerCell, { width: 60 }]}>ID</Text>
-                  <Text style={[styles.headerCell, { width: 120 }]}>Name</Text>
-                  <Text style={[styles.headerCell, { width: 320 }]}>Complaint</Text>
-                  <Text style={[styles.headerCell, { width: 120 }]}>Location</Text>
-                  <Text style={[styles.headerCell, { width: 100 }]}>Agency</Text>
-                  <Text style={[styles.headerCell, { width: 120 }]}>Contact</Text>
-                  <Text style={[styles.headerCell, { width: 100 }]}>Date</Text>
-                  <Text style={[styles.headerCell, { width: 80 }]}>Time</Text>
-                  <Text style={[styles.headerCell, { width: 100 }]}>Image ID</Text>
-                  <Text style={[styles.headerCell, { width: 100 }]}>Status</Text>
-                  <Text style={[styles.headerCell, { width: 150 }]}>Remark</Text>
-                  <Text style={[styles.headerCell, { width: 150 }]}>Feedback</Text>
-                </>
-              )}
+            {/* Widgets */}
+            <View style={styles.widgetsRow}>
+              <View style={[styles.widget, { backgroundColor: "#eaf3fc" }]}>
+                <Text style={[styles.widgetTitle, { color: "#11493f" }]}>Total Complaints</Text>
+                <Text style={styles.widgetValue}>{totalFiltered}</Text>
+              </View>
+              <View style={[styles.widget, { backgroundColor: "#fbeaec" }]}>
+                <Text style={[styles.widgetTitle, { color: "#c00" }]}>Flagged Urgent Complaints</Text>
+                <Text style={[styles.widgetValue, { color: "#c00" }]}>{flaggedCount}</Text>
+              </View>
             </View>
 
-            {loading ? (
-              <Text style={{ margin: 10, color: "#11493f" }}>Loading...</Text>
-            ) : fetchError ? (
-              <Text style={{ margin: 10, color: "red" }}>Error loading data.</Text>
-            ) : currentComplaints.length === 0 ? (
-              <Text style={{ margin: 10, color: "#11493f" }}>No {viewMode.toLowerCase()} complaints found.</Text>
-            ) : (
-              currentComplaints.map((c) => {
-                const isFlagged = String(c["Flagged Words"]).trim().toUpperCase() === "TRUE";
-                return (
-                  <View
-                    style={[styles.tableRow, isFlagged && styles.flaggedRow]}
-                    key={c.ID}
-                  >
-                    {viewMode === "Active" ? (
-                      <>
-                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.ID }]}>{isFlagged ? "🚩 " : ""}{c.ID}</Text>
-                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Name }]}>{c.Name}</Text>
-                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Complaint, textAlign: "left" }]}>{c.Complaint || c["Raw Complaint"]}</Text>
-                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Category }]}>{c["Predicted Agency"] || c["Category"]}</Text>
-                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Status }]}>{c.Status}</Text>
-                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Location }]}>{c.Location}</Text>
-                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.ContactNo }]}>{c.ContactNo || ""}</Text>
-                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Date }]}>{c.Date || ""}</Text>
-                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.Time }]}>{c.Time || ""}</Text>
-                        <Text style={[styles.cell, { width: COLUMN_WIDTHS.ImageID }]}>{c.ImageID || ""}</Text>
-                        <TouchableOpacity style={[styles.actionBtn, { width: COLUMN_WIDTHS.Action }]} onPress={() => openResolver(c)}>
-                          <Text style={styles.actionBtnText}>Resolve</Text>
-                        </TouchableOpacity>
-                      </>
-                    ) : (
-                      <>
-                        <Text style={[styles.cell, { width: 60 }]}>{isFlagged ? "🚩 " : ""}{c.ID}</Text>
-                        <Text style={[styles.cell, { width: 120 }]}>{c.Name}</Text>
-                        <Text style={[styles.cell, { width: 320, textAlign: "left" }]}>{c.Complaint || c["Raw Complaint"]}</Text>
-                        <Text style={[styles.cell, { width: 120 }]}>{c.Location}</Text>
-                        <Text style={[styles.cell, { width: 100 }]}>{c.Agency || c["Predicted Agency"] || c["Category"]}</Text>
-                        <Text style={[styles.cell, { width: 120 }]}>{c.ContactNo || ""}</Text>
-                        <Text style={[styles.cell, { width: 100 }]}>{c.Date || ""}</Text>
-                        <Text style={[styles.cell, { width: 80 }]}>{c.Time || ""}</Text>
-                        <Text style={[styles.cell, { width: 100 }]}>{c["Image ID"] || ""}</Text>
-                        <Text style={[styles.cell, { width: 100 }]}>{c.Status}</Text>
-                        <Text style={[styles.cell, { width: 150 }]}>{c.Remark || ""}</Text>
-                        <Text style={[styles.cell, { width: 150 }]}>{c.Feedback || ""}</Text>
-                      </>
-                    )}
-                  </View>
-                );
-              })
-            )}
+            {/* Filters */}
+            <View style={styles.filterRow}>
+              <Picker selectedValue={viewMode} style={styles.picker} onValueChange={setViewMode}>
+                <Picker.Item label="Active Complaints" value="Active" />
+                <Picker.Item label="Archived Complaints" value="Archive" />
+              </Picker>
+
+              <Picker selectedValue={categoryFilter} style={styles.picker} onValueChange={setCategoryFilter}>
+                {CATEGORY_OPTIONS.map((opt) => (
+                  <Picker.Item label={opt} value={opt} key={opt} />
+                ))}
+              </Picker>
+
+              <Picker
+                selectedValue={viewMode === "Active" ? statusFilterActive : statusFilterArchive}
+                style={styles.picker}
+                onValueChange={(val) => (viewMode === "Active" ? setStatusFilterActive(val) : setStatusFilterArchive(val))}
+              >
+                {currentStatusOptions.map((opt) => (
+                  <Picker.Item label={opt} value={opt} key={opt} />
+                ))}
+              </Picker>
+            </View>
+
+            {/* Table */}
+            {viewMode === "Active" ? (
+              <Text style={{ fontWeight: "bold", marginBottom: 6, alignContent: "center" }}>
+                The Active Complaint list is an organized ranking of the top priority complaints based on emotional urgency.
+              </Text>
+            ) : null}
+
+            <ScrollView style={{ maxHeight: 400 }}>
+              <View style={styles.tableContainer}>
+                <View style={styles.tableHeader}>
+                  {viewMode === "Active" ? (
+                    <>
+                      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.ID }]}>ID</Text>
+                      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Name }]}>Name</Text>
+                      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Complaint }]}>Complaint</Text>
+                      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Category }]}>Category</Text>
+                      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Status }]}>Status</Text>
+                      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Location }]}>Location</Text>
+                      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.ContactNo }]}>Contact</Text>
+                      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Date }]}>Date</Text>
+                      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Time }]}>Time</Text>
+                      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.ImageID }]}>Image ID</Text>
+                      <Text style={[styles.headerCell, { width: COLUMN_WIDTHS.Action }]}>Action</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={[styles.headerCell, { width: 60 }]}>ID</Text>
+                      <Text style={[styles.headerCell, { width: 120 }]}>Name</Text>
+                      <Text style={[styles.headerCell, { width: 320 }]}>Complaint</Text>
+                      <Text style={[styles.headerCell, { width: 120 }]}>Location</Text>
+                      <Text style={[styles.headerCell, { width: 100 }]}>Agency</Text>
+                      <Text style={[styles.headerCell, { width: 120 }]}>Contact</Text>
+                      <Text style={[styles.headerCell, { width: 100 }]}>Date</Text>
+                      <Text style={[styles.headerCell, { width: 80 }]}>Time</Text>
+                      <Text style={[styles.headerCell, { width: 100 }]}>Image ID</Text>
+                      <Text style={[styles.headerCell, { width: 100 }]}>Status</Text>
+                      <Text style={[styles.headerCell, { width: 150 }]}>Remark</Text>
+                      <Text style={[styles.headerCell, { width: 150 }]}>Feedback</Text>
+                    </>
+                  )}
+                </View>
+
+                {loading ? (
+                  <Text style={{ margin: 10, color: "#11493f" }}>Loading...</Text>
+                ) : fetchError ? (
+                  <Text style={{ margin: 10, color: "red" }}>Error loading data.</Text>
+                ) : currentComplaints.length === 0 ? (
+                  <Text style={{ margin: 10, color: "#11493f" }}>No {viewMode.toLowerCase()} complaints found.</Text>
+                ) : (
+                  currentComplaints.map((c) => {
+                    const isFlagged = String(c["Flagged Words"]).trim().toUpperCase() === "TRUE";
+                    const imgId = resolveImageId(c);
+                    const imgUrl = buildImageUrl(imgId);
+
+                    return (
+                      <View style={[styles.tableRow, isFlagged && styles.flaggedRow]} key={c.ID}>
+                        {viewMode === "Active" ? (
+                          <>
+                            <Text style={[styles.cell, { width: COLUMN_WIDTHS.ID }]}>
+                              {isFlagged ? "🚩 " : ""}
+                              {c.ID}
+                            </Text>
+                            <Text style={[styles.cell, { width: COLUMN_WIDTHS.Name }]}>{c.Name}</Text>
+                            <Text style={[styles.cell, { width: COLUMN_WIDTHS.Complaint, textAlign: "left" }]}>
+                              {c.Complaint || c["Raw Complaint"]}
+                            </Text>
+                            <Text style={[styles.cell, { width: COLUMN_WIDTHS.Category }]}>
+                              {c["Predicted Agency"] || c["Category"]}
+                            </Text>
+                            <Text style={[styles.cell, { width: COLUMN_WIDTHS.Status }]}>{c.Status}</Text>
+                            <Text style={[styles.cell, { width: COLUMN_WIDTHS.Location }]}>{c.Location}</Text>
+                            <Text style={[styles.cell, { width: COLUMN_WIDTHS.ContactNo }]}>{c.ContactNo || ""}</Text>
+                            <Text style={[styles.cell, { width: COLUMN_WIDTHS.Date }]}>{c.Date || ""}</Text>
+                            <Text style={[styles.cell, { width: COLUMN_WIDTHS.Time }]}>{c.Time || ""}</Text>
+
+                            {/* Image ID cell with link */}
+                            <View style={{ width: COLUMN_WIDTHS.ImageID, alignItems: "center", justifyContent: "center" }}>
+                              {imgUrl ? (
+                                <TouchableOpacity onPress={() => Linking.openURL(imgUrl)}>
+                                  <Text style={{ color: "#197278", textDecorationLine: "underline" }}>{imgId}</Text>
+                                </TouchableOpacity>
+                              ) : (
+                                <Text>None</Text>
+                              )}
+                            </View>
+
+                            {/* Action: Resolve only */}
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { width: COLUMN_WIDTHS.Action }]}
+                              onPress={() => openResolver(c)}
+                            >
+                              <Text style={styles.actionBtnText}>Resolve</Text>
+                            </TouchableOpacity>
+                          </>
+                        ) : (
+                          <>
+                            <Text style={[styles.cell, { width: 60 }]}>{isFlagged ? "🚩 " : ""}{c.ID}</Text>
+                            <Text style={[styles.cell, { width: 120 }]}>{c.Name}</Text>
+                            <Text style={[styles.cell, { width: 320, textAlign: "left" }]}>{c.Complaint || c["Raw Complaint"]}</Text>
+                            <Text style={[styles.cell, { width: 120 }]}>{c.Location}</Text>
+                            <Text style={[styles.cell, { width: 100 }]}>{c.Agency || c["Predicted Agency"] || c["Category"]}</Text>
+                            <Text style={[styles.cell, { width: 120 }]}>{c.ContactNo || ""}</Text>
+                            <Text style={[styles.cell, { width: 100 }]}>{c.Date || ""}</Text>
+                            <Text style={[styles.cell, { width: 80 }]}>{c.Time || ""}</Text>
+                            <Text style={[styles.cell, { width: 100 }]}>{imgId || ""}</Text>
+                            <Text style={[styles.cell, { width: 100 }]}>{c.Status}</Text>
+                            <Text style={[styles.cell, { width: 150 }]}>{c.Remark || ""}</Text>
+                            <Text style={[styles.cell, { width: 150 }]}>{c.Feedback || ""}</Text>
+                          </>
+                        )}
+                      </View>
+                    );
+                  })
+                )}
+              </View>
+            </ScrollView>
           </View>
-        </ScrollView>
-      </View>
-    </Layout>
-    );
-}
+        </Layout>
+      );
+    }
 
 const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: "bold", color: "#11493f", marginBottom: 12, textAlign: "center" },

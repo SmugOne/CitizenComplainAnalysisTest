@@ -1,0 +1,12 @@
+flask
+flask-cors
+python-dotenv
+pandas
+joblib
+gspread
+oauth2client
+scikit-learn
+transformers
+torch
+reportlab
+gunicorn

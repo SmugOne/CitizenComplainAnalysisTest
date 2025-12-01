@@ -101,9 +101,6 @@ def upload_image():
     filepath = os.path.join(IMAGE_FOLDER, filename)
     file.save(filepath)
 
-    # Save file
-    file.save(filepath)
-
     return jsonify({
         "message": "Image uploaded successfully",
         "imageId": image_id,
@@ -143,7 +140,7 @@ def run_arrangement():
     complaint = data.get('complaint') or ''
     location = data.get('location') or ''
     category = data.get('category') or ''
-    imageFilename = data.get('imageFilename') or ''
+    imageFilename = data.get('imageFilename') or data.get('imageId') or data.get('filename') or ''
     status = data.get('status') or "UNSOLVED" 
     password = data.get('password') or ''
     contact_no = data.get('contactNo') or ''  
@@ -172,7 +169,7 @@ def run_arrangement():
         str(location),         
         str(status),           
         str(category),         
-        str(imageFilename),          
+        str(imageFilename),   
         str(password),         
         ''                     
     ]

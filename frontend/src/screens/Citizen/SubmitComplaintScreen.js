@@ -162,7 +162,7 @@ export default function SubmitComplaintScreen({ navigation }) {
           category: category.value,
           location: location,
           contactNo: contactNo,
-          imageID: imageId,
+          imageFilename: imageId,
           imageUrl: imageUrl,
           status: "UNSOLVED",
           password: generatedPassword,

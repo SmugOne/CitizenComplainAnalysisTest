@@ -136,7 +136,7 @@ export default function Layout({ children, navigation }) {
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>
-                I can do all things through Christ who strengthens me. - Philippians 4:13
+                2025 Citizen Complaint Portal.
               </Text>
             </View>
           </View>

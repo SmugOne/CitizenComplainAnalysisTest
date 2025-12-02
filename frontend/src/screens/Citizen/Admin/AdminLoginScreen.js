@@ -125,7 +125,7 @@ export default function AdminLoginScreen({ navigation }) {
         </TouchableOpacity>
 
         <Text style={{ marginTop: 10, color: "#888", fontSize: 12 }}>
-          Demo login (optional if backend empty): admin / password123
+          Demo login: admin / password123
         </Text>
       </View>
     </Layout>

@@ -21,6 +21,7 @@ from collections import Counter
 from sklearn.pipeline import make_pipeline
 from flask import render_template, send_file, request, jsonify
 from datetime import datetime
+from flask import send_from_directory, abort
 #For PDF generation
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
 from reportlab.lib.pagesizes import letter, A4
@@ -74,35 +75,58 @@ Accounts = pd.DataFrame(accounts_sheet.get_all_records())
 
 #-------------------------IMAGE BACKEND-------------------------
 
-#Image Folder:
-ImageFolder = os.path.join(os.getcwd(),'ImageFolder')
-os.makedirs(ImageFolder, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = ImageFolder
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+IMAGE_FOLDER = os.path.join(os.path.dirname(__file__), "ImageFolder")
+UPLOAD_FOLDER = "ImageFolder"
 
-#Image upload from ComplaintsFormScreen:
-@app.route('/api/uploadImage', methods=['POST'])
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+#Image upload route
+@app.route("/api/uploadImage", methods=["POST"])
 def upload_image():
-    if 'image' not in request.files:
-        return jsonify({"error": "No image part in the request"}), 400
+    if "image" not in request.files:
+        return jsonify({"error": "No image part in request"}), 400
 
-    file = request.files['image']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
+    file = request.files["image"]
 
-    #Stores image with identifier
-    image = request.files['image']
-    filename = secure_filename(image.filename)
-    imageId = str(uuid.uuid4())  # unique ID for the image
-    saved_filename = f"{imageId}_{filename}"
-    image.save(os.path.join(app.config['UPLOAD_FOLDER'], saved_filename))
+    if file.filename == "":
+        return jsonify({"error": "No file uploaded"}), 400
 
-    #push imageid into Image Folder
+    # Generate random image ID
+    image_id = str(uuid.uuid4())[:8]
+    ext = os.path.splitext(file.filename)[1].lower()  # Keep original extension
+    if ext not in ['.jpg', '.jpeg', '.png']:
+        ext = '.jpg'  # fallback
+    filename = secure_filename(f"{image_id}{ext}")
+    filepath = os.path.join(IMAGE_FOLDER, filename)
+    file.save(filepath)
+
     return jsonify({
         "message": "Image uploaded successfully",
-        "imageId": imageId,
-        "file_name": saved_filename,
-        "imageUrl": f"/uploads/{saved_filename}"
-    })
+        "imageId": image_id,
+        "filename": filename,
+        "imageUrl": f"/api/getImage/{filename}"
+    }), 200
+
+
+#Image retrieval route
+@app.route("/api/getImage/<filename>")
+def get_image(filename):
+    IMAGE_FOLDER = os.path.join(os.path.dirname(__file__), "ImageFolder")
+    
+    # Try with given name
+    file_path = os.path.join(IMAGE_FOLDER, filename)
+    if os.path.exists(file_path):
+        return send_from_directory(IMAGE_FOLDER, filename)
+    
+    # Try adding .jpg if not found
+    if not filename.lower().endswith(".jpg"):
+        file_path_jpg = os.path.join(IMAGE_FOLDER, f"{filename}.jpg")
+        if os.path.exists(file_path_jpg):
+            return send_from_directory(IMAGE_FOLDER, f"{filename}.jpg")
+    
+    return abort(404, description="File not found")
+
 
 #-------------------------COMPLAINT INPUT BACKEND-------------------------
 
@@ -116,7 +140,7 @@ def run_arrangement():
     complaint = data.get('complaint') or ''
     location = data.get('location') or ''
     category = data.get('category') or ''
-    imageID = data.get('imageID') or ''
+    imageFilename = data.get('imageFilename') or data.get('imageId') or data.get('filename') or ''
     status = data.get('status') or "UNSOLVED" 
     password = data.get('password') or ''
     contact_no = data.get('contactNo') or ''  
@@ -145,7 +169,7 @@ def run_arrangement():
         str(location),         
         str(status),           
         str(category),         
-        str(imageID),          
+        str(imageFilename),   
         str(password),         
         ''                     
     ]
@@ -161,6 +185,7 @@ def run_arrangement():
     return jsonify({
         "message": "Complaint submitted successfully",
         "ID": ID,
+        "imageFilename": imageFilename
     })
 
 #-------------------------MAIN ALGORITHM LIST BACKEND-------------------------
@@ -391,7 +416,7 @@ def get_admin_stats():
     
     return jsonify(response_data)
 
-#Update ComplaintList and ArrangedComplaint for Admin Dashboard:
+#Update ComplaintList and ArrangedComplsaint for Admin Dashboard:
 @app.route('/api/complaints/update', methods=['POST'])
 def update_complaint():
     data = request.get_json()
@@ -405,6 +430,7 @@ def update_complaint():
     status = data.get("status")
     agency = data.get("agency", "NONE")
     remark = data.get("remark", "")
+    image_filename = data.get("imageFilename")
 
     if agency not in allowed_agencies:
         return jsonify({"error": "Invalid agency"}), 400
@@ -486,12 +512,21 @@ def update_complaint():
         archive_sheet.update(
             [archive.columns.tolist()] + archive.astype(str).values.tolist()
         )
+    
+    for ext in ["jpg", "png"]:
+        if os.path.exists(os.path.join(IMAGE_FOLDER, f"{image_filename}.{ext}")):
+            image_filename_with_ext = f"{image_filename}.{ext}"
+            break
+    else:
+        image_filename_with_ext = None
 
     return jsonify({
         "status": "success",
         "message": f"Complaint {complaint_id} updated successfully",
         "updated_status": status,
-        "updated_agency": agency
+        "updated_agency": agency,
+        "success": True, 
+        "image_served": image_filename_with_ext,
 })
 
 

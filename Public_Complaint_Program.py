@@ -9,6 +9,9 @@ import uuid
 import gspread
 import json
 import math
+import numpy as np
+import gspread
+
 
 from oauth2client.service_account import ServiceAccountCredentials
 from sklearn.preprocessing import PolynomialFeatures
@@ -22,6 +25,7 @@ from sklearn.pipeline import make_pipeline
 from flask import render_template, send_file, request, jsonify
 from datetime import datetime
 from flask import send_from_directory, abort
+from flask import Flask, render_template, jsonify, request, send_file
 #For PDF generation
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
 from reportlab.lib.pagesizes import letter, A4
@@ -725,22 +729,212 @@ def get_admin_list():
 
 
 #-------------------------REPORT GENERATOR-------------------------
+def load_all_complaints(csv_folder, gs_creds_path, gs_spreadsheet_name, gs_worksheet_titles):
+    """
+    Load and unify complaint data from Google Sheets and local CSV file(s).
+    Returns a DataFrame with standardized columns.
+    """
+    # --- Google Sheets setup ---
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_name(gs_creds_path, scope)
+    client = gspread.authorize(creds)
+    spreadsheet = client.open(gs_spreadsheet_name)
+    
+    # List of standard columns for complaint records
+    cols = [
+        "ID", "Name", "Complaint", "Location", "Anger Score", "Fear Score",
+        "Joy Score", "Neutral Score", "Sadness Score", "Surprise Score",
+        "Predicted Agency", "Flagged Words", "Image ID", "Status", "Password", "Remark", "Date", "Time"
+    ]
+    
+    all_df = []
+    
+    # --- Google Sheets Worksheets ---
+    # gs_worksheet_titles is a list, e.g. ["ComplaintsData", "ArrangedData", "Archive"]
+    for title in gs_worksheet_titles:
+        sheet = spreadsheet.worksheet(title)
+        gs_data = pd.DataFrame(sheet.get_all_records()).fillna("")
+        # Map fields to unified format (best effort, fill missing columns)
+        mapped = pd.DataFrame()
+        for c in cols:
+            if c in gs_data.columns:
+                mapped[c] = gs_data[c]
+            elif c == "Complaint" and "Raw Complaint" in gs_data.columns:
+                mapped[c] = gs_data["Raw Complaint"]
+            elif c == "Predicted Agency" and "Agency" in gs_data.columns:
+                mapped[c] = gs_data["Agency"]
+            elif c == "Predicted Agency" and "Category" in gs_data.columns:
+                mapped[c] = gs_data["Category"]
+            elif c == "Complaint" and "Complaint" in gs_data.columns:
+                mapped[c] = gs_data["Complaint"]
+            elif c == "Complaint" and "Complaint/Concern" in gs_data.columns:
+                mapped[c] = gs_data["Complaint/Concern"]
+            elif c == "Complaint" and "Complaint Text" in gs_data.columns:
+                mapped[c] = gs_data["Complaint Text"]
+            elif c == "ID" and "ID" in gs_data.columns:
+                mapped[c] = gs_data["ID"]
+            elif c == "Name" and "Name" in gs_data.columns:
+                mapped[c] = gs_data["Name"]
+            else:
+                mapped[c] = ""
+        all_df.append(mapped[cols])
+    
+    # --- Load from CSV complaintdata.csv ---
+    csv_path = os.path.join(csv_folder, "complaintdata.csv")
+    try:
+        csv_data = pd.read_csv(csv_path, encoding="utf-8").fillna("")
+    except Exception:
+        csv_data = pd.DataFrame()
+    mapped_csv = pd.DataFrame()
+    for c in cols:
+        if c in csv_data.columns:
+            mapped_csv[c] = csv_data[c]
+        elif c == "Complaint" and "Raw Complaint" in csv_data.columns:
+            mapped_csv[c] = csv_data["Raw Complaint"]
+        elif c == "Predicted Agency" and "Category" in csv_data.columns:
+            mapped_csv[c] = csv_data["Category"]
+        else:
+            mapped_csv[c] = ""
+    all_df.append(mapped_csv[cols])
+    
+    # --- Concatenate all sources ---
+    if all_df:
+        combo_df = pd.concat(all_df, ignore_index=True).fillna("")
+    else:
+        combo_df = pd.DataFrame(columns=cols)
+    return combo_df
 
+# ---------------- REPORT DATA BUILDER ----------------
+def fetch_report_data(report_type, date_from, date_to, category):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    csv_folder = os.path.join(base_dir, 'CSVFile')
+    gs_creds_path = os.path.join(base_dir, r"JSON Key/publiccomplaintprogram-1f431cc7f437.json")
+    gs_spreadsheet_name = "Main Database"
+    gs_worksheet_titles = ["ComplaintsData", "ArrangedData", "Archive"] # extend as needed
+
+    # UNIFIED DATA LOAD!
+    df = load_all_complaints(csv_folder, gs_creds_path, gs_spreadsheet_name, gs_worksheet_titles)
+    print(f"\nUnified complaints loaded: {len(df)}\n")
+
+    if df.empty:
+        print("❌ No data loaded from any sources.")
+        return {
+            'title': f'{report_type.title()} Complaint Report',
+            'report_type': report_type,
+            'generated_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'date_from': date_from if date_from else 'All Time',
+            'date_to': date_to if date_to else 'Present',
+            'category': category.upper() if category != 'all' else 'All Categories',
+            'total_complaints': 0,
+            'resolved': 0,
+            'spam': 0,
+            'pending': 0,
+            'flagged': 0,
+            'categories': [],
+            'locations': [],
+            'emotions': {},
+            'resolution_rate': 0,
+            'complaints': []
+        }
+
+    # Category filter
+    initial_count = len(df)
+    if category != 'all':
+        df = df[df['Predicted Agency'].str.strip().str.upper() == category.upper()]
+        print(f"Category filter applied [{category}], Reduced from {initial_count} to {len(df)}")
+
+    # DATE FILTERING (include blanks, only drop if date value exists & is out of range)
+    if 'Date' in df.columns and not df.empty:
+        df['Date_parsed'] = pd.to_datetime(df['Date'], errors='coerce')
+        mask = (df['Date_parsed'].isnull())  # blanks included!
+        if date_from:
+            date_from_dt = pd.to_datetime(date_from)
+            mask = mask | (df['Date_parsed'] >= date_from_dt)
+        if date_to:
+            date_to_dt = pd.to_datetime(date_to)
+            mask = mask | (df['Date_parsed'] <= date_to_dt)
+        df = df[mask]
+
+    print(f"Final complaint count: {len(df)}\n")
+    df.fillna("", inplace=True)
+
+    # Calculate statistics
+    total_complaints = len(df)
+    resolved = len(df[df['Status'].str.strip().str.upper() == 'SOLVED']) if 'Status' in df.columns else 0
+    spam = len(df[df['Status'].str.strip().str.upper() == 'SPAM']) if 'Status' in df.columns else 0
+    pending = len(df[df['Status'].str.strip().str.upper().isin(['UNSOLVED', 'UNDER REVIEW'])]) if 'Status' in df.columns else 0
+
+    categories = []
+    if 'Predicted Agency' in df.columns and not df.empty:
+        cat_counts = df['Predicted Agency'].astype(str).str.strip().str.upper().value_counts().to_dict()
+        categories = [{'name': k, 'count': int(v)} for k, v in cat_counts.items() if k and k != '']
+        categories = sorted(categories, key=lambda x: x['count'], reverse=True)
+
+    location_breakdown = []
+    if 'Location' in df.columns and not df.empty:
+        location_counts = df[df['Location'] != '']['Location'].astype(str).str.strip().value_counts().head(5).to_dict()
+        location_breakdown = [{'name': k, 'count': int(v)} for k, v in location_counts.items()]
+
+    emotion_scores = {}
+    emotion_cols = ['Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score', 'Sadness Score', 'Surprise Score']
+    for col in emotion_cols:
+        if col in df.columns and not df.empty:
+            numeric_scores = pd.to_numeric(df[col], errors='coerce')
+            avg_score = numeric_scores.mean()
+            if not pd.isna(avg_score):
+                emotion_scores[col.replace(' Score', '')] = round(avg_score, 2)
+    flagged_count = 0
+    if 'Flagged Words' in df.columns and not df.empty:
+        flagged_count = sum([str(val).strip().lower() == "true" for val in df['Flagged Words']])
+
+    report_data = {
+        'title': f'{report_type.title()} Complaint Report',
+        'report_type': report_type,
+        'generated_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'date_from': date_from if date_from else 'All Time',
+        'date_to': date_to if date_to else 'Present',
+        'category': category.upper() if category != 'all' else 'All Categories',
+        'total_complaints': total_complaints,
+        'resolved': resolved,
+        'spam': spam,
+        'pending': pending,
+        'flagged': flagged_count,
+        'categories': categories,
+        'locations': location_breakdown,
+        'emotions': emotion_scores,
+        'resolution_rate': round((resolved / total_complaints * 100), 1) if total_complaints > 0 else 0,
+    }
+
+    # Detailed complaint list for detailed reports
+    if report_type == 'detailed' and not df.empty:
+        complaint_list = []
+        for _, row in df.head(50).iterrows():
+            complaint_text = row.get('Complaint', '')
+            complaint_list.append({
+                'id': str(row.get('ID', '')),
+                'name': row.get('Name', 'Anonymous'),
+                'complaint': str(complaint_text)[:200] + '...' if len(str(complaint_text)) > 200 else str(complaint_text),
+                'location': row.get('Location', ''),
+                'agency': row.get('Predicted Agency', ''),
+                'status': row.get('Status', ''),
+            })
+        report_data['complaints'] = complaint_list
+
+    print(f"✓ Report data prepared: {total_complaints} total, {resolved} resolved, {pending} pending\n")
+    return report_data
+
+# ----------------- REPORT GENERATOR ENDPOINTS ------------------
 @app.route('/api/reports')
 def reports_page():
-    """Render the reports page"""
     try:
         return render_template('reports.html')
     except Exception as e:
         print(f"ERROR loading reports page: {e}")
         return jsonify({'error': 'Could not load reports page', 'details': str(e)}), 500
 
-
 @app.route('/api/generate-report', methods=['POST', 'GET'])
 def generate_report():
-    """Generate PDF report (ReportLab) based on selected parameters"""
     try:
-        # --- Extract params (support POST form and GET query) ---
         if request.method == 'POST':
             report_type = request.form.get('report_type', 'summary')
             date_from = request.form.get('date_from', '')
@@ -753,34 +947,24 @@ def generate_report():
             category = request.args.get('category', 'all')
 
         print(f"Generating (ReportLab) {report_type} report - Category: {category}, From: {date_from}, To: {date_to}")
-
-        # --- Build report data using your existing function ---
         report_data = fetch_report_data(report_type, date_from, date_to, category)
 
-        # --- Prepare PDF buffer ---
         buffer = io.BytesIO()
-
-        # Choose page size (A4 recommended for reports)
-        page_size = A4
-
         doc = SimpleDocTemplate(
             buffer,
-            pagesize=page_size,
+            pagesize=A4,
             rightMargin=18 * mm,
             leftMargin=18 * mm,
             topMargin=18 * mm,
             bottomMargin=18 * mm,
         )
 
-        # --- Register a UTF-8 font if available (optional) ---
         try:
-            # Try to register DejaVuSans if font file exists in project root or known path
             font_path = os.path.join(os.getcwd(), "fonts", "DejaVuSans.ttf")
             if os.path.exists(font_path):
                 pdfmetrics.registerFont(TTFont("DejaVuSans", font_path))
                 base_font_name = "DejaVuSans"
             else:
-                # fallback: attempt to register common system font path (windows)
                 alt_path = r"C:\Windows\Fonts\DejaVuSans.ttf"
                 if os.path.exists(alt_path):
                     pdfmetrics.registerFont(TTFont("DejaVuSans", alt_path))
@@ -790,7 +974,6 @@ def generate_report():
         except Exception:
             base_font_name = "Helvetica"
 
-        # --- Styles ---
         styles = getSampleStyleSheet()
         styles.add(ParagraphStyle(name="ReportTitle", fontName=base_font_name, fontSize=18, leading=22, spaceAfter=8))
         styles.add(ParagraphStyle(name="SubTitle", fontName=base_font_name, fontSize=12, leading=14, spaceAfter=6))
@@ -798,15 +981,12 @@ def generate_report():
         normal = ParagraphStyle(name="NormalCustom", fontName=base_font_name, fontSize=10, leading=12)
 
         elements = []
-
-        # --- Header / Title ---
         title_text = report_data.get("title", "Complaint Report")
         elements.append(Paragraph(title_text, styles["ReportTitle"]))
         meta = f"Generated: {report_data.get('generated_date', '')}  |  Type: {report_data.get('report_type','')}"
         elements.append(Paragraph(meta, styles["SubTitle"]))
         elements.append(Spacer(1, 8))
 
-        # --- Summary boxes (totals) ---
         totals_table = [
             ["Total Complaints", str(report_data.get("total_complaints", 0))],
             ["Resolved", str(report_data.get("resolved", 0))],
@@ -829,7 +1009,6 @@ def generate_report():
         elements.append(t)
         elements.append(Spacer(1, 12))
 
-        # --- Category breakdown table ---
         categories = report_data.get("categories", [])
         if categories:
             elements.append(Paragraph("Category breakdown", styles["SubTitle"]))
@@ -844,7 +1023,6 @@ def generate_report():
             elements.append(cat_table)
             elements.append(Spacer(1, 10))
 
-        # --- Location breakdown ---
         locations = report_data.get("locations", [])
         if locations:
             elements.append(Paragraph("Top locations", styles["SubTitle"]))
@@ -859,7 +1037,6 @@ def generate_report():
             elements.append(loc_table)
             elements.append(Spacer(1, 10))
 
-        # --- Emotion averages ---
         emotions = report_data.get("emotions", {})
         if emotions:
             elements.append(Paragraph("Average emotion scores", styles["SubTitle"]))
@@ -874,15 +1051,12 @@ def generate_report():
             elements.append(emo_table)
             elements.append(Spacer(1, 10))
 
-        # --- Detailed complaints list when requested ---
         if report_type == "detailed":
             complaints_list = report_data.get("complaints", [])
             if complaints_list:
                 elements.append(PageBreak())
                 elements.append(Paragraph("Detailed complaints (first 50)", styles["ReportTitle"]))
                 elements.append(Spacer(1, 6))
-
-                # header row
                 detail_rows = [["ID", "Name", "Agency", "Status", "Location", "Complaint (truncated)"]]
                 for c in complaints_list:
                     detail_rows.append([
@@ -893,8 +1067,6 @@ def generate_report():
                         c.get("location", ""),
                         (c.get("complaint", "")[:200] + ("..." if len(c.get("complaint",""))>200 else ""))
                     ])
-
-                # Limit column widths and allow wrapping
                 detail_table = Table(detail_rows, colWidths=[18*mm, 30*mm, 28*mm, 28*mm, 30*mm, 60*mm])
                 detail_table.setStyle(TableStyle([
                     ("GRID", (0,0), (-1,-1), 0.25, colors.grey),
@@ -906,7 +1078,6 @@ def generate_report():
                 elements.append(detail_table)
                 elements.append(Spacer(1, 10))
 
-        # --- Trend / Category special pages (basic) ---
         if report_type == "trend":
             elements.append(PageBreak())
             elements.append(Paragraph("Trend analysis (basic)", styles["ReportTitle"]))
@@ -920,26 +1091,19 @@ def generate_report():
             elements.append(Paragraph("Use the categories table above for quick counts. For richer visuals, embed charts.", normal))
             elements.append(Spacer(1, 6))
 
-        # Build the PDF
         doc.build(elements)
-
         buffer.seek(0)
-
-        # Filename creation
         if date_from and date_to:
             filename = f"complaint_report_{report_type}_{date_from}_to_{date_to}.pdf"
         else:
             filename = f"complaint_report_{report_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-
-        print(f"✓ PDF (ReportLab) generated successfully: {filename}")
-
+        print(f"✓ PDF generated successfully: {filename}")
         return send_file(
             buffer,
             mimetype='application/pdf',
             as_attachment=True,
             download_name=filename
         )
-
     except FileNotFoundError as e:
         print(f"ERROR: Template or resource not found - {e}")
         return jsonify({'error': 'Required resource not found.', 'details': str(e)}), 500
@@ -949,30 +1113,22 @@ def generate_report():
         traceback.print_exc()
         return jsonify({'error': 'Failed to generate report', 'details': str(e)}), 500
 
-
 @app.route('/api/preview-report', methods=['POST', 'GET'])
 def preview_report():
-    """Preview report in HTML format before generating PDF - Supports both POST and GET"""
     try:
-        # Support both POST (form) and GET (query params) for React Native
         if request.method == 'POST':
             report_type = request.form.get('report_type', 'summary')
             date_from = request.form.get('date_from', '')
             date_to = request.form.get('date_to', '')
             category = request.form.get('category', 'all')
-        else:  # GET method
+        else:
             report_type = request.args.get('report_type', 'summary')
             date_from = request.args.get('date_from', '')
             date_to = request.args.get('date_to', '')
             category = request.args.get('category', 'all')
-        
         print(f"Previewing {report_type} report - Category: {category}, From: {date_from}, To: {date_to}")
-        
-        # Fetch actual data
         report_data = fetch_report_data(report_type, date_from, date_to, category)
-        
         return render_template('report_template.html', data=report_data)
-        
     except FileNotFoundError as e:
         print(f"ERROR: Template file not found - {e}")
         return f"<h1>Error: Template not found</h1><p>{str(e)}</p><p>Make sure 'report_template.html' exists in the templates folder.</p>", 500
@@ -982,225 +1138,8 @@ def preview_report():
         traceback.print_exc()
         return f"<h1>Error generating preview</h1><p>{str(e)}</p>", 500
 
-
-def fetch_report_data(report_type, date_from, date_to, category):
-    """
-    Fetch and process complaint data for reports WITH DATE FILTERING
-    FIXED VERSION with better path handling
-    """
-    # Get the absolute path to ensure correct file location
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    csv_folder = os.path.join(base_dir, 'CSVFile')
-    arranged_path = os.path.join(csv_folder, 'ArrangedData.csv')
-    archive_path = os.path.join(csv_folder, 'Archive.csv')
-    
-    print(f"\n{'='*70}")
-    print(f"LOADING DATA FOR REPORT")
-    print(f"{'='*70}")
-    print(f"Base directory: {base_dir}")
-    print(f"CSV Folder: {csv_folder}")
-    print(f"ArrangedData path: {arranged_path}")
-    print(f"Archive path: {archive_path}")
-    print(f"{'='*70}\n")
-    
-    # Initialize empty dataframes
-    df_active = pd.DataFrame()
-    df_archive = pd.DataFrame()
-    
-    # Load active complaints with multiple encoding attempts
-    if os.path.exists(arranged_path):
-        try:
-            df_active = pd.read_csv(arranged_path, encoding='cp1252').fillna('')
-            print(f"✓ Loaded {len(df_active)} active complaints from ArrangedData.csv")
-            print(f"  Columns: {', '.join(df_active.columns.tolist()[:5])}...")
-        except UnicodeDecodeError:
-            try:
-                df_active = pd.read_csv(arranged_path, encoding='utf-8').fillna('')
-                print(f"✓ Loaded {len(df_active)} active complaints (UTF-8 encoding)")
-            except Exception as e:
-                print(f"❌ Error reading ArrangedData.csv with UTF-8: {e}")
-        except Exception as e:
-            print(f"❌ Error reading ArrangedData.csv: {e}")
-    else:
-        print(f"⚠ ArrangedData.csv not found at: {arranged_path}")
-        print(f"  Files in CSVFile folder:")
-        if os.path.exists(csv_folder):
-            files = os.listdir(csv_folder)
-            for f in files:
-                print(f"    - {f}")
-        else:
-            print(f"  ❌ CSVFile folder doesn't exist!")
-    
-    # Load archived complaints with multiple encoding attempts
-    if os.path.exists(archive_path):
-        try:
-            df_archive = pd.read_csv(archive_path, encoding='cp1252').fillna('')
-            print(f"✓ Loaded {len(df_archive)} archived complaints from Archive.csv")
-        except UnicodeDecodeError:
-            try:
-                df_archive = pd.read_csv(archive_path, encoding='utf-8').fillna('')
-                print(f"✓ Loaded {len(df_archive)} archived complaints (UTF-8 encoding)")
-            except Exception as e:
-                print(f"❌ Error reading Archive.csv with UTF-8: {e}")
-        except Exception as e:
-            print(f"❌ Error reading Archive.csv: {e}")
-    else:
-        print(f"⚠ Archive.csv not found at: {archive_path}")
-    
-    # If both are empty, try alternative names
-    if df_active.empty and df_archive.empty:
-        print(f"\n⚠ WARNING: No data found in standard files. Checking alternatives...")
-        
-        # Try ComplaintsData.csv as fallback
-        complaints_path = os.path.join(csv_folder, 'ComplaintsData.csv')
-        if os.path.exists(complaints_path):
-            try:
-                df_active = pd.read_csv(complaints_path, encoding='cp1252').fillna('')
-                print(f"✓ Loaded {len(df_active)} complaints from ComplaintsData.csv")
-            except:
-                try:
-                    df_active = pd.read_csv(complaints_path, encoding='utf-8').fillna('')
-                    print(f"✓ Loaded {len(df_active)} complaints from ComplaintsData.csv (UTF-8)")
-                except Exception as e:
-                    print(f"❌ Error reading ComplaintsData.csv: {e}")
-    
-    # Combine both dataframes
-    df = pd.concat([df_active, df_archive], ignore_index=True)
-    print(f"\nTotal complaints before filtering: {len(df)}")
-    
-    if df.empty:
-        print(f"\n{'='*70}")
-        print(f"❌ ERROR: NO DATA FOUND!")
-        print(f"{'='*70}")
-        print(f"Please check:")
-        print(f"1. CSV files exist in: {csv_folder}")
-        print(f"2. Files are named correctly: ArrangedData.csv, Archive.csv")
-        print(f"3. Files contain data")
-        print(f"{'='*70}\n")
-        
-        # Return empty report data
-        return {
-            'title': f'{report_type.title()} Complaint Report',
-            'report_type': report_type,
-            'generated_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'date_from': date_from if date_from else 'All Time',
-            'date_to': date_to if date_to else 'Present',
-            'category': category.upper() if category != 'all' else 'All Categories',
-            'total_complaints': 0,
-            'resolved': 0,
-            'spam': 0,
-            'pending': 0,
-            'flagged': 0,
-            'categories': [],
-            'locations': [],
-            'emotions': {},
-            'resolution_rate': 0,
-            'complaints': []
-        }
-    
-    # Filter by category
-    if category != 'all':
-        initial_count = len(df)
-        if 'Predicted Agency' in df.columns:
-            df = df[df['Predicted Agency'].str.strip().str.upper() == category.upper()]
-        elif 'Agency' in df.columns:
-            df = df[df['Agency'].str.strip().str.upper() == category.upper()]
-        print(f"After category filter ({category}): {len(df)} complaints (removed {initial_count - len(df)})")
-    
-    # DATE FILTERING
-    if 'Date' in df.columns and not df.empty:
-        # Convert Date column to datetime
-        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-        
-        initial_count = len(df)
-        
-        if date_from:
-            date_from_dt = pd.to_datetime(date_from)
-            df = df[df['Date'] >= date_from_dt]
-            print(f"After date_from filter ({date_from}): {len(df)} complaints")
-        
-        if date_to:
-            date_to_dt = pd.to_datetime(date_to)
-            df = df[df['Date'] <= date_to_dt]
-            print(f"After date_to filter ({date_to}): {len(df)} complaints")
-    
-    print(f"Final complaint count: {len(df)}\n")
-    
-    # Calculate statistics
-    total_complaints = len(df)
-    resolved = len(df[df['Status'].str.strip().str.upper() == 'SOLVED']) if 'Status' in df.columns else 0
-    spam = len(df[df['Status'].str.strip().str.upper() == 'SPAM']) if 'Status' in df.columns else 0
-    pending = len(df[df['Status'].str.strip().str.upper().isin(['UNSOLVED', 'UNDER REVIEW'])]) if 'Status' in df.columns else 0
-    
-    # Category breakdown
-    category_col = 'Predicted Agency' if 'Predicted Agency' in df.columns else 'Agency'
-    categories = []
-    if category_col in df.columns and not df.empty:
-        df[category_col] = df[category_col].astype(str).str.strip().str.upper()
-        category_counts = df[category_col].value_counts().to_dict()
-        categories = [{'name': k, 'count': int(v)} for k, v in category_counts.items() if k and k != '']
-        categories = sorted(categories, key=lambda x: x['count'], reverse=True)
-    
-    # Location breakdown (top 5)
-    location_breakdown = []
-    if 'Location' in df.columns and not df.empty:
-        df['Location'] = df['Location'].astype(str).str.strip()
-        location_counts = df[df['Location'] != '']['Location'].value_counts().head(5).to_dict()
-        location_breakdown = [{'name': k, 'count': int(v)} for k, v in location_counts.items()]
-    
-    # Emotion analysis
-    emotion_scores = {}
-    emotion_cols = ['Anger Score', 'Fear Score', 'Joy Score', 'Neutral Score', 'Sadness Score', 'Surprise Score']
-    for col in emotion_cols:
-        if col in df.columns and not df.empty:
-            numeric_scores = pd.to_numeric(df[col], errors='coerce')
-            avg_score = numeric_scores.mean()
-            if not pd.isna(avg_score):
-                emotion_scores[col.replace(' Score', '')] = round(avg_score, 2)
-    
-    # Count flagged complaints
-    flagged_count = 0
-    if 'Flagged Words' in df.columns and not df.empty:
-        flagged_count = int((df['Flagged Words'] == True).sum())
-    
-    # Prepare report data
-    report_data = {
-        'title': f'{report_type.title()} Complaint Report',
-        'report_type': report_type,
-        'generated_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        'date_from': date_from if date_from else 'All Time',
-        'date_to': date_to if date_to else 'Present',
-        'category': category.upper() if category != 'all' else 'All Categories',
-        'total_complaints': total_complaints,
-        'resolved': resolved,
-        'spam': spam,
-        'pending': pending,
-        'flagged': flagged_count,
-        'categories': categories,
-        'locations': location_breakdown,
-        'emotions': emotion_scores,
-        'resolution_rate': round((resolved / total_complaints * 100), 1) if total_complaints > 0 else 0,
-    }
-    
-    # Add detailed complaint list for detailed reports
-    if report_type == 'detailed' and not df.empty:
-        complaint_list = []
-        for _, row in df.head(50).iterrows():
-            complaint_text = row.get('Complaint', row.get('Raw Complaint', ''))
-            
-            complaint_list.append({
-                'id': str(row.get('ID', '')),
-                'name': row.get('Name', 'Anonymous'),
-                'complaint': str(complaint_text)[:200] + '...' if len(str(complaint_text)) > 200 else str(complaint_text),
-                'location': row.get('Location', ''),
-                'agency': row.get('Predicted Agency', row.get('Agency', '')),
-                'status': row.get('Status', ''),
-            })
-        report_data['complaints'] = complaint_list
-    
-    print(f"✓ Report data prepared: {total_complaints} total, {resolved} resolved, {pending} pending\n")
-    
-    return report_data
+if __name__ == "__main__":
+    app.run(debug=True)
 
 #-------------------------END POINT-------------------------
 

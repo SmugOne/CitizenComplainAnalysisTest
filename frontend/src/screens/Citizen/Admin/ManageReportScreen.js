@@ -24,7 +24,6 @@ export default function ManageReportScreen({ navigation }) {
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Log API_URL on component mount for debugging
   useEffect(() => {
     console.log('=== ManageReport Screen Loaded ===');
     console.log('API_URL:', API_URL);
@@ -32,7 +31,6 @@ export default function ManageReportScreen({ navigation }) {
     console.log('Initial End Date:', formatDate(endDate));
   }, []);
 
-  // Format date for display and API (YYYY-MM-DD)
   const formatDate = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -40,58 +38,41 @@ export default function ManageReportScreen({ navigation }) {
     return `${year}-${month}-${day}`;
   };
 
-  // Handle start date change
   const onStartDateChange = (event, selectedDate) => {
     setShowStartPicker(false);
     if (selectedDate) {
-      console.log('Start date changed to:', formatDate(selectedDate));
       setStartDate(selectedDate);
-      // Don't auto-adjust end date - let user choose freely
     }
   };
 
-  // Handle end date change
   const onEndDateChange = (event, selectedDate) => {
     setShowEndPicker(false);
     if (selectedDate) {
-      console.log('End date changed to:', formatDate(selectedDate));
       setEndDate(selectedDate);
-      // Don't validate here - will validate on preview/generate
     }
   };
 
-  // Validate dates before making API calls
   const validateDates = () => {
     if (startDate > endDate) {
       Alert.alert('Invalid Date Range', 'Start date cannot be after end date. Please adjust your dates.');
       return false;
     }
-    
     const today = new Date();
-    today.setHours(23, 59, 59, 999); // Set to end of day
-    
+    today.setHours(23, 59, 59, 999);
     if (startDate > today) {
       Alert.alert('Invalid Date', 'Start date cannot be in the future. Please select a past date.');
       return false;
     }
-    
     if (endDate > today) {
       Alert.alert('Invalid Date', 'End date cannot be in the future. Please select today or an earlier date.');
       return false;
     }
-    
     return true;
   };
 
   const previewReport = async () => {
-    console.log('\n=== PREVIEW REPORT CLICKED ===');
-    
-    if (!validateDates()) {
-      return;
-    }
-
+    if (!validateDates()) return;
     setLoading(true);
-    
     try {
       const params = {
         report_type: reportType,
@@ -99,18 +80,9 @@ export default function ManageReportScreen({ navigation }) {
         date_to: formatDate(endDate),
         category: category
       };
-
-      console.log('Preview Parameters:', params);
-
       const queryString = new URLSearchParams(params).toString();
       const previewUrl = `${API_URL}/api/preview-report?${queryString}`;
-      
-      console.log('Preview URL:', previewUrl);
-      console.log('Attempting to open preview in browser...');
-      
       const canOpen = await Linking.canOpenURL(previewUrl);
-      console.log('Can open URL:', canOpen);
-      
       if (canOpen) {
         await Linking.openURL(previewUrl);
         Alert.alert('Success', 'Report preview opened in browser');
@@ -118,26 +90,15 @@ export default function ManageReportScreen({ navigation }) {
         throw new Error('Cannot open browser - URL may be invalid');
       }
     } catch (error) {
-      console.error('❌ Preview error:', error);
-      Alert.alert(
-        'Preview Error', 
-        `Failed to open preview:\n\n${error.message}\n\nTroubleshooting:\n1. Check if Flask server is running\n2. Verify API_URL: ${API_URL}\n3. Check network connection\n4. Try the "Open Full Web Generator" button`
-      );
+      Alert.alert('Preview Error', `Failed to open preview:\n\n${error.message}`);
     } finally {
       setLoading(false);
-      console.log('=== PREVIEW REQUEST COMPLETE ===\n');
     }
   };
 
   const generateReport = async () => {
-    console.log('\n=== GENERATE PDF CLICKED ===');
-    
-    if (!validateDates()) {
-      return;
-    }
-
+    if (!validateDates()) return;
     setLoading(true);
-    
     try {
       const params = {
         report_type: reportType,
@@ -145,86 +106,49 @@ export default function ManageReportScreen({ navigation }) {
         date_to: formatDate(endDate),
         category: category
       };
-
-      console.log('Generate Parameters:', params);
-
       const queryString = new URLSearchParams(params).toString();
       const pdfUrl = `${API_URL}/api/generate-report?${queryString}`;
-      
-      console.log('PDF URL:', pdfUrl);
-      console.log('Attempting to generate and download PDF...');
-      
       const canOpen = await Linking.canOpenURL(pdfUrl);
-      console.log('Can open URL:', canOpen);
-      
       if (canOpen) {
         await Linking.openURL(pdfUrl);
-        Alert.alert(
-          'PDF Generation Started', 
-          'Your PDF report is being generated and will download automatically in your browser.'
-        );
+        Alert.alert('PDF Generation Started', 'Your PDF report is being generated and will download automatically in your browser.');
       } else {
         throw new Error('Cannot open browser - URL may be invalid');
       }
     } catch (error) {
-      console.error('❌ Generate error:', error);
-      Alert.alert(
-        'Generation Error', 
-        `Failed to generate PDF:\n\n${error.message}\n\nTroubleshooting:\n1. Check if Flask server is running at ${API_URL}\n2. Verify your date range has data\n3. Check network connection\n4. Try preview first to test connection`
-      );
+      Alert.alert('Generation Error', `Failed to generate PDF:\n\n${error.message}`);
     } finally {
       setLoading(false);
-      console.log('=== GENERATE REQUEST COMPLETE ===\n');
     }
   };
 
-  // Test connection to backend
-  const testConnection = async () => {
-    setLoading(true);
-    try {
-      console.log('Testing connection to:', API_URL);
-      const response = await fetch(`${API_URL}/api/reports`, {
-        method: 'GET',
-      });
-      
-      if (response.ok) {
-        Alert.alert('Connection Success', `Successfully connected to server at ${API_URL}`);
-      } else {
-        throw new Error(`Server responded with status: ${response.status}`);
-      }
-    } catch (error) {
-      console.error('Connection test failed:', error);
-      Alert.alert(
-        'Connection Failed',
-        `Cannot reach server at ${API_URL}\n\nError: ${error.message}\n\nMake sure Flask server is running.`
-      );
-    } finally {
-      setLoading(false);
+  const quickSelectPreset = (daysOrYear) => {
+    const end = new Date();
+    let start;
+    if (daysOrYear === 'year') {
+      start = new Date(end.getFullYear(), 0, 1);
+    } else {
+      start = new Date();
+      start.setDate(end.getDate() - daysOrYear);
     }
+    setStartDate(start);
+    setEndDate(end);
   };
 
   return (
     <LayoutAdmin navigation={navigation}>
       <ScrollView style={styles.container}>
-        {/* Page Title */}
         <Text style={styles.pageTitle}>Generate Reports</Text>
-
-        {/* Report Configuration Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Report Configuration</Text>
-
           {/* Report Type */}
           <View style={styles.formGroup}>
             <Text style={styles.label}>Report Type</Text>
             <View style={styles.pickerWrapper}>
               <Picker
                 selectedValue={reportType}
-                onValueChange={(value) => {
-                  console.log('Report type changed to:', value);
-                  setReportType(value);
-                }}
-                style={styles.picker}
-              >
+                onValueChange={value => setReportType(value)}
+                style={styles.picker}>
                 <Picker.Item label="Summary Report" value="summary" />
                 <Picker.Item label="Detailed Report" value="detailed" />
                 <Picker.Item label="Category Analysis" value="category" />
@@ -232,17 +156,13 @@ export default function ManageReportScreen({ navigation }) {
               </Picker>
             </View>
           </View>
-
           {/* Category Filter */}
           <View style={styles.formGroup}>
             <Text style={styles.label}>Category Filter</Text>
             <View style={styles.pickerWrapper}>
               <Picker
                 selectedValue={category}
-                onValueChange={(value) => {
-                  console.log('Category changed to:', value);
-                  setCategory(value);
-                }}
+                onValueChange={value => setCategory(value)}
                 style={styles.picker}
               >
                 <Picker.Item label="All Categories" value="all" />
@@ -261,95 +181,35 @@ export default function ManageReportScreen({ navigation }) {
             </View>
           </View>
 
-          {/* Date Range Selection */}
+          {/* Date Range Selection (Side by Side) */}
           <View style={styles.formGroup}>
             <Text style={styles.label}>Date Range</Text>
             <Text style={styles.hint}>
               Select any date range. Both dates are fully editable.
             </Text>
-            
-            {/* Start Date */}
-            <TouchableOpacity 
-              style={styles.dateButton} 
-              onPress={() => setShowStartPicker(true)}
-            >
-              <View style={styles.dateButtonContent}>
-                <Text style={styles.dateLabel}>Start Date</Text>
-                <Text style={styles.dateValue}>{formatDate(startDate)}</Text>
+            <View style={styles.dateRangeRow}>
+              {/* Start Date */}
+              <View style={styles.dateFieldBox}>
+                <View style={styles.dateFieldInner}>
+                  <Text style={styles.dateValue}>{formatDate(startDate)}</Text>
+                  <TouchableOpacity onPress={() => setShowStartPicker(true)}>
+                    <Text style={styles.calendarIcon}>📅</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.dateFieldLabel}>Start date</Text>
               </View>
-              <Text style={styles.calendarIcon}>📅</Text>
-            </TouchableOpacity>
-
-            {/* End Date */}
-            <TouchableOpacity 
-              style={styles.dateButton} 
-              onPress={() => setShowEndPicker(true)}
-            >
-              <View style={styles.dateButtonContent}>
-                <Text style={styles.dateLabel}>End Date</Text>
-                <Text style={styles.dateValue}>{formatDate(endDate)}</Text>
-              </View>
-              <Text style={styles.calendarIcon}>📅</Text>
-            </TouchableOpacity>
-
-            {/* Quick Date Range Presets */}
-            <View style={styles.presetContainer}>
-              {/*<Text style={styles.presetLabel}>Quick Select:</Text> */}
-              <View style={styles.presetButtons}>
-                <TouchableOpacity 
-                  style={styles.presetButton}
-                  onPress={() => {
-                    const end = new Date();
-                    const start = new Date();
-                    start.setDate(end.getDate() - 7);
-                    setStartDate(start);
-                    setEndDate(end);
-                  }}
-                >
-                  <Text style={styles.presetButtonText}>Last 7 days</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={styles.presetButton}
-                  onPress={() => {
-                    const end = new Date();
-                    const start = new Date();
-                    start.setDate(end.getDate() - 30);
-                    setStartDate(start);
-                    setEndDate(end);
-                  }}
-                >
-                  <Text style={styles.presetButtonText}>Last 30 days</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={styles.presetButton}
-                  onPress={() => {
-                    const end = new Date();
-                    const start = new Date();
-                    start.setDate(end.getDate() - 90);
-                    setStartDate(start);
-                    setEndDate(end);
-                  }}
-                >
-                  <Text style={styles.presetButtonText}>Last 90 days</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={styles.presetButton}
-                  onPress={() => {
-                    const end = new Date();
-                    const start = new Date(end.getFullYear(), 0, 1); // Jan 1 of current year
-                    setStartDate(start);
-                    setEndDate(end);
-                  }}
-                >
-                  <Text style={styles.presetButtonText}>This Year</Text>
-                </TouchableOpacity>
+              {/* End Date */}
+              <View style={styles.dateFieldBox}>
+                <View style={styles.dateFieldInner}>
+                  <Text style={styles.dateValue}>{formatDate(endDate)}</Text>
+                  <TouchableOpacity onPress={() => setShowEndPicker(true)}>
+                    <Text style={styles.calendarIcon}>📅</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.dateFieldLabel}>End date</Text>
               </View>
             </View>
-
-            {/* Date Pickers - No restrictions, fully editable */}
+            {/* Date Pickers */}
             {showStartPicker && (
               <DateTimePicker
                 value={startDate}
@@ -359,7 +219,6 @@ export default function ManageReportScreen({ navigation }) {
                 maximumDate={new Date()}
               />
             )}
-
             {showEndPicker && (
               <DateTimePicker
                 value={endDate}
@@ -369,6 +228,31 @@ export default function ManageReportScreen({ navigation }) {
                 maximumDate={new Date()}
               />
             )}
+            {/* Quick Date Range Presets */}
+            <View style={styles.presetContainer}>
+              <View style={styles.presetButtons}>
+                <TouchableOpacity
+                  style={styles.presetButton}
+                  onPress={() => quickSelectPreset(7)}>
+                  <Text style={styles.presetButtonText}>Last 7 days</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.presetButton}
+                  onPress={() => quickSelectPreset(30)}>
+                  <Text style={styles.presetButtonText}>Last 30 days</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.presetButton}
+                  onPress={() => quickSelectPreset(90)}>
+                  <Text style={styles.presetButtonText}>Last 90 days</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.presetButton}
+                  onPress={() => quickSelectPreset('year')}>
+                  <Text style={styles.presetButtonText}>This Year</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
 
           {/* Report Info */}
@@ -393,8 +277,6 @@ export default function ManageReportScreen({ navigation }) {
               </Text>
             </Text>
           </View>
-
-          {/* Action Buttons */}
           <View style={styles.buttonGroup}>
             <TouchableOpacity
               style={[styles.button, styles.previewButton]}
@@ -421,23 +303,10 @@ export default function ManageReportScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
-          {/* Test Connection Button */}
-          {/* <TouchableOpacity
-            style={styles.testButton}
-            onPress={testConnection}
-            disabled={loading}
-          >
-            <Text style={styles.testButtonText}>
-              🔌 Test Server Connection
-            </Text>
-          </TouchableOpacity> */}
-
-          {/* Web Link Button */}
           <TouchableOpacity
             style={styles.webLinkButton}
             onPress={async () => {
               const webUrl = `${API_URL}/api/reports`;
-              console.log('Opening web generator at:', webUrl);
               try {
                 const canOpen = await Linking.canOpenURL(webUrl);
                 if (canOpen) {
@@ -446,7 +315,6 @@ export default function ManageReportScreen({ navigation }) {
                   Alert.alert('Error', 'Cannot open browser');
                 }
               } catch (error) {
-                console.error('Error opening web generator:', error);
                 Alert.alert('Error', `Cannot open browser: ${error.message}`);
               }
             }}
@@ -462,214 +330,72 @@ export default function ManageReportScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  pageTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#11493f',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-    marginBottom: 20,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#11493f',
-    marginBottom: 20,
-    paddingBottom: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: '#ffd66b',
-  },
-  formGroup: {
-    marginBottom: 24,
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#11493f',
-    marginBottom: 8,
-  },
-  hint: {
-    fontSize: 13,
-    color: '#666',
-    marginBottom: 12,
-    fontStyle: 'italic',
-  },
-  pickerWrapper: {
-    borderWidth: 2,
-    borderColor: '#11493f',
-    borderRadius: 8,
-    backgroundColor: '#f7f1de',
-    overflow: 'hidden',
-  },
-  picker: {
-    height: 50,
-    color: '#11493f',
-  },
-  dateButton: {
+  container: { flex: 1 },
+  pageTitle: { fontSize: 28, fontWeight: 'bold', color: '#11493f', marginBottom: 20, textAlign: 'center' },
+  card: { backgroundColor: '#fff', borderRadius: 12, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3, marginBottom: 20 },
+  cardTitle: { fontSize: 20, fontWeight: '600', color: '#11493f', marginBottom: 20, paddingBottom: 12, borderBottomWidth: 2, borderBottomColor: '#ffd66b' },
+  formGroup: { marginBottom: 24 },
+  label: { fontSize: 15, fontWeight: '600', color: '#11493f', marginBottom: 8 },
+  hint: { fontSize: 13, color: '#666', marginBottom: 12, fontStyle: 'italic' },
+  pickerWrapper: { borderWidth: 2, borderColor: '#11493f', borderRadius: 8, backgroundColor: '#f7f1de', overflow: 'hidden' },
+  picker: { height: 50, color: '#11493f' },
+
+  dateRangeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    gap: 12,
+    marginBottom: 10,
+  },
+  dateFieldBox: {
+    flex: 1,
     backgroundColor: '#f7f1de',
-    padding: 16,
-    borderRadius: 8,
     borderWidth: 2,
     borderColor: '#11493f',
-    marginBottom: 12,
+    borderRadius: 8,
+    marginRight: 8,
+    padding: 8,
+    alignItems: 'flex-start',
+    minWidth: 120,
   },
-  dateButtonContent: {
-    flex: 1,
-  },
-  dateLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
-    fontWeight: '500',
+  dateFieldInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    justifyContent: 'space-between',
   },
   dateValue: {
-    fontSize: 16,
+    fontSize: 17,
     color: '#11493f',
-    fontWeight: '700',
+    fontWeight: '600',
+    paddingRight: 10,
   },
   calendarIcon: {
-    fontSize: 24,
-    marginLeft: 12,
+    fontSize: 22,
+    paddingLeft: 8,
   },
-  reportInfo: {
-    backgroundColor: '#f0f8ff',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#11493f',
+  dateFieldLabel: {
+    fontSize: 11,
+    color: '#666',
+    marginTop: 4,
   },
-  reportInfoTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#11493f',
-    marginBottom: 8,
-  },
-  reportInfoText: {
-    fontSize: 13,
-    color: '#11493f',
-    marginBottom: 4,
-  },
-  reportInfoBold: {
-    fontWeight: '700',
-  },
-  buttonGroup: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  previewButton: {
-    backgroundColor: '#11493f',
-  },
-  downloadButton: {
-    backgroundColor: '#d32f2f',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  testButton: {
-    backgroundColor: '#3498db',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  testButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  webLinkButton: {
-    backgroundColor: '#f7f1de',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#11493f',
-    borderStyle: 'dashed',
-    marginBottom: 16,
-  },
-  webLinkText: {
-    color: '#11493f',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  statusCard: {
-    backgroundColor: '#fff3cd',
-    padding: 16,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#ffc107',
-  },
-  statusTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#856404',
-    marginBottom: 8,
-  },
-  statusText: {
-    fontSize: 13,
-    color: '#856404',
-    marginBottom: 4,
-  },
-  presetContainer: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#ddd',
-  },
-  presetLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#11493f',
-    marginBottom: 8,
-  },
-  presetButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  presetButton: {
-    backgroundColor: '#11493f',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    marginRight: 4,
-    marginBottom: 4,
-  },
-  presetButtonText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
+
+  reportInfo: { backgroundColor: '#f0f8ff', padding: 16, borderRadius: 8, marginBottom: 16, borderLeftWidth: 4, borderLeftColor: '#11493f' },
+  reportInfoTitle: { fontSize: 14, fontWeight: '700', color: '#11493f', marginBottom: 8 },
+  reportInfoText: { fontSize: 13, color: '#11493f', marginBottom: 4 },
+  reportInfoBold: { fontWeight: '700' },
+  buttonGroup: { flexDirection: 'row', gap: 12, marginBottom: 12 },
+  button: { flex: 1, paddingVertical: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 3 },
+  previewButton: { backgroundColor: '#11493f' },
+  downloadButton: { backgroundColor: '#d32f2f' },
+  buttonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  webLinkButton: { backgroundColor: '#f7f1de', padding: 16, borderRadius: 8, alignItems: 'center', borderWidth: 2, borderColor: '#11493f', borderStyle: 'dashed', marginBottom: 16 },
+  webLinkText: { color: '#11493f', fontSize: 14, fontWeight: '600' },
+  statusCard: { backgroundColor: '#fff3cd', padding: 16, borderRadius: 8, borderLeftWidth: 4, borderLeftColor: '#ffc107' },
+  statusTitle: { fontSize: 14, fontWeight: '700', color: '#856404', marginBottom: 8 },
+  statusText: { fontSize: 13, color: '#856404', marginBottom: 4 },
+  presetContainer: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#ddd' },
+  presetLabel: { fontSize: 13, fontWeight: '600', color: '#11493f', marginBottom: 8 },
+  presetButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  presetButton: { backgroundColor: '#11493f', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 6, marginRight: 4, marginBottom: 4 },
+  presetButtonText: { color: '#fff', fontSize: 12, fontWeight: '600' },
 });

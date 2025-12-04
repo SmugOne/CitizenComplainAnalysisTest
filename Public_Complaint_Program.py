@@ -40,21 +40,10 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-
-
 #Connection:
 load_dotenv()
 app = Flask(__name__)
 CORS(app)
-
-@app.route('/', methods=['GET'])
-def home_check():
-    try:
-        df = pd.DataFrame(arranged_sheet.get_all_records())
-        sample = df.head(5).to_dict(orient='records')
-        return jsonify({"status": "Backend running", "sample_complaints": sample})
-    except:
-        return jsonify({"status": "Backend running, but cannot read sheet"})
 
 #-------------------------GOOGLE SHEETS API-------------------------
 #Define scope
@@ -1160,10 +1149,14 @@ def preview_report():
         import traceback
         traceback.print_exc()
         return f"<h1>Error generating preview</h1><p>{str(e)}</p>", 500
+    
+if __name__ == "__main__":
+    app.run(debug=True)
 
 #-------------------------END POINT-------------------------
 
 #Back and Front end connection:
 if __name__ == '__main__':
+
     Main()  #Run once
     app.run(host="0.0.0.0", port=5000, debug=True)

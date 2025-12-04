@@ -61,12 +61,9 @@ def home_check():
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
 #Load service account credentials
-# Load JSON from environment variable
-json_key_content = os.getenv("GOOGLE_JSON_KEY_CONTENT")
-creds_dict = json.loads(json_key_content)
-
-# Authenticate
-creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+creds = ServiceAccountCredentials.from_json_keyfile_name(
+    r"JSON Key/publiccomplaintprogram-1f431cc7f437.json", scope
+)
 client = gspread.authorize(creds)
 spreadsheet = client.open("Main Database")
 
@@ -1168,6 +1165,5 @@ def preview_report():
 
 #Back and Front end connection:
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000)) 
     Main()  #Run once
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

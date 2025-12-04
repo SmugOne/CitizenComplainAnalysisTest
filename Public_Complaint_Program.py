@@ -1159,9 +1159,6 @@ def preview_report():
         traceback.print_exc()
         return f"<h1>Error generating preview</h1><p>{str(e)}</p>", 500
 
-if __name__ == "__main__":
-    app.run(debug=True)
-
 #-------------------------END POINT-------------------------
 
 #Back and Front end connection:

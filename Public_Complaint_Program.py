@@ -810,14 +810,14 @@ def fetch_report_data(report_type, date_from, date_to, category):
     csv_folder = os.path.join(base_dir, 'CSVFile')
     gs_creds_path = os.path.join(base_dir, r"JSON Key/publiccomplaintprogram-1f431cc7f437.json")
     gs_spreadsheet_name = "Main Database"
-    gs_worksheet_titles = ["ComplaintsData", "ArrangedData", "Archive"] # extend as needed
+    gs_worksheet_titles = ["ComplaintsData", "ArrangedData", "Archive"]
 
-    # UNIFIED DATA LOAD!
+    # Load unified data (Sheets + CSV)
     df = load_all_complaints(csv_folder, gs_creds_path, gs_spreadsheet_name, gs_worksheet_titles)
     print(f"\nUnified complaints loaded: {len(df)}\n")
 
     if df.empty:
-        print("❌ No data loaded from any sources.")
+        # return empty report_data as before...
         return {
             'title': f'{report_type.title()} Complaint Report',
             'report_type': report_type,
@@ -837,32 +837,46 @@ def fetch_report_data(report_type, date_from, date_to, category):
             'complaints': []
         }
 
-    # Category filter
+    # Category filter (unchanged)
     initial_count = len(df)
     if category != 'all':
-        df = df[df['Predicted Agency'].str.strip().str.upper() == category.upper()]
+        df = df[df['Predicted Agency'].astype(str).str.strip().str.upper() == category.upper()]
         print(f"Category filter applied [{category}], Reduced from {initial_count} to {len(df)}")
 
-    # DATE FILTERING (include blanks, only drop if date value exists & is out of range)
+    # DATE FILTERING — CORRECTED: include blanks OR dates BETWEEN start and end
     if 'Date' in df.columns and not df.empty:
         df['Date_parsed'] = pd.to_datetime(df['Date'], errors='coerce')
-        mask = (df['Date_parsed'].isnull())  # blanks included!
-        if date_from:
-            date_from_dt = pd.to_datetime(date_from)
-            mask = mask | (df['Date_parsed'] >= date_from_dt)
-        if date_to:
-            date_to_dt = pd.to_datetime(date_to)
-            mask = mask | (df['Date_parsed'] <= date_to_dt)
-        df = df[mask]
+
+        # Prepare parsed bounds if provided
+        from_dt = pd.to_datetime(date_from) if date_from else None
+        to_dt = pd.to_datetime(date_to) if date_to else None
+
+        # Build mask: keep rows with no date OR (date within bounds)
+        blank_mask = df['Date_parsed'].isna()
+
+        if from_dt is not None and to_dt is not None:
+            range_mask = (df['Date_parsed'] >= from_dt) & (df['Date_parsed'] <= to_dt)
+        elif from_dt is not None:
+            range_mask = (df['Date_parsed'] >= from_dt)
+        elif to_dt is not None:
+            range_mask = (df['Date_parsed'] <= to_dt)
+        else:
+            # no filtering
+            range_mask = pd.Series([True] * len(df), index=df.index)
+
+        # Final mask: blanks OR (in range)
+        final_mask = blank_mask | range_mask
+        df = df[final_mask].copy()
+        print(f"Date filter applied. Params => from: {date_from}, to: {date_to}. Rows after date filter: {len(df)}")
 
     print(f"Final complaint count: {len(df)}\n")
     df.fillna("", inplace=True)
 
-    # Calculate statistics
+    # rest of statistics/calculations (unchanged) ...
     total_complaints = len(df)
-    resolved = len(df[df['Status'].str.strip().str.upper() == 'SOLVED']) if 'Status' in df.columns else 0
-    spam = len(df[df['Status'].str.strip().str.upper() == 'SPAM']) if 'Status' in df.columns else 0
-    pending = len(df[df['Status'].str.strip().str.upper().isin(['UNSOLVED', 'UNDER REVIEW'])]) if 'Status' in df.columns else 0
+    resolved = len(df[df['Status'].astype(str).str.strip().str.upper() == 'SOLVED']) if 'Status' in df.columns else 0
+    spam = len(df[df['Status'].astype(str).str.strip().str.upper() == 'SPAM']) if 'Status' in df.columns else 0
+    pending = len(df[df['Status'].astype(str).str.strip().str.upper().isin(['UNSOLVED', 'UNDER REVIEW'])]) if 'Status' in df.columns else 0
 
     categories = []
     if 'Predicted Agency' in df.columns and not df.empty:
@@ -883,6 +897,7 @@ def fetch_report_data(report_type, date_from, date_to, category):
             avg_score = numeric_scores.mean()
             if not pd.isna(avg_score):
                 emotion_scores[col.replace(' Score', '')] = round(avg_score, 2)
+
     flagged_count = 0
     if 'Flagged Words' in df.columns and not df.empty:
         flagged_count = sum([str(val).strip().lower() == "true" for val in df['Flagged Words']])
@@ -905,7 +920,6 @@ def fetch_report_data(report_type, date_from, date_to, category):
         'resolution_rate': round((resolved / total_complaints * 100), 1) if total_complaints > 0 else 0,
     }
 
-    # Detailed complaint list for detailed reports
     if report_type == 'detailed' and not df.empty:
         complaint_list = []
         for _, row in df.head(50).iterrows():

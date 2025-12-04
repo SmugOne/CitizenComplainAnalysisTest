@@ -302,27 +302,6 @@ export default function ManageReportScreen({ navigation }) {
               )}
             </TouchableOpacity>
           </View>
-
-          <TouchableOpacity
-            style={styles.webLinkButton}
-            onPress={async () => {
-              const webUrl = `${API_URL}/api/reports`;
-              try {
-                const canOpen = await Linking.canOpenURL(webUrl);
-                if (canOpen) {
-                  await Linking.openURL(webUrl);
-                } else {
-                  Alert.alert('Error', 'Cannot open browser');
-                }
-              } catch (error) {
-                Alert.alert('Error', `Cannot open browser: ${error.message}`);
-              }
-            }}
-          >
-            <Text style={styles.webLinkText}>
-              🌐 Open Full Web Generator
-            </Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </LayoutAdmin>
@@ -388,8 +367,6 @@ const styles = StyleSheet.create({
   previewButton: { backgroundColor: '#11493f' },
   downloadButton: { backgroundColor: '#d32f2f' },
   buttonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  webLinkButton: { backgroundColor: '#f7f1de', padding: 16, borderRadius: 8, alignItems: 'center', borderWidth: 2, borderColor: '#11493f', borderStyle: 'dashed', marginBottom: 16 },
-  webLinkText: { color: '#11493f', fontSize: 14, fontWeight: '600' },
   statusCard: { backgroundColor: '#fff3cd', padding: 16, borderRadius: 8, borderLeftWidth: 4, borderLeftColor: '#ffc107' },
   statusTitle: { fontSize: 14, fontWeight: '700', color: '#856404', marginBottom: 8 },
   statusText: { fontSize: 13, color: '#856404', marginBottom: 4 },

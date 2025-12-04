@@ -49,7 +49,12 @@ CORS(app)
 
 @app.route('/', methods=['GET'])
 def home_check():
-    return jsonify({"status": "Backend is running successfully", "version": "1.0"}), 200
+    try:
+        df = pd.DataFrame(arranged_sheet.get_all_records())
+        sample = df.head(5).to_dict(orient='records')
+        return jsonify({"status": "Backend running", "sample_complaints": sample})
+    except:
+        return jsonify({"status": "Backend running, but cannot read sheet"})
 
 #-------------------------GOOGLE SHEETS API-------------------------
 #Define scope

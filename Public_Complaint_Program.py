@@ -47,6 +47,10 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
+@app.route('/', methods=['GET'])
+def home_check():
+    return jsonify({"status": "Backend is running successfully", "version": "1.0"}), 200
+
 #-------------------------GOOGLE SHEETS API-------------------------
 #Define scope
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]

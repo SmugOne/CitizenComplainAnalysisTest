@@ -52,9 +52,12 @@ CORS(app)
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
 #Load service account credentials
-creds = ServiceAccountCredentials.from_json_keyfile_name(
-    r"JSON Key/publiccomplaintprogram-1f431cc7f437.json", scope
-)
+# Load JSON from environment variable
+json_key_content = os.getenv("GOOGLE_JSON_KEY_CONTENT")
+creds_dict = json.loads(json_key_content)
+
+# Authenticate
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 spreadsheet = client.open("Main Database")
 
@@ -1159,5 +1162,6 @@ if __name__ == "__main__":
 
 #Back and Front end connection:
 if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000)) 
     Main()  #Run once
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=True)

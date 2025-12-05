@@ -42,10 +42,9 @@ from reportlab.pdfbase.ttfonts import TTFont
 
 #Connection:
 load_dotenv()
-app = Flask(__name__)
+app = Flask(__name__, static_folder="web-build")
 CORS(app)
 
-app = Flask(__name__, static_folder="web-build")
 
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
@@ -59,9 +58,10 @@ def serve(path):
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
 #Load service account credentials
-creds = ServiceAccountCredentials.from_json_keyfile_name(
-    r"JSON Key/publiccomplaintprogram-1f431cc7f437.json", scope
-)
+
+google_creds_json = os.getenv("GOOGLE_CREDS_JSON")
+creds_info = json.loads(google_creds_json)
+creds = ServiceAccountCredentials.from_dict(creds_info, scope)
 client = gspread.authorize(creds)
 spreadsheet = client.open("Main Database")
 
@@ -1158,9 +1158,6 @@ def preview_report():
         import traceback
         traceback.print_exc()
         return f"<h1>Error generating preview</h1><p>{str(e)}</p>", 500
-    
-if __name__ == "__main__":
-    app.run(debug=True)
 
 #-------------------------END POINT-------------------------
 

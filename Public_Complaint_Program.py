@@ -45,6 +45,15 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
+app = Flask(__name__, static_folder="web-build")
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, "index.html")
+
 #-------------------------GOOGLE SHEETS API-------------------------
 #Define scope
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]

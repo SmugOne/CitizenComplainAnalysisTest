@@ -176,7 +176,7 @@ def run_arrangement():
         ''                     
     ]
 
-    # Make sure length matches columns
+    #Make sure length matches columns
     if len(new_row_list) < len(columns):
         new_row_list += [''] * (len(columns) - len(new_row_list))
 

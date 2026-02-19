@@ -203,7 +203,7 @@ export default function ManageReportScreen({ navigation }) {
                 <View style={styles.dateFieldInner}>
                   <Text style={styles.dateValue}>{formatDate(endDate)}</Text>
                   <TouchableOpacity onPress={() => setShowEndPicker(true)}>
-                    <Text style={styles.calendarIcon}>📅</Text>
+                    <Text style={styles.calendarIcon}></Text>
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.dateFieldLabel}>End date</Text>

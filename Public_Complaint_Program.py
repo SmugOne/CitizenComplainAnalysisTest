@@ -21,7 +21,6 @@ from sklearn.pipeline import make_pipeline
 from werkzeug.utils import secure_filename
 from transformers import pipeline
 from collections import Counter
-from sklearn.pipeline import make_pipeline
 from flask import render_template, send_file, request, jsonify
 from datetime import datetime
 from flask import send_from_directory, abort

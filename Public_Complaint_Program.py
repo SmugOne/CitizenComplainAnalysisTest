@@ -48,9 +48,12 @@ CORS(app)
 #Define scope
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
-#Load service account credentials
-creds = ServiceAccountCredentials.from_json_keyfile_name(
-    r"JSON Key/publiccomplaintprogram-722b37f3cab1.json", scope
+#Load service account credentials in environment (Vercel)
+google_credentials = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
+
+creds = ServiceAccountCredentials.from_json_keyfile_dict(
+    google_credentials,
+    scope
 )
 client = gspread.authorize(creds)
 spreadsheet = client.open("Main Database")

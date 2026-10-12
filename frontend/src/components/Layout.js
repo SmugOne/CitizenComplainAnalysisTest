@@ -136,7 +136,7 @@ export default function Layout({ children, navigation }) {
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>
-                2025 Citizen Complaint Portal.
+                2026 Citizen Complaint Portal.
               </Text>
             </View>
           </View>

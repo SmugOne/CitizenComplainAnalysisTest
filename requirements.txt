@@ -2,10 +2,12 @@ flask
 flask-cors
 python-dotenv
 pandas
+numpy
 joblib
 gspread
 oauth2client
 scikit-learn
+Werkzeug
 transformers
 torch
 reportlab

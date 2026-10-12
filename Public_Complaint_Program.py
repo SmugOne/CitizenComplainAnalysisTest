@@ -729,33 +729,33 @@ def get_admin_list():
 
 
 #-------------------------REPORT GENERATOR-------------------------
-def load_all_complaints(csv_folder, gs_creds_path, gs_spreadsheet_name, gs_worksheet_titles):
+def load_all_complaints(csv_folder, client, gs_spreadsheet_name, gs_worksheet_titles):
     """
     Load and unify complaint data from Google Sheets and local CSV file(s).
     Returns a DataFrame with standardized columns.
     """
+
     # --- Google Sheets setup ---
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name(gs_creds_path, scope)
-    client = gspread.authorize(creds)
     spreadsheet = client.open(gs_spreadsheet_name)
-    
+
     # List of standard columns for complaint records
     cols = [
         "ID", "Name", "Complaint", "Location", "Anger Score", "Fear Score",
         "Joy Score", "Neutral Score", "Sadness Score", "Surprise Score",
-        "Predicted Agency", "Flagged Words", "Image ID", "Status", "Password", "Remark", "Date", "Time"
+        "Predicted Agency", "Flagged Words", "Image ID", "Status",
+        "Password", "Remark", "Date", "Time"
     ]
-    
+
     all_df = []
-    
+
     # --- Google Sheets Worksheets ---
-    # gs_worksheet_titles is a list, e.g. ["ComplaintsData", "ArrangedData", "Archive"]
     for title in gs_worksheet_titles:
         sheet = spreadsheet.worksheet(title)
         gs_data = pd.DataFrame(sheet.get_all_records()).fillna("")
-        # Map fields to unified format (best effort, fill missing columns)
+
+        # Map fields to unified format
         mapped = pd.DataFrame()
+
         for c in cols:
             if c in gs_data.columns:
                 mapped[c] = gs_data[c]
@@ -777,15 +777,21 @@ def load_all_complaints(csv_folder, gs_creds_path, gs_spreadsheet_name, gs_works
                 mapped[c] = gs_data["Name"]
             else:
                 mapped[c] = ""
+
         all_df.append(mapped[cols])
-    
+
     # --- Load from CSV complaintdata.csv ---
     csv_path = os.path.join(csv_folder, "complaintdata.csv")
+
     try:
         csv_data = pd.read_csv(csv_path, encoding="utf-8").fillna("")
-    except Exception:
+    except FileNotFoundError:
         csv_data = pd.DataFrame()
+    except pd.errors.EmptyDataError:
+        csv_data = pd.DataFrame()
+
     mapped_csv = pd.DataFrame()
+
     for c in cols:
         if c in csv_data.columns:
             mapped_csv[c] = csv_data[c]
@@ -795,25 +801,41 @@ def load_all_complaints(csv_folder, gs_creds_path, gs_spreadsheet_name, gs_works
             mapped_csv[c] = csv_data["Category"]
         else:
             mapped_csv[c] = ""
+
     all_df.append(mapped_csv[cols])
-    
-    # --- Concatenate all sources ---
+
+    # --- Combine all sources ---
     if all_df:
         combo_df = pd.concat(all_df, ignore_index=True).fillna("")
     else:
         combo_df = pd.DataFrame(columns=cols)
+
     return combo_df
+
 
 # ---------------- REPORT DATA BUILDER ----------------
 def fetch_report_data(report_type, date_from, date_to, category):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     csv_folder = os.path.join(base_dir, 'CSVFile')
-    gs_creds_path = os.path.join(base_dir, r"JSON Key/publiccomplaintprogram-1f431cc7f437.json")
+
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+
+    google_credentials = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
+
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(google_credentials, scope)
+
+    client = gspread.authorize(creds)
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    google_credentials = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(google_credentials, scope)
+
+    client = gspread.authorize(creds)
+
     gs_spreadsheet_name = "Main Database"
     gs_worksheet_titles = ["ComplaintsData", "ArrangedData", "Archive"]
 
     # Load unified data (Sheets + CSV)
-    df = load_all_complaints(csv_folder, gs_creds_path, gs_spreadsheet_name, gs_worksheet_titles)
+    df = load_all_complaints(csv_folder, client, gs_spreadsheet_name, gs_worksheet_titles)
     print(f"\nUnified complaints loaded: {len(df)}\n")
 
     if df.empty:

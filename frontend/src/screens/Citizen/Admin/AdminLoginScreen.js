@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Modal } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import Layout from "../../../components/Layout";
-import { API_URL } from "@env";
+import { EXPO_PUBLIC_API_URL } from "@env";
 
 // MODAL ALERT
 function ModalAlert({ visible, message, onClose }) {
@@ -58,7 +58,7 @@ export default function AdminLoginScreen({ navigation }) {
   const closeModal = () => setModal({ show: false, message: "" });
 
   const handleLogin = async () => {
-    const response = await fetch(`${API_URL}/api/admin/login`, {
+    const response = await fetch(`${EXPO_PUBLIC_API_URL}/api/admin/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),

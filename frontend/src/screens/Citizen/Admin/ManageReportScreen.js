@@ -13,7 +13,7 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import LayoutAdmin from '../../../components/LayoutAdmin';
-import { API_URL } from "@env";
+import { EXPO_PUBLIC_API_URL } from "@env";
 
 export default function ManageReportScreen({ navigation }) {
   const [reportType, setReportType] = useState('summary');
@@ -26,7 +26,7 @@ export default function ManageReportScreen({ navigation }) {
 
   useEffect(() => {
     console.log('=== ManageReport Screen Loaded ===');
-    console.log('API_URL:', API_URL);
+    console.log('EXPO_PUBLIC_API_URL:', EXPO_PUBLIC_API_URL);
     console.log('Initial Start Date:', formatDate(startDate));
     console.log('Initial End Date:', formatDate(endDate));
   }, []);
@@ -81,7 +81,7 @@ export default function ManageReportScreen({ navigation }) {
         category: category
       };
       const queryString = new URLSearchParams(params).toString();
-      const previewUrl = `${API_URL}/api/preview-report?${queryString}`;
+      const previewUrl = `${EXPO_PUBLIC_API_URL}/api/preview-report?${queryString}`;
       const canOpen = await Linking.canOpenURL(previewUrl);
       if (canOpen) {
         await Linking.openURL(previewUrl);
@@ -107,7 +107,7 @@ export default function ManageReportScreen({ navigation }) {
         category: category
       };
       const queryString = new URLSearchParams(params).toString();
-      const pdfUrl = `${API_URL}/api/generate-report?${queryString}`;
+      const pdfUrl = `${EXPO_PUBLIC_API_URL}/api/generate-report?${queryString}`;
       const canOpen = await Linking.canOpenURL(pdfUrl);
       if (canOpen) {
         await Linking.openURL(pdfUrl);

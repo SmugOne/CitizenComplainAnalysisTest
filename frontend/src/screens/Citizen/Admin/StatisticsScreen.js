@@ -4,7 +4,7 @@ import { Svg, Path, Circle, G, Text as SvgText, Rect, Line } from "react-native-
 import { MaterialIcons } from "@expo/vector-icons";
 import Layout from "../../../components/LayoutAdmin";
 import { Container, Row, Col, Card, useResponsive } from "../../../components/Bootstrap";
-import { API_URL } from "@env";
+import { EXPO_PUBLIC_API_URL } from "@env";
 
 const AGENCY_OPTIONS = [
   "DPWH", "DOH", "DENR", "OMBUDSMAN",
@@ -31,7 +31,7 @@ export default function StatisticsScreen({ navigation }) {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/admin/stats`);
+        const response = await fetch(`${EXPO_PUBLIC_API_URL}/api/admin/stats`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

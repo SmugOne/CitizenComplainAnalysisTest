@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from "react-native";
 import Layout from "../../components/Layout";
-import { API_URL } from "@env";
+import { EXPO_PUBLIC_API_URL } from "@env";
 
 export default function TrackComplaintScreen({ route, navigation }) {
   const [inputId, setInputId] = useState(route?.params?.complaintId || "");
@@ -21,7 +21,7 @@ export default function TrackComplaintScreen({ route, navigation }) {
     }
 
     try {
-      const res = await fetch(`${API_URL}/api/complaints/feedback`, {
+      const res = await fetch(`${EXPO_PUBLIC_API_URL}/api/complaints/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -58,7 +58,7 @@ export default function TrackComplaintScreen({ route, navigation }) {
     setIsVerified(false);
 
     try {
-      const response = await fetch(`${API_URL}/api/complaints/track/${inputId.trim()}`);
+      const response = await fetch(`${EXPO_PUBLIC_API_URL}/api/complaints/track/${inputId.trim()}`);
       const data = await response.json();
 
       if (data.found) {

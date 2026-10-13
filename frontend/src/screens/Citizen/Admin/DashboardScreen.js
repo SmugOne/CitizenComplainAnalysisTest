@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Modal, View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Linking} from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import Layout from "../../../components/LayoutAdmin";
-import { API_URL } from "@env";
+import { EXPO_PUBLIC_API_URL } from "@env";
 
 // Column widths for active complaints
 const COLUMN_WIDTHS = {
@@ -88,7 +88,7 @@ export default function ComplaintListScreen({ navigation }) {
 
   const buildImageUrl = (filename) => {
     if (!filename) return "";
-    return `${API_URL}/api/getImage/${filename}`;
+    return `${EXPO_PUBLIC_API_URL}/api/getImage/${filename}`;
   };
 
   //Load data
@@ -96,8 +96,8 @@ export default function ComplaintListScreen({ navigation }) {
     const fetchData = async () => {
       try {
         const [activeRes, archiveRes] = await Promise.all([
-          fetch(`${API_URL}/api/complaints/all`),
-          fetch(`${API_URL}/api/archive_complaints`)
+          fetch(`${EXPO_PUBLIC_API_URL}/api/complaints/all`),
+          fetch(`${EXPO_PUBLIC_API_URL}/api/archive_complaints`)
         ]);
         const [activeData, archiveData] = await Promise.all([activeRes.json(), archiveRes.json()]);
         setActiveComplaints(activeData);
@@ -125,7 +125,7 @@ export default function ComplaintListScreen({ navigation }) {
 
   const submitResolution = () => {
     const imageIdToSend = selectedComplaint ? resolveImageId(selectedComplaint) : "";
-    fetch(`${API_URL}/api/complaints/update`, {
+    fetch(`${EXPO_PUBLIC_API_URL}/api/complaints/update`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -158,8 +158,8 @@ export default function ComplaintListScreen({ navigation }) {
     setFetchError(false);
 
     try {
-      const activeRes = await fetch(`${API_URL}/api/complaints/all`);
-      const archiveRes = await fetch(`${API_URL}/api/archive_complaints`);
+      const activeRes = await fetch(`${EXPO_PUBLIC_API_URL}/api/complaints/all`);
+      const archiveRes = await fetch(`${EXPO_PUBLIC_API_URL}/api/archive_complaints`);
 
       if (!activeRes.ok || !archiveRes.ok) throw new Error("API fetch failed");
 
@@ -233,7 +233,7 @@ export default function ComplaintListScreen({ navigation }) {
 
               <Text style={styles.detailLabel}>Image ID:</Text>
 
-              <TouchableOpacity onPress={() => Linking.openURL(`${API_URL}/api/getImage/${filename}`)}>
+              <TouchableOpacity onPress={() => Linking.openURL(`${EXPO_PUBLIC_API_URL}/api/getImage/${filename}`)}>
                 <Text style={{ color: "blue", textDecorationLine: "underline" }}>
                   {filename || "No Image"}
                 </Text>

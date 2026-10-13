@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker"; 
 import LayoutAdmin from "../../../components/LayoutAdmin";
-import { API_URL } from "@env";
+import { EXPO_PUBLIC_API_URL } from "@env";
 
 //Responsive helper
 function useIsNarrowScreen() {
@@ -65,7 +65,7 @@ export default function ManageAdminUserScreen({ navigation }) {
   async function fetchAdmins() {
     setLoadingAdmins(true);
     try {
-      const res = await fetch(`${API_URL}/api/admins`);
+      const res = await fetch(`${EXPO_PUBLIC_API_URL}/api/admins`);
       const data = await res.json();
       setAdmins(Array.isArray(data) ? data : []);
     } catch {
@@ -79,7 +79,7 @@ export default function ManageAdminUserScreen({ navigation }) {
   async function fetchAnnouncements() {
     setLoadingAnns(true);
     try {
-      const res = await fetch(`${API_URL}/api/announcements`);
+      const res = await fetch(`${EXPO_PUBLIC_API_URL}/api/announcements`);
       const data = await res.json();
       setAnnouncements(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -99,7 +99,7 @@ export default function ManageAdminUserScreen({ navigation }) {
     }
     setCreating(true);
     try {
-      const res = await fetch(`${API_URL}/api/admins`, {
+      const res = await fetch(`${EXPO_PUBLIC_API_URL}/api/admins`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password, name, email }),
@@ -127,7 +127,7 @@ export default function ManageAdminUserScreen({ navigation }) {
     }
 
     try {
-      const res = await fetch(`${API_URL}/api/announcements`, {
+      const res = await fetch(`${EXPO_PUBLIC_API_URL}/api/announcements`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

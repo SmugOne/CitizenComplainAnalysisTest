@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import Layout from "../../components/Layout";
-import { API_URL } from "@env";
+import { EXPO_PUBLIC_API_URL } from "@env";
 import { Container, Row, Col, useResponsive } from "../../components/Bootstrap";
 
 export default function HomeScreen({ navigation }) {
@@ -13,7 +13,7 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/admin/stats`);
+        const response = await fetch(`${EXPO_PUBLIC_API_URL}/api/admin/stats`);
         const data = await response.json();
 
         //resolved complaints = SOLVED + SPAM
@@ -36,7 +36,7 @@ export default function HomeScreen({ navigation }) {
 
     const fetchAnnouncements = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/announcements`);
+        const res = await fetch(`${EXPO_PUBLIC_API_URL}/api/announcements`);
         const data = await res.json();
 
         if (Array.isArray(data)) {

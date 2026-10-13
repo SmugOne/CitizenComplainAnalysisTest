@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Image, S
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import Layout from "../../components/Layout";
-import { API_URL } from "@env";
+import { EXPO_PUBLIC_API_URL } from "@env";
 
 // MODAL ALERT
 function ModalAlert({ visible, message, onClose }) {
@@ -135,7 +135,7 @@ export default function SubmitComplaintScreen({ navigation }) {
         const formData = new FormData();
         formData.append("image", realFile);
 
-        const uploadResponse = await fetch(`${API_URL}/api/uploadImage`, {
+        const uploadResponse = await fetch(`${EXPO_PUBLIC_API_URL}/api/uploadImage`, {
           method: "POST",
           body: formData,
         });
@@ -153,7 +153,7 @@ export default function SubmitComplaintScreen({ navigation }) {
 
     //Submit complaint data to backend
     try {
-      const response = await fetch(`${API_URL}/api/complaints`, {
+      const response = await fetch(`${EXPO_PUBLIC_API_URL}/api/complaints`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

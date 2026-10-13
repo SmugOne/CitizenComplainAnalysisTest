@@ -127,7 +127,11 @@ export default function ManageReportScreen({ navigation }) {
     let start;
     if (daysOrYear === 'year') {
       start = new Date(end.getFullYear(), 0, 1);
-    } else {
+    } 
+    else if (daysOrYear === 'start') {
+      start = new Date(2000, 0, 1); 
+    } 
+    else {
       start = new Date();
       start.setDate(end.getDate() - daysOrYear);
     }
@@ -203,7 +207,7 @@ export default function ManageReportScreen({ navigation }) {
                 <View style={styles.dateFieldInner}>
                   <Text style={styles.dateValue}>{formatDate(endDate)}</Text>
                   <TouchableOpacity onPress={() => setShowEndPicker(true)}>
-                    <Text style={styles.calendarIcon}></Text>
+                    <Text style={styles.calendarIcon}>📅</Text>
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.dateFieldLabel}>End date</Text>
@@ -250,6 +254,11 @@ export default function ManageReportScreen({ navigation }) {
                   style={styles.presetButton}
                   onPress={() => quickSelectPreset('year')}>
                   <Text style={styles.presetButtonText}>This Year</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.presetButton}
+                  onPress={() => quickSelectPreset('start')}>
+                  <Text style={styles.presetButtonText}>All Time</Text>
                 </TouchableOpacity>
               </View>
             </View>

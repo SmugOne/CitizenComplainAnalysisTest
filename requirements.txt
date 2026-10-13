@@ -8,7 +8,7 @@ gspread
 oauth2client
 scikit-learn
 Werkzeug
-//transformers
-//torch
+transformers
+torch
 reportlab
 gunicorn

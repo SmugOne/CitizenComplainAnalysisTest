@@ -19,7 +19,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import make_pipeline
 from werkzeug.utils import secure_filename
-from transformers import pipeline
+#from transformers import pipeline
 from collections import Counter
 from flask import render_template, send_file, request, jsonify
 from datetime import datetime
